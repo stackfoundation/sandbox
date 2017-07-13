@@ -1,0 +1,41 @@
+import org.echocat.gradle.plugins.golang.vcs.RawVcsReference
+import org.echocat.gradle.plugins.golang.vcs.VcsException
+
+plugins {
+    id "org.echocat.golang" version "0.1.16"
+}
+
+group 'github.com/stackfoundation/cli/core'
+
+class KubernetesProvider extends org.echocat.gradle.plugins.golang.model.VcsRepositoryProvider {
+    KubernetesProvider() {
+        super(org.echocat.gradle.plugins.golang.vcs.VcsType.git,
+                "k8s.io/", "Kubernetes",
+                java.util.regex.Pattern.compile("^(?<root>k8s\\.io/)(?<subPath>[/A-Za-z0-9_.\\-]+)*\$"))
+    }
+
+    org.echocat.gradle.plugins.golang.vcs.VcsRepositoryProvider toConcrete() {
+        return new org.echocat.gradle.plugins.golang.vcs.isps.DefaultVcsRepositoryProvider(
+                type, prefix, name, dependencyPattern) {
+            protected String rootFor(java.util.regex.Matcher matcher, RawVcsReference rawReference) throws VcsException {
+                return "github.com/kubernetes/minikube"
+            }
+
+            protected String idFor(java.util.regex.Matcher matcher, RawVcsReference rawReference) throws VcsException {
+                return "k8s.io/minikube"
+            }
+        }
+    }
+}
+
+golang {
+    platforms = System.getProperty("platforms", "windows-amd64")
+
+    build {
+        arguments = [ "-ldflags", "\"-s -w\"" ]
+    }
+
+    dependencies {
+        vcsRepositoryProviders = [new KubernetesProvider()]
+    }
+}
