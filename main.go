@@ -5,7 +5,7 @@ package main
 //import "k8s.io/minikube/pkg/minikube/config"
 //import "github.com/spf13/viper"
 //import "time"
-import "github.com/stackfoundation/cli/core/cmd"
+import "./cmd"
 
 func initConfig() {
         //viper.Set(config.WantKubectlDownloadMsg, false)
