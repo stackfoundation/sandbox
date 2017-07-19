@@ -3,6 +3,10 @@ apply from: '../../gradle/environments.gradle'
 apply from: '../../gradle/binaries.gradle'
 
 goBinary 'Core',
+        ['windows'],
+        ['amd64'],
+        false,
+        [],
         'github.com/spf13/cobra',
         'github.com/spf13/viper',
         'github.com/spf13/pflag',
