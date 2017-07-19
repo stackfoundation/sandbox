@@ -41,7 +41,6 @@ import (
         "k8s.io/minikube/pkg/util"
         pkgutil "k8s.io/minikube/pkg/util"
         "k8s.io/minikube/pkg/util/kubeconfig"
-        "github.com/kubernetes/minikube/pkg/minikube/config"
 )
 
 const (
@@ -50,7 +49,6 @@ const (
         humanReadableDiskSize = "disk-size"
         vmDriver = "vm-driver"
         xhyveDiskDriver = "xhyve-disk-driver"
-        kubernetesVersion = constants.DefaultKubernetesVersion
         hostOnlyCIDR = "host-only-cidr"
         containerRuntime = "container-runtime"
         networkPlugin = "network-plugin"
@@ -70,10 +68,11 @@ var (
         dockerOpt        []string
         insecureRegistry []string
         extraOptions util.ExtraOptionSlice
+        kubernetesVersion = constants.DefaultKubernetesVersion
 )
 
 func startKube() {
-        viper.Set(config.MachineProfile, "sbox")
+        viper.Set(cfg.MachineProfile, "sbox")
 
         api, err := machine.NewAPIClient()
         if err != nil {

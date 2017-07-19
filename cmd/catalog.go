@@ -10,7 +10,7 @@ import (
         "sort"
 )
 
-const catalog = "https://aob9mfn59e.execute-api.eu-west-1.amazonaws.com/dev/catalog"
+const catalog = "https://s3-eu-west-1.amazonaws.com/dev.stack.foundation/catalog/catalog.json"
 
 type image struct {
         Name        string `json:"name"`
@@ -65,6 +65,7 @@ Shows a list of all official Docker images that are available to use as a base i
                 table.SetBorder(false)
                 table.SetColumnSeparator("")
                 table.SetColWidth(65)
+                table.SetHeaderLine(false)
 
                 for _, image := range images {
                         table.Append([]string{image.Name, image.Description})

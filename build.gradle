@@ -2,6 +2,11 @@ apply from: '../../gradle/version.gradle'
 apply from: '../../gradle/environments.gradle'
 apply from: '../../gradle/binaries.gradle'
 
+goDep 'github.com/stackfoundation/core'
+goBinData 'vendor/src/k8s.io/minikube',
+        'pkg/minikube/assets/assets.go',
+        ['./out/localkube', 'deploy/addons/...'],
+        'assets'
 goBinary 'Core',
         ['windows'],
         ['amd64'],
@@ -14,4 +19,7 @@ goBinary 'Core',
         'github.com/gholt/blackfridaytext',
         'k8s.io/minikube/pkg/version',
         'k8s.io/minikube/pkg/minikube/config',
-        'k8s.io/minikube/pkg/minikube/constants'
+        'k8s.io/minikube/pkg/minikube/constants',
+        'github.com/docker/go-units',
+        'github.com/docker/machine/libmachine/host',
+        'github.com/golang/glog'
