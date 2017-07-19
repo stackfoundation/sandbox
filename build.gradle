@@ -3,7 +3,7 @@ apply from: '../../gradle/environments.gradle'
 apply from: '../../gradle/binaries.gradle'
 
 goDep 'github.com/stackfoundation/core'
-goBinData 'vendor/src/k8s.io/minikube',
+goBinData 'vendor/k8s.io/minikube',
         'pkg/minikube/assets/assets.go',
         ['./out/localkube', 'deploy/addons/...'],
         'assets'
@@ -12,14 +12,4 @@ goBinary 'Core',
         ['amd64'],
         false,
         [],
-        'github.com/spf13/cobra',
-        'github.com/spf13/viper',
-        'github.com/spf13/pflag',
-        'github.com/olekukonko/tablewriter',
-        'github.com/gholt/blackfridaytext',
-        'k8s.io/minikube/pkg/version',
-        'k8s.io/minikube/pkg/minikube/config',
-        'k8s.io/minikube/pkg/minikube/constants',
-        'github.com/docker/go-units',
-        'github.com/docker/machine/libmachine/host',
-        'github.com/golang/glog'
+        'github.com/stackfoundation/core'

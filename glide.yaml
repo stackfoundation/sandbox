@@ -21,3 +21,4 @@ import:
   - pkg/util
   - pkg/util/kubeconfig
   - pkg/version
+- package: github.com/pkg/sftp
