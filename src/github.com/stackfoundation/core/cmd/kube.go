@@ -40,6 +40,7 @@ import (
         "github.com/stackfoundation/core/pkg/util"
         pkgutil "github.com/stackfoundation/core/pkg/util"
         "github.com/stackfoundation/core/pkg/util/kubeconfig"
+        "github.com/docker/machine/libmachine/state"
 )
 
 const (
@@ -77,6 +78,16 @@ func startKube() {
                 os.Exit(1)
         }
         defer api.Close()
+
+        ms, err := cluster.GetHostStatus(api)
+        if err != nil {
+                glog.Errorln("Error getting machine status:", err)
+                MaybeReportErrorAndExit(err)
+        }
+
+        if ms == state.Running.String() || ms == state.Starting.String() || ms == state.Stopping.String() {
+                return
+        }
 
         diskSize := viper.GetString(humanReadableDiskSize)
         diskSizeMB := calculateDiskSizeInMB(diskSize)
