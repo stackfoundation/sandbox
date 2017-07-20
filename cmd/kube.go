@@ -32,15 +32,14 @@ import (
         "github.com/golang/glog"
         "github.com/spf13/cobra"
         "github.com/spf13/viper"
-        cmdUtil "k8s.io/minikube/cmd/util"
-        "k8s.io/minikube/pkg/minikube/cluster"
-        cfg "k8s.io/minikube/pkg/minikube/config"
-        "k8s.io/minikube/pkg/minikube/constants"
-        "k8s.io/minikube/pkg/minikube/kubernetes_versions"
-        "k8s.io/minikube/pkg/minikube/machine"
-        "k8s.io/minikube/pkg/util"
-        pkgutil "k8s.io/minikube/pkg/util"
-        "k8s.io/minikube/pkg/util/kubeconfig"
+        "github.com/stackfoundation/core/pkg/minikube/cluster"
+        cfg "github.com/stackfoundation/core/pkg/minikube/config"
+        "github.com/stackfoundation/core/pkg/minikube/constants"
+        "github.com/stackfoundation/core/pkg/minikube/kubernetes_versions"
+        "github.com/stackfoundation/core/pkg/minikube/machine"
+        "github.com/stackfoundation/core/pkg/util"
+        pkgutil "github.com/stackfoundation/core/pkg/util"
+        "github.com/stackfoundation/core/pkg/util/kubeconfig"
 )
 
 const (
@@ -95,7 +94,7 @@ func startKube() {
         }
 
         config := cluster.MachineConfig{
-                MinikubeISO:         viper.GetString(constants.DefaultIsoUrl),
+                MinikubeISO:         constants.DefaultIsoUrl,
                 Memory:              viper.GetInt(memory),
                 CPUs:                viper.GetInt(cpus),
                 DiskSize:            diskSizeMB,
@@ -125,14 +124,14 @@ func startKube() {
         err = util.RetryAfter(5, start, 2 * time.Second)
         if err != nil {
                 glog.Errorln("Error starting host: ", err)
-                cmdUtil.MaybeReportErrorAndExit(err)
+                MaybeReportErrorAndExit(err)
         }
 
         fmt.Println("Getting VM IP address...")
         ip, err := host.Driver.GetIP()
         if err != nil {
                 glog.Errorln("Error getting VM IP address: ", err)
-                cmdUtil.MaybeReportErrorAndExit(err)
+                MaybeReportErrorAndExit(err)
         }
         kubernetesConfig := cluster.KubernetesConfig{
                 KubernetesVersion: kubernetesVersion,
@@ -148,20 +147,20 @@ func startKube() {
         fmt.Println("Moving files into cluster...")
         if err := cluster.UpdateCluster(host.Driver, kubernetesConfig); err != nil {
                 glog.Errorln("Error updating cluster: ", err)
-                cmdUtil.MaybeReportErrorAndExit(err)
+                MaybeReportErrorAndExit(err)
         }
 
         fmt.Println("Setting up certs...")
         if err := cluster.SetupCerts(host.Driver, kubernetesConfig.APIServerName, kubernetesConfig.DNSDomain); err != nil {
                 glog.Errorln("Error configuring authentication: ", err)
-                cmdUtil.MaybeReportErrorAndExit(err)
+                MaybeReportErrorAndExit(err)
         }
 
         fmt.Println("Starting cluster components...")
 
         if err := cluster.StartCluster(api, kubernetesConfig); err != nil {
                 glog.Errorln("Error starting cluster: ", err)
-                cmdUtil.MaybeReportErrorAndExit(err)
+                MaybeReportErrorAndExit(err)
         }
 
         fmt.Println("Connecting to cluster...")
@@ -195,7 +194,7 @@ func startKube() {
 
         if err := kubeconfig.SetupKubeConfig(kubeCfgSetup); err != nil {
                 glog.Errorln("Error setting up kubeconfig: ", err)
-                cmdUtil.MaybeReportErrorAndExit(err)
+                MaybeReportErrorAndExit(err)
         }
 
         // start 9p server mount
@@ -216,12 +215,12 @@ func startKube() {
                 err = mountCmd.Start()
                 if err != nil {
                         glog.Errorf("Error running command Sandbox mount %s", err)
-                        cmdUtil.MaybeReportErrorAndExit(err)
+                        MaybeReportErrorAndExit(err)
                 }
                 err = ioutil.WriteFile(filepath.Join(constants.GetMinipath(), constants.MountProcessFileName), []byte(strconv.Itoa(mountCmd.Process.Pid)), 0644)
                 if err != nil {
                         glog.Errorf("Error writing mount process pid to file: %s", err)
-                        cmdUtil.MaybeReportErrorAndExit(err)
+                        MaybeReportErrorAndExit(err)
                 }
         }
 
@@ -251,7 +250,7 @@ This can also be done automatically by setting the env var CHANGE_MINIKUBE_NONE_
                 if err := util.MaybeChownDirRecursiveToMinikubeUser(constants.GetMinipath()); err != nil {
                         glog.Errorf("Error recursively changing ownership of directory %s: %s",
                                 constants.GetMinipath(), err)
-                        cmdUtil.MaybeReportErrorAndExit(err)
+                        MaybeReportErrorAndExit(err)
                 }
         }
 }

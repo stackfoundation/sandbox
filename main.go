@@ -1,8 +1,8 @@
 package main
 
-//import "k8s.io/minikube/pkg/minikube/machine"
+//import "github.com/stackfoundation/core/pkg/minikube/machine"
 //import "k8s.io/minikube/cmd/minikube/cmd"
-//import "k8s.io/minikube/pkg/minikube/config"
+//import "github.com/stackfoundation/core/pkg/minikube/config"
 //import "github.com/spf13/viper"
 //import "time"
 import "github.com/stackfoundation/core/cmd"

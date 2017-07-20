@@ -24,8 +24,8 @@ import (
         "github.com/spf13/cobra"
         "github.com/spf13/pflag"
         "github.com/spf13/viper"
-        "k8s.io/minikube/pkg/minikube/config"
-        "k8s.io/minikube/pkg/minikube/constants"
+        "github.com/stackfoundation/core/pkg/minikube/config"
+        "github.com/stackfoundation/core/pkg/minikube/constants"
         //"github.com/golang/glog"
 )
 

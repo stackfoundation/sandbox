@@ -2,9 +2,7 @@ apply from: '../../gradle/version.gradle'
 apply from: '../../gradle/environments.gradle'
 apply from: '../../gradle/binaries.gradle'
 
-goDep 'github.com/stackfoundation/core'
-goBinData 'vendor/k8s.io/minikube',
-        'pkg/minikube/assets/assets.go',
+goBinData 'pkg/minikube/assets/assets.go',
         ['./out/localkube', 'deploy/addons/...'],
         'assets'
 goBinary 'Core',
@@ -12,4 +10,5 @@ goBinary 'Core',
         ['amd64'],
         false,
         [],
-        'github.com/stackfoundation/core'
+        'github.com/stackfoundation/core',
+        'github.com/gholt/blackfridaytext'

@@ -3,7 +3,7 @@ package cmd
 import (
         "fmt"
         "github.com/spf13/cobra"
-        "k8s.io/minikube/pkg/version"
+        "github.com/stackfoundation/core/pkg/version"
 )
 
 var versionCmd = &cobra.Command{
