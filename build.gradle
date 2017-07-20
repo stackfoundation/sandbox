@@ -2,7 +2,8 @@ apply from: '../../gradle/version.gradle'
 apply from: '../../gradle/environments.gradle'
 apply from: '../../gradle/binaries.gradle'
 
-goBinData 'pkg/minikube/assets/assets.go',
+goBinData 'github.com/stackfoundation/core',
+        'pkg/minikube/assets/assets.go',
         ['./out/localkube', 'deploy/addons/...'],
         'assets'
 goBinary 'Core',
