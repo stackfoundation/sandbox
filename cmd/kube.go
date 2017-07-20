@@ -71,8 +71,6 @@ var (
 )
 
 func startKube() {
-        viper.Set(cfg.MachineProfile, "sbox")
-
         api, err := machine.NewAPIClient()
         if err != nil {
                 fmt.Fprintf(os.Stderr, "Error getting client: %s\n", err)

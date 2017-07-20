@@ -42,8 +42,8 @@ const vboxConfig = `
         "MachineName": "minikube",
         "SSHUser": "docker",
         "SSHPort": 33627,
-        "SSHKeyPath": "/home/sundarp/.minikube/machines/minikube/id_rsa",
-        "StorePath": "/home/sundarp/.minikube",
+        "SSHKeyPath": "/home/sundarp/.sbox/machines/minikube/id_rsa",
+        "StorePath": "/home/sundarp/.sbox",
         "SwarmMaster": false,
         "SwarmHost": "",
         "SwarmDiscovery": "",
@@ -53,7 +53,7 @@ const vboxConfig = `
         "Memory": 16384,
         "DiskSize": 20000,
         "NatNicType": "82540EM",
-        "Boot2DockerURL": "file:///home/sundarp/.minikube/cache/iso/minikube-v1.0.6.iso",
+        "Boot2DockerURL": "file:///home/sundarp/.sbox/cache/iso/minikube-v1.0.6.iso",
         "Boot2DockerImportVM": "",
         "HostDNSResolver": false,
         "HostOnlyCIDR": "192.168.99.1/24",
@@ -169,7 +169,7 @@ func makeTempDir() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	tempDir = filepath.Join(tempDir, ".minikube")
+	tempDir = filepath.Join(tempDir, ".sbox")
 	os.Setenv(constants.MinikubeHome, tempDir)
 	return constants.GetMinipath()
 }

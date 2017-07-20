@@ -736,7 +736,7 @@ func TestUpdateCustomAddons(t *testing.T) {
 		},
 	}
 
-	//write a file into ~/.minikube/addons
+	//write a file into ~/.sbox/addons
 	path := filepath.Join(constants.MakeMiniPath("addons"), "dir-addon.yaml")
 	testContent1 := []byte("CUSTOM ADDON TEST STRING#1, In Addons Dir")
 	err = ioutil.WriteFile(path, testContent1, 0644)

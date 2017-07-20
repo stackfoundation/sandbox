@@ -40,13 +40,13 @@ func GetMinipath() string {
 	if os.Getenv(MinikubeHome) == "" {
 		return DefaultMinipath
 	}
-	if filepath.Base(os.Getenv(MinikubeHome)) == ".minikube" {
+	if filepath.Base(os.Getenv(MinikubeHome)) == ".sbox" {
 		return os.Getenv(MinikubeHome)
 	}
-	return filepath.Join(os.Getenv(MinikubeHome), ".minikube")
+	return filepath.Join(os.Getenv(MinikubeHome), ".sbox")
 }
 
-var DefaultMinipath = filepath.Join(homedir.HomeDir(), ".minikube")
+var DefaultMinipath = filepath.Join(homedir.HomeDir(), ".sbox")
 
 // KubeconfigPath is the path to the Kubernetes client config
 var KubeconfigPath = clientcmd.RecommendedHomeFile
@@ -61,7 +61,7 @@ const MinikubeContext = "minikube"
 const MinikubeEnvPrefix = "MINIKUBE"
 
 // DefaultMachineName is the default name for the VM
-const DefaultMachineName = "minikube"
+const DefaultMachineName = "sbox"
 
 // The name of the default storage class provisioner
 const DefaultStorageClassProvisioner = "standard"

@@ -164,7 +164,7 @@ var Addons = map[string]*Addon{
 }
 
 func AddMinikubeAddonsDirToAssets(assetList *[]CopyableFile) {
-	// loop over .minikube/addons and add them to assets
+	// loop over .sbox/addons and add them to assets
 	searchDir := constants.MakeMiniPath("addons")
 	err := filepath.Walk(searchDir, func(addonFile string, f os.FileInfo, err error) error {
 		isDir, err := util.IsDirectory(addonFile)
@@ -174,11 +174,11 @@ func AddMinikubeAddonsDirToAssets(assetList *[]CopyableFile) {
 				*assetList = append(*assetList, f)
 			}
 		} else if err != nil {
-			glog.Infoln("Error encountered while walking .minikube/addons: ", err)
+			glog.Infoln("Error encountered while walking .sbox/addons: ", err)
 		}
 		return nil
 	})
 	if err != nil {
-		glog.Infoln("Error encountered while walking .minikube/addons: ", err)
+		glog.Infoln("Error encountered while walking .sbox/addons: ", err)
 	}
 }

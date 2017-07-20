@@ -396,14 +396,14 @@ func minikubeConfig(config *api.Config) {
 	clusterName := "minikube"
 	cluster := api.NewCluster()
 	cluster.Server = "https://192.168.99.100:" + strconv.Itoa(util.APIServerPort)
-	cluster.CertificateAuthority = "/home/tux/.minikube/apiserver.crt"
+	cluster.CertificateAuthority = "/home/tux/.sbox/apiserver.crt"
 	config.Clusters[clusterName] = cluster
 
 	// user
 	userName := "minikube"
 	user := api.NewAuthInfo()
-	user.ClientCertificate = "/home/tux/.minikube/apiserver.crt"
-	user.ClientKey = "/home/tux/.minikube/apiserver.key"
+	user.ClientCertificate = "/home/tux/.sbox/apiserver.crt"
+	user.ClientKey = "/home/tux/.sbox/apiserver.key"
 	config.AuthInfos[userName] = user
 
 	// context

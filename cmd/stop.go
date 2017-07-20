@@ -2,7 +2,6 @@ package cmd
 
 import (
         "github.com/spf13/cobra"
-        "fmt"
 )
 
 var stopCmd = &cobra.Command{
@@ -10,7 +9,6 @@ var stopCmd = &cobra.Command{
         Short: "Stop a running workflow",
         Long:  `Stop a running workflow.`,
         Run: func(command *cobra.Command, args []string) {
-                fmt.Println("Sandbox version:", "0.1.0")
         },
 }
 
