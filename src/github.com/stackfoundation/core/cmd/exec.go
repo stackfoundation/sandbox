@@ -44,7 +44,8 @@ var execCmd = &cobra.Command{
 		restClient, err := k8sClientConfig.ClientConfig()
 		clientset, err := kubernetes.NewForConfig(restClient)
 
-		job, err := clientset.Pods("default").Create(&v1.Pod{
+		pods := clientset.Pods("default")
+		pod, err := pods.Create(&v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "sbox-",
 			},
@@ -62,7 +63,13 @@ var execCmd = &cobra.Command{
 		if err != nil {
 			panic(err.Error())
 		}
-		fmt.Printf("Started the container: %v!\n", job.Status.StartTime)
+		fmt.Printf("Started a pod: %v!\n", pod.Name)
+
+		response := pods.GetLogs(pod.Name, &v1.PodLogOptions{Follow: true}).Do()
+		if response.Error() != nil {
+			panic(response.Error())
+		}
+
 	},
 }
 
