@@ -11,5 +11,4 @@ goBinary 'Core',
         ['amd64'],
         false,
         [],
-        'github.com/stackfoundation/core',
-        'github.com/gholt/blackfridaytext'
+        'github.com/stackfoundation/core'
