@@ -15,14 +15,14 @@ limitations under the License.
 package cmd
 
 import (
-        goflag "flag"
+        //goflag "flag"
         //"io/ioutil"
         "os"
         "strings"
 
         //"github.com/docker/machine/libmachine/log"
         "github.com/spf13/cobra"
-        "github.com/spf13/pflag"
+        //"github.com/spf13/pflag"
         "github.com/spf13/viper"
         "github.com/stackfoundation/core/pkg/minikube/config"
         "github.com/stackfoundation/core/pkg/minikube/constants"
@@ -69,10 +69,10 @@ var RootCmd = &cobra.Command{
                 //        log.SetDebug(true)
                 //}
 
-                logDir := pflag.Lookup("log_dir")
-                if !logDir.Changed {
-                        logDir.Value.Set(constants.MakeMiniPath("logs"))
-                }
+                //logDir := pflag.Lookup("log_dir")
+                //if !logDir.Changed {
+                //        logDir.Value.Set(constants.MakeMiniPath("logs"))
+                //}
         },
 }
 
@@ -83,26 +83,26 @@ func Execute() {
 // Handle config values for flags used in external packages (e.g. glog)
 // by setting them directly, using values from viper when not passed in as args
 func setFlagsUsingViper() {
-        for _, config := range viperWhiteList {
-                var a = pflag.Lookup(config)
-                viper.SetDefault(a.Name, a.DefValue)
-                // If the flag is set, override viper value
-                if a.Changed {
-                        viper.Set(a.Name, a.Value.String())
-                }
-                // Viper will give precedence first to calls to the Set command,
-                // then to values from the config.yml
-                a.Value.Set(viper.GetString(a.Name))
-                a.Changed = true
-        }
+        //for _, config := range viperWhiteList {
+        //        var a = pflag.Lookup(config)
+        //        viper.SetDefault(a.Name, a.DefValue)
+        //        // If the flag is set, override viper value
+        //        if a.Changed {
+        //                viper.Set(a.Name, a.Value.String())
+        //        }
+        //        // Viper will give precedence first to calls to the Set command,
+        //        // then to values from the config.yml
+        //        a.Value.Set(viper.GetString(a.Name))
+        //        a.Changed = true
+        //}
 }
 
 func init() {
         RootCmd.PersistentFlags().StringP(config.MachineProfile, "p", constants.DefaultMachineName, `The name of the minikube VM being used.
 	This can be modified to allow for multiple minikube instances to be run independently`)
 
-        pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
-        viper.BindPFlags(RootCmd.PersistentFlags())
+        //pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
+        //viper.BindPFlags(RootCmd.PersistentFlags())
 
         cobra.OnInitialize(initConfig)
 }

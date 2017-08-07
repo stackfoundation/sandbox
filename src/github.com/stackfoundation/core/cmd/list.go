@@ -10,7 +10,17 @@ var listCmd = &cobra.Command{
         Short: "List all workflows available in the current project",
         Long:  `List all workflows available in the current project.`,
         Run: func(command *cobra.Command, args []string) {
-                fmt.Println("Sandbox version:", "0.1.0")
+                workflows, err := ListWorkflows()
+                if err != nil || len(workflows) < 1 {
+                        fmt.Println("No workflows")
+                        return
+                }
+
+                fmt.Println("NAME")
+                for _, workflow := range workflows {
+                        fmt.Printf("%v", workflow)
+                        fmt.Println()
+                }
         },
 }
 

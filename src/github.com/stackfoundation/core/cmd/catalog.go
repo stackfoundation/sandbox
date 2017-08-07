@@ -8,6 +8,7 @@ import (
         "encoding/json"
         "os"
         "sort"
+        "gopkg.in/cheggaaa/pb.v1"
 )
 
 const catalog = "https://s3-eu-west-1.amazonaws.com/dev.stack.foundation/catalog/catalog.json"
@@ -64,7 +65,13 @@ Shows a list of all official Docker images that are available to use as a base i
                 table.SetHeader([]string{"Image", "Description"})
                 table.SetBorder(false)
                 table.SetColumnSeparator("")
-                table.SetColWidth(65)
+
+                width, err := pb.GetTerminalWidth()
+                if err != nil {
+                        width = 80
+                }
+
+                table.SetColWidth(width - 25)
                 table.SetHeaderLine(false)
 
                 for _, image := range images {

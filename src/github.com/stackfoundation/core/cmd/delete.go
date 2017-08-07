@@ -3,14 +3,34 @@ package cmd
 import (
         "github.com/spf13/cobra"
         "fmt"
+        "os"
 )
 
 var deleteCmd = &cobra.Command{
-        Use:   "delete",
+        Use:   "delete <workflow>",
         Short: "Delete an existing workflow from the current project",
         Long:  `Delete an existing workflow from the current project.`,
+        ValidArgs: []string { "workflow" },
         Run: func(command *cobra.Command, args []string) {
-                fmt.Println("Sandbox version:", "0.1.0")
+                if len(args) < 1 {
+                        fmt.Println("You must specify the name of a workflow to delete!")
+                        fmt.Println()
+                        fmt.Println("Try running `sbox delete --help` for help")
+                        return
+                }
+
+                deleted, err := DeleteWorkflow(args[0])
+                if err != nil && os.IsNotExist(err) {
+                        fmt.Printf("%v does not exist", args[0])
+                        fmt.Println()
+                        return
+                }
+
+                if deleted && err == nil {
+                        fmt.Printf("%v deleted", args[0])
+                        fmt.Println()
+                        return
+                }
         },
 }
 

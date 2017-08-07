@@ -12,8 +12,6 @@ import (
 
 const catalogBucket = "https://s3-eu-west-1.amazonaws.com/dev.stack.foundation/catalog/"
 
-var docsImage string
-
 var docsCmd = &cobra.Command{
         Use:   "docs",
         Short: "Show documentation about a particular official Docker image",
@@ -21,16 +19,25 @@ var docsCmd = &cobra.Command{
 
 Shows documentation available about a particular offical Docker image.`,
         Run: func(command *cobra.Command, args []string) {
-                if len(docsImage) < 1 {
-                        fmt.Println("Specify a valid image to print documentation")
-                        command.Help()
+                if len(args) < 1 {
+                        fmt.Println("You must specify the name of an official Docker image to show documentation for!")
+                        fmt.Println()
+                        fmt.Println("Try running `sbox docs --help` for help")
+                        fmt.Println("Try running `sbox catalog` for a list of official Docker images")
                         return
                 }
 
-                response, err := http.Get(catalogBucket + docsImage + ".md")
+                if len(args) > 1 {
+                        fmt.Println("You can only specify one image to show documentation!")
+                        fmt.Println()
+                        fmt.Println("Try running `sbox docs --help` for help")
+                }
+
+                response, err := http.Get(catalogBucket + args[0] + ".md")
                 if err != nil {
                         fmt.Printf("Could not retrieve documentation for %v - is it an official Docker image?", args[0])
-                        fmt.Println("Try running the \"catalog\" command to list all Docker offical images")
+                        fmt.Println()
+                        fmt.Println("Try running `sbox catalog` for a list of offical Docker images")
                         return
                 }
                 defer response.Body.Close()
@@ -69,6 +76,5 @@ Shows documentation available about a particular offical Docker image.`,
 }
 
 func init() {
-        docsCmd.Flags().StringVarP(&docsImage, "image", "i", "", "Image to display documentation for")
         RootCmd.AddCommand(docsCmd)
 }
