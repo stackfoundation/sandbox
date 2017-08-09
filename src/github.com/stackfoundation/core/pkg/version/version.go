@@ -28,7 +28,7 @@ const VersionPrefix = "v"
 
 var version = "v0.21.0"
 
-var isoVersion = "v0.23.0"
+var isoVersion = "v0.23.1"
 
 var isoPath = "minikube/iso"
 
