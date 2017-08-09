@@ -51,7 +51,7 @@ var statusCmd = &cobra.Command{
                                 glog.Errorln("Error host driver ip status:", err)
                                 MaybeReportErrorAndExit(err)
                         }
-                        kstatus, err := kubeconfig.GetKubeConfigStatus(ip, constants.KubeconfigPath, config.GetMachineName())
+                        kstatus, err := kubeconfig.GetKubeConfigStatus(ip, GetKubeConfigPath(), config.GetMachineName())
                         if err != nil {
                                 glog.Errorln("Error kubeconfig status:", err)
                                 MaybeReportErrorAndExit(err)

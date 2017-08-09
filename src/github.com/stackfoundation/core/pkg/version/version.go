@@ -26,9 +26,9 @@ import (
 // This is a private field and should be set when compiling with --ldflags="-X github.com/stackfoundation/core/pkg/version.version=vX.Y.Z"
 const VersionPrefix = "v"
 
-var version = "v0.20.0"
+var version = "v0.21.0"
 
-var isoVersion = "v0.22.0"
+var isoVersion = "v0.23.0"
 
 var isoPath = "minikube/iso"
 

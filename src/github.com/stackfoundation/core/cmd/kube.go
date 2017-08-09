@@ -183,7 +183,7 @@ func startKube() {
         fmt.Println("Setting up kubeconfig...")
         // setup kubeconfig
 
-        kubeConfigEnv := os.Getenv(constants.KubeconfigEnvVar)
+        kubeConfigEnv := GetKubeConfigPath()
         var kubeConfigFile string
         if kubeConfigEnv == "" {
                 kubeConfigFile = constants.KubeconfigPath

@@ -180,6 +180,14 @@ func PromptUserForAccept(r io.Reader) bool {
 	}
 }
 
+func GetKubeConfigPath() string {
+	kubeConfigEnv := os.Getenv(constants.KubeconfigEnvVar)
+	if kubeConfigEnv == "" {
+		return constants.KubeconfigPath
+	}
+	return filepath.SplitList(kubeConfigEnv)[0]
+}
+
 func MaybePrintKubectlDownloadMsg(goos string, out io.Writer) {
 	if !viper.GetBool(config.WantKubectlDownloadMsg) {
 		return

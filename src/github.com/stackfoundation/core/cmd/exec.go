@@ -25,10 +25,110 @@ import (
         "path/filepath"
         "net/http"
         "context"
+        "errors"
 )
 
 var execImage string
 var execCommandString string
+
+func createDockerHttpClient(hostDockerEnv map[string]string) (*http.Client, error) {
+        if dockerCertPath := hostDockerEnv["DOCKER_CERT_PATH"]; dockerCertPath != "" {
+                tlsConfigOptions := tlsconfig.Options{
+                        CAFile:             filepath.Join(dockerCertPath, "ca.pem"),
+                        CertFile:           filepath.Join(dockerCertPath, "cert.pem"),
+                        KeyFile:            filepath.Join(dockerCertPath, "key.pem"),
+                        InsecureSkipVerify: hostDockerEnv["DOCKER_TLS_VERIFY"] == "",
+                }
+
+                tlsClientConfig, err := tlsconfig.Client(tlsConfigOptions)
+                if err != nil {
+                        return nil, err
+                }
+
+                httpClient := &http.Client{
+                        Transport: &http.Transport{
+                                TLSClientConfig: tlsClientConfig,
+                        },
+                }
+
+                return httpClient, nil
+        }
+
+        return nil, errors.New("Unable to determine Docker configuration")
+}
+
+func createDockerClient() (*client.Client, error) {
+        hostDockerEnv, err := getHostDockerEnv()
+        if err != nil {
+                return nil, err
+        }
+
+        httpClient, err := createDockerHttpClient(hostDockerEnv)
+        if err != nil {
+                return nil, err
+        }
+
+        host := hostDockerEnv["DOCKER_HOST"]
+        return client.NewClient(host, constants.DockerAPIVersion, httpClient, nil)
+}
+
+func getHostDockerEnv() (map[string]string, error) {
+        machineClient, err := machine.NewAPIClient()
+        if err != nil {
+                return nil, err
+        }
+        defer machineClient.Close()
+
+        return cluster.GetHostDockerEnv(machineClient)
+}
+
+func pullImage(dockerClient *client.Client, image string) error {
+        pullOptions := types.ImagePullOptions{All: false}
+        pullProgress, err := dockerClient.ImagePull(context.Background(), image, pullOptions)
+        defer pullProgress.Close()
+
+        if err != nil {
+                return err
+        }
+
+        jsonmessage.DisplayJSONMessagesStream(pullProgress, os.Stdout, 0, true, nil)
+        _, _ = io.Copy(os.Stdout, pullProgress)
+
+        return nil
+}
+
+func createKubeClient() (*kubernetes.Clientset, error) {
+        kubeConfig, err := kubeconfig.ReadConfigOrNew(constants.KubeconfigPath)
+        if err != nil {
+                return nil, err
+        }
+
+        configOverrides := &clientcmd.ConfigOverrides{}
+        k8sClientConfig := clientcmd.NewNonInteractiveClientConfig(
+                *kubeConfig, config.GetMachineName(), configOverrides, nil)
+        restClient, err := k8sClientConfig.ClientConfig()
+
+        return kubernetes.NewForConfig(restClient)
+}
+
+func createPod(pods corev1.PodInterface, name string, image string, command string) (*v1.Pod, error) {
+        return pods.Create(&v1.Pod{
+                ObjectMeta: metav1.ObjectMeta{
+                        GenerateName: "sbox-",
+                },
+                Spec: v1.PodSpec{
+                        Containers: []v1.Container{
+                                v1.Container{
+                                        Name:    name,
+                                        Image:   image,
+                                        Command: []string{command},
+                                        ImagePullPolicy: v1.PullIfNotPresent,
+                                },
+                        },
+                        RestartPolicy: v1.RestartPolicyNever,
+                },
+        })
+}
 
 var execCmd = &cobra.Command{
         Use:   "exec",
@@ -36,73 +136,23 @@ var execCmd = &cobra.Command{
         Long:  `Execute a single command within a Docker container.`,
         Run: func(command *cobra.Command, args []string) {
                 startKube()
-                api, err := machine.NewAPIClient()
+
+                dockerClient, err := createDockerClient()
                 if err != nil {
-                        fmt.Fprintf(os.Stderr, "Error getting client: %s\n", err)
-                        os.Exit(1)
-                }
-                defer api.Close()
 
-                envMap, err := cluster.GetHostDockerEnv(api)
-
-                var httpClient *http.Client
-                if dockerCertPath :=envMap["DOCKER_CERT_PATH"]; dockerCertPath != "" {
-                        options := tlsconfig.Options{
-                                CAFile:             filepath.Join(dockerCertPath, "ca.pem"),
-                                CertFile:           filepath.Join(dockerCertPath, "cert.pem"),
-                                KeyFile:            filepath.Join(dockerCertPath, "key.pem"),
-                                InsecureSkipVerify: envMap["DOCKER_TLS_VERIFY"] == "",
-                        }
-                        tlsc, err := tlsconfig.Client(options)
-                        if err != nil {
-                                //return nil, err
-                                return
-                        }
-
-                        httpClient = &http.Client{
-                                Transport: &http.Transport{
-                                        TLSClientConfig: tlsc,
-                                },
-                        }
                 }
 
-                options := types.ImagePullOptions{All: false}
+                pullImage(dockerClient, execImage)
 
-                host := envMap["DOCKER_HOST"]
-                dockerClient, err := client.NewClient(host, constants.DockerAPIVersion, httpClient, nil)
-                pullProgress, err := dockerClient.ImagePull(context.Background(), execImage, options)
-                defer pullProgress.Close()
-                jsonmessage.DisplayJSONMessagesStream(pullProgress, os.Stdout, 0, true, nil)
-                _, _ = io.Copy(os.Stdout, pullProgress)
-
-                con, err := kubeconfig.ReadConfigOrNew(constants.KubeconfigPath)
+                clientSet, err := createKubeClient()
                 if err != nil {
                         glog.Errorln("Error kubeconfig status:", err)
                         MaybeReportErrorAndExit(err)
                 }
 
-                configOverrides := &clientcmd.ConfigOverrides{}
-                k8sClientConfig := clientcmd.NewNonInteractiveClientConfig(*con, config.GetMachineName(), configOverrides, nil)
-                restClient, err := k8sClientConfig.ClientConfig()
-                clientset, err := kubernetes.NewForConfig(restClient)
+                pods := clientSet.Pods("default")
 
-                pods := clientset.Pods("default")
-                pod, err := pods.Create(&v1.Pod{
-                        ObjectMeta: metav1.ObjectMeta{
-                                GenerateName: "sbox-",
-                        },
-                        Spec: v1.PodSpec{
-                                Containers: []v1.Container{
-                                        v1.Container{
-                                                Name:    "sboxstep",
-                                                Image:   execImage,
-                                                Command: []string{execCommandString},
-                                                ImagePullPolicy: v1.PullIfNotPresent,
-                                        },
-                                },
-                                RestartPolicy: v1.RestartPolicyNever,
-                        },
-                })
+                pod, err := createPod(clientSet, "sboxstep", execImage, execCommandString)
                 if err != nil {
                         panic(err.Error())
                 }
