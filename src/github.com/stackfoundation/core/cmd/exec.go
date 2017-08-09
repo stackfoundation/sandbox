@@ -1,7 +1,6 @@
 package cmd
 
 import (
-        "fmt"
         "os"
         "io"
 
@@ -152,7 +151,7 @@ var execCmd = &cobra.Command{
 
                 pods := clientSet.Pods("default")
 
-                pod, err := createPod(clientSet, "sboxstep", execImage, execCommandString)
+                pod, err := createPod(pods, "sboxstep", execImage, execCommandString)
                 if err != nil {
                         panic(err.Error())
                 }
