@@ -48,6 +48,7 @@ import (
 	"github.com/stackfoundation/core/pkg/minikube/sshutil"
 	"github.com/stackfoundation/core/pkg/util"
 	"github.com/stackfoundation/core/pkg/util/kubeconfig"
+	"path"
 )
 
 var (
@@ -307,9 +308,9 @@ func SetupCerts(d drivers.Driver, apiServerName string, clusterDnsDomain string)
 	kubeCfgSetup := &kubeconfig.KubeConfigSetup{
 		ClusterName:          cfg.GetMachineName(),
 		ClusterServerAddress: "https://localhost:8443",
-		ClientCertificate:    filepath.Join(util.DefaultCertPath, "apiserver.crt"),
-		ClientKey:            filepath.Join(util.DefaultCertPath, "apiserver.key"),
-		CertificateAuthority: filepath.Join(util.DefaultCertPath, "ca.crt"),
+		ClientCertificate:    path.Join(util.DefaultCertPath, "apiserver.crt"),
+		ClientKey:            path.Join(util.DefaultCertPath, "apiserver.key"),
+		CertificateAuthority: path.Join(util.DefaultCertPath, "ca.crt"),
 		KeepContext:          false,
 	}
 
