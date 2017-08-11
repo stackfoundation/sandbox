@@ -143,7 +143,7 @@ To opt out of these messages, run the command:
 		}
 	}
 	if err != nil {
-		glog.Errorf(err.Error())
+		panic(err.Error())
 	}
 	os.Exit(1)
 }
