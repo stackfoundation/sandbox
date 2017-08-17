@@ -8,6 +8,7 @@ import (
 
         "gopkg.in/yaml.v2"
         metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+        "fmt"
 )
 
 const workflowExtension = ".wflow"
@@ -120,6 +121,8 @@ func readWorkflow(workflowName string) (*Workflow, error) {
                 },
                 Spec: workflowSpec,
         }
+
+        fmt.Println(workflow)
 
         return &workflow, nil
 }

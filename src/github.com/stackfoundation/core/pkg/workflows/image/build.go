@@ -5,25 +5,21 @@ package image
 
 import "io"
 
-func BuildImageStream(contextDir, dockerfilePath string, dockerfileContent io.Reader) (io.ReadCloser, error) {
+func BuildImageStream(contextDir, dockerfilePath string, dockerfileContent io.Reader) (io.ReadCloser, string, error) {
         excludes, err := readDockerignore(contextDir)
         if err != nil {
-                return nil, err
+                return nil, "", err
         }
 
+        dockerfileTarEntry := ""
         _, contextDirRelativeDockerfilePath, err := getContextFromLocalDir(contextDir, dockerfilePath)
-        if err != nil {
-                return nil, err
+        if err == nil {
+                dockerfileTarEntry, _ = canonicalTarNameForPath(contextDirRelativeDockerfilePath)
         }
 
         err = validateContextDirectory(contextDir, excludes)
         if err != nil {
-                return nil, err
-        }
-
-        dockerfileTarEntry, err := canonicalTarNameForPath(contextDirRelativeDockerfilePath)
-        if err != nil {
-                return nil, err
+                return nil, "", err
         }
 
         excludes = trimBuildFilesFromExcludes(excludes, dockerfileTarEntry, true)
@@ -36,11 +32,11 @@ func BuildImageStream(contextDir, dockerfilePath string, dockerfileContent io.Re
         buildContext, err := tarWithOptions(contextDir, tarOptions)
 
         if buildContext != nil {
-                buildContext, _, err = addDockerfileToBuildContext(dockerfileContent, buildContext)
+                buildContext, dockerfileTarEntry, err = addDockerfileToBuildContext(dockerfileContent, buildContext)
                 if err != nil {
-                        return nil, err
+                        return nil, "", err
                 }
         }
 
-        return buildContext, err
+        return buildContext, dockerfileTarEntry, err
 }

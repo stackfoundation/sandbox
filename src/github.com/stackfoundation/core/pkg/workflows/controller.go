@@ -9,6 +9,7 @@ import (
         "k8s.io/apimachinery/pkg/fields"
         "k8s.io/client-go/pkg/api/v1"
         "k8s.io/client-go/rest"
+        "time"
 )
 
 type WorkflowController struct {
@@ -39,13 +40,18 @@ func (controller *WorkflowController) saveWorkflow(workflow *Workflow) error {
 func (controller *WorkflowController) buildImageForStep(workflowSpec *WorkflowSpec, stepNumber int) error {
         step := workflowSpec.Steps[stepNumber]
 
+        fmt.Println("Image is from " + step.ImageSource)
+
         if step.ImageSource == SourceCatalog || step.ImageSource == SourceManual {
                 dockerClient, err := createDockerClient()
                 if err != nil {
                         return err
                 }
 
-                buildImage(controller.context, dockerClient, workflowSpec, &step)
+                err = buildImage(controller.context, dockerClient, workflowSpec, &step)
+                if err != nil {
+                        return err
+                }
         }
 
         workflowSpec.Status.Status = StatusStepImageBuilt
@@ -70,7 +76,12 @@ func (controller *WorkflowController) proceedToNextStep(workflow *Workflow) erro
                         controller.deleteWorkflow(workflow)
                 }
         } else if len(workflow.Spec.Steps) > 0 {
-                controller.buildImageForStep(&workflow.Spec, 0)
+                err := controller.buildImageForStep(&workflow.Spec, 0)
+                if err != nil {
+                        panic(err)
+                }
+                fmt.Println("Workflow save")
+                fmt.Println(workflow)
                 return controller.saveWorkflow(workflow)
         }
 
@@ -85,6 +96,8 @@ func RunController() {
         ctx, cancelFunc := context.WithCancel(context.Background())
         defer cancelFunc()
         go controller.Run(ctx)
+
+        time.Sleep(10 * time.Second)
 }
 
 func (c *WorkflowController) Run(ctx context.Context) error {
@@ -106,8 +119,10 @@ func (c *WorkflowController) watchWorkflows(ctx context.Context) (cache.Controll
                 panic(err)
         }
 
+        c.client = client
+
         source := cache.NewListWatchFromClient(
-                client, "workflows", v1.NamespaceDefault, fields.Everything())
+                client, WorkflowsPluralName, v1.NamespaceDefault, fields.Everything())
 
         _, controller := cache.NewInformer(
                 source,

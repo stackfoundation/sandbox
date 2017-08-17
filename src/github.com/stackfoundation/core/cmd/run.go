@@ -31,7 +31,10 @@ var runCmd = &cobra.Command{
 
                 workflow := strings.Join(args, " ")
 
-                workflows.RunCommand(workflow)
+                err := workflows.RunCommand(workflow)
+                if err != nil {
+                        panic(err)
+                }
         },
 }
 

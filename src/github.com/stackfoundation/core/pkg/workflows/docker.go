@@ -18,6 +18,8 @@ import (
         "github.com/stackfoundation/core/pkg/minikube/constants"
         "github.com/stackfoundation/core/pkg/minikube/machine"
         "github.com/stackfoundation/core/pkg/workflows/image"
+        "fmt"
+        "time"
 )
 
 func createDockerHttpClient(hostDockerEnv map[string]string) (*http.Client, error) {
@@ -72,32 +74,39 @@ func getHostDockerEnv() (map[string]string, error) {
 }
 
 func buildImage(ctx context.Context, dockerClient *client.Client, workflowSpec *WorkflowSpec, step *WorkflowStep) error {
-        buildOptions := types.ImageBuildOptions{
-        }
 
         var imageStream io.ReadCloser
         var err error
+        var dockerfileTarEntry string
         if len(step.Dockerfile) > 0 {
-                imageStream, err = image.BuildImageStream(workflowSpec.ProjectRoot, step.Dockerfile, nil)
+                fmt.Println("Using Dockerfile")
+                imageStream, dockerfileTarEntry, err = image.BuildImageStream(workflowSpec.ProjectRoot, step.Dockerfile, nil)
         } else {
+                fmt.Println("Building image")
                 dockerfileContent := buildDockerfile(step)
-                imageStream, err = image.BuildImageStream(workflowSpec.ProjectRoot, "", strings.NewReader(dockerfileContent))
+                fmt.Println(dockerfileContent)
+                imageStream, dockerfileTarEntry, err = image.BuildImageStream(workflowSpec.ProjectRoot, "", strings.NewReader(dockerfileContent))
 
         }
+        if err != nil {
+                return err
+        }
+
         defer imageStream.Close()
 
-        if err != nil {
-                return err
+        buildOptions := types.ImageBuildOptions{
+                Dockerfile: dockerfileTarEntry,
         }
 
-        response, err := dockerClient.ImageBuild(ctx, imageStream, buildOptions)
+        response, err := dockerClient.ImageBuild(context.Background(), imageStream, buildOptions)
         if err != nil {
-                return err
+                panic(err)
         }
 
         jsonmessage.DisplayJSONMessagesStream(response.Body, os.Stdout, 0, true, nil)
         _, _ = io.Copy(os.Stdout, response.Body)
 
+        time.Sleep(10 * time.Second)
         return nil
 }
 

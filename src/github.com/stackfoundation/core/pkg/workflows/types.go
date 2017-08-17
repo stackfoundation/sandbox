@@ -7,34 +7,34 @@ import (
 )
 
 type EnvironmentVariable struct {
-        Name  string `json:"name"`
-        Value string `json:"value"`
+        Name  string `json:"name" yaml:"name"`
+        Value string `json:"value" yaml:"value"`
 }
 
 type WorkflowStep struct {
-        StepImage   string `json:"stepImage"`
+        StepImage   string `json:"stepImage" yaml:"stepImage"`
 
-        Name        string `json:"name"`
-        Type        string `json:"type"`
-        Image       string `json:"image"`
-        ImageSource string `json:"imageSource"`
-        Tag         string `json:"tag"`
-        Dockerfile  string `json:"dockerfile"`
-        Script      string `json:"script"`
-        Ports       []string `json:"ports"`
-        Variables   []EnvironmentVariable `json:"variables"`
+        Name        string `json:"name" yaml:"name"`
+        Type        string `json:"type" yaml:"type"`
+        Image       string `json:"image" yaml:"image"`
+        ImageSource string `json:"imageSource" yaml:"imageSource"`
+        Tag         string `json:"tag" yaml:"tag"`
+        Dockerfile  string `json:"dockerfile" yaml:"dockerfile"`
+        Script      string `json:"script" yaml:"script"`
+        Ports       []string `json:"ports" yaml:"ports"`
+        Variables   []EnvironmentVariable `json:"variables" yaml:"variables"`
 }
 
 type WorkflowStatus struct {
-        Step   int `json:"step"`
-        Status string `json:"status"`
+        Step   int `json:"step" yaml:"step"`
+        Status string `json:"status" yaml:"status"`
 }
 
 type WorkflowSpec struct {
-        ProjectRoot string `json:"projectRoot"`
-        File        string `json:"file"`
-        Steps       []WorkflowStep `json:"steps"`
-        Status      WorkflowStatus `json:"status"`
+        ProjectRoot string `json:"projectRoot" yaml:"projectRoot"`
+        File        string `json:"file" yaml:"file"`
+        Steps       []WorkflowStep `json:"steps" yaml:"steps"`
+        Status      WorkflowStatus `json:"status" yaml:"status"`
 }
 
 type Workflow struct {

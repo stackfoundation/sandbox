@@ -6,6 +6,7 @@ import (
         metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
         "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
         "k8s.io/client-go/pkg/api/v1"
+        "fmt"
 )
 
 func writeFromInstruction(dockerfile *bytes.Buffer, step *WorkflowStep) {
@@ -58,7 +59,7 @@ func uploadWorkflow(workflow *Workflow) error {
         workflowResource["apiVersion"] = "stack.foundation/v1"
         workflowResource["kind"] = "Workflow"
         workflowResource["spec"] = workflow.Spec
-        workflowResource["metadata"] = workflow
+        workflowResource["metadata"] = workflow.ObjectMeta
 
         data := unstructured.Unstructured{
                 Object: workflowResource,
@@ -90,9 +91,15 @@ func RunCommand(workflowName string) error {
                 return err
         }
 
+        fmt.Println("Creating workflow resource type definition")
         createWorkflowResourceIfRequired(clientSet.CustomResourceDefinitions())
-        uploadWorkflow(workflow)
+        fmt.Println("Uploading workflow")
+        err = uploadWorkflow(workflow)
+        if err != nil {
+                panic(err)
+        }
 
+        fmt.Println("Running workflow controller")
         RunController()
 
         return nil
