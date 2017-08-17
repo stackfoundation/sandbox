@@ -1,9 +1,12 @@
 package cmd
 
 import (
-        "github.com/spf13/cobra"
         "fmt"
         "os"
+
+        "github.com/spf13/cobra"
+
+        "github.com/stackfoundation/core/pkg/workflows"
 )
 
 var deleteCmd = &cobra.Command{
@@ -19,7 +22,7 @@ var deleteCmd = &cobra.Command{
                         return
                 }
 
-                deleted, err := DeleteWorkflow(args[0])
+                deleted, err := workflows.DeleteWorkflow(args[0])
                 if err != nil && os.IsNotExist(err) {
                         fmt.Printf("%v does not exist", args[0])
                         fmt.Println()

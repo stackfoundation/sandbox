@@ -157,8 +157,6 @@ This adds to the system PATH variable so that the Sandbox command-line is availa
                         environmentVariables.SetStringValue("Path", pathVariable)
                         NotifySettingChange()
                 }
-
-                fmt.Println("Sandbox version:", "0.1.0")
         },
 }
 

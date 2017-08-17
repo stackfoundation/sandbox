@@ -1,10 +1,13 @@
-package cmd
+package workflows
 
 import (
         "path/filepath"
-        "os"
         "io/ioutil"
+        "os"
         "strings"
+
+        "gopkg.in/yaml.v2"
+        metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const workflowExtension = ".wflow"
@@ -73,6 +76,52 @@ func getWorkflowsDirectory() (string, error) {
         }
 
         return filepath.Join(path, "workflows"), nil
+}
+
+func readWorkflow(workflowName string) (*Workflow, error) {
+        workflowsDirectory, err := getWorkflowsDirectory()
+        if err != nil {
+                return nil, err
+        }
+
+        workflowFile := filepath.Join(workflowsDirectory, workflowName + workflowExtension)
+
+        workflowFileExists, err := fileExists(workflowFile)
+        if err != nil {
+                return nil, err
+        }
+
+        if !workflowFileExists {
+                return nil, os.ErrNotExist
+        }
+
+        workflowFileContent, err := ioutil.ReadFile(workflowFile)
+        if err != nil {
+                return nil, err
+        }
+
+        var workflowSpec WorkflowSpec
+        err = yaml.Unmarshal(workflowFileContent, &workflowSpec)
+        if err != nil {
+                return nil, err
+        }
+
+        workflowSpec.File = workflowFile
+        workflowSpec.ProjectRoot, err = os.Getwd()
+        workflowSpec.Status.Status = ""
+
+        workflow := Workflow{
+                TypeMeta: metav1.TypeMeta{
+                        APIVersion: WorkflowsGroupName + "/" + WorkflowsGroupVersion,
+                        Kind: WorkflowsKind,
+                },
+                ObjectMeta: metav1.ObjectMeta{
+                        Name: workflowName,
+                },
+                Spec: workflowSpec,
+        }
+
+        return &workflow, nil
 }
 
 func DeleteWorkflow(workflow string) (bool, error) {

@@ -1,9 +1,11 @@
 package cmd
 
 import (
-        "github.com/spf13/cobra"
         "fmt"
         "os"
+
+        "github.com/spf13/cobra"
+
         "github.com/stackfoundation/core/pkg/minikube/cluster"
         "github.com/stackfoundation/core/pkg/minikube/machine"
 )

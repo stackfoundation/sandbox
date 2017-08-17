@@ -1,8 +1,11 @@
 package cmd
 
 import (
-        "github.com/spf13/cobra"
         "fmt"
+
+        "github.com/spf13/cobra"
+
+        "github.com/stackfoundation/core/pkg/workflows"
 )
 
 var listCmd = &cobra.Command{
@@ -10,14 +13,14 @@ var listCmd = &cobra.Command{
         Short: "List all workflows available in the current project",
         Long:  `List all workflows available in the current project.`,
         Run: func(command *cobra.Command, args []string) {
-                workflows, err := ListWorkflows()
-                if err != nil || len(workflows) < 1 {
+                projectWorkflows, err := workflows.ListWorkflows()
+                if err != nil || len(projectWorkflows) < 1 {
                         fmt.Println("No workflows")
                         return
                 }
 
                 fmt.Println("NAME")
-                for _, workflow := range workflows {
+                for _, workflow := range projectWorkflows {
                         fmt.Printf("%v", workflow)
                         fmt.Println()
                 }
