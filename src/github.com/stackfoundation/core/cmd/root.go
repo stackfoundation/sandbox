@@ -15,116 +15,142 @@ limitations under the License.
 package cmd
 
 import (
-        //goflag "flag"
-        //"io/ioutil"
-        "os"
-        "strings"
+	//goflag "flag"
+	//"io/ioutil"
+	"os"
+	"strings"
 
-        //"github.com/docker/machine/libmachine/log"
-        "github.com/spf13/cobra"
-        //"github.com/spf13/pflag"
-        "github.com/spf13/viper"
-        "github.com/stackfoundation/core/pkg/minikube/config"
-        "github.com/stackfoundation/core/pkg/minikube/constants"
-        //"github.com/golang/glog"
+	//"github.com/docker/machine/libmachine/log"
+	"github.com/spf13/cobra"
+	//"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	"github.com/stackfoundation/core/pkg/log"
+	"github.com/stackfoundation/core/pkg/minikube/config"
+	"github.com/stackfoundation/core/pkg/minikube/constants"
+	//"github.com/golang/glog"
 )
 
+var debug bool
 var dirs = [...]string{
-        constants.GetMinipath(),
-        constants.MakeMiniPath("certs"),
-        constants.MakeMiniPath("machines"),
-        constants.MakeMiniPath("cache"),
-        constants.MakeMiniPath("cache", "iso"),
-        constants.MakeMiniPath("cache", "localkube"),
-        constants.MakeMiniPath("config"),
-        constants.MakeMiniPath("addons"),
-        constants.MakeMiniPath("logs"),
+	constants.GetMinipath(),
+	constants.MakeMiniPath("certs"),
+	constants.MakeMiniPath("machines"),
+	constants.MakeMiniPath("cache"),
+	constants.MakeMiniPath("cache", "iso"),
+	constants.MakeMiniPath("cache", "localkube"),
+	constants.MakeMiniPath("config"),
+	constants.MakeMiniPath("addons"),
+	constants.MakeMiniPath("logs"),
 }
 
 var viperWhiteList = []string{
-        "v",
-        "alsologtostderr",
-        "log_dir",
+	"v",
+	"alsologtostderr",
+	"log_dir",
 }
 
 var RootCmd = &cobra.Command{
-        Use:   "sbox",
-        Short: "Sandbox is a tool for running reproducible development workflows.",
-        Long:  `Sandbox is a tool that uses Docker to create, manage and run development workflows.`,
-        PersistentPreRun: func(cmd *cobra.Command, args []string) {
-                for _, path := range dirs {
-                        if err := os.MkdirAll(path, 0777); err != nil {
-                                //glog.Exitf("Error creating sbox directory: %s", err)
-                        }
-                }
+	Use:   "sbox",
+	Short: "Sandbox is a tool for running reproducible development workflows.",
+	Long:  `Sandbox is a tool that uses Docker to create, manage and run development workflows.`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		for _, path := range dirs {
+			if err := os.MkdirAll(path, 0777); err != nil {
+				//glog.Exitf("Error creating sbox directory: %s", err)
+			}
+		}
 
-                // Log level 3 or greater enables libmachine logs
-                //if !glog.V(3) {
-                //        log.SetOutWriter(ioutil.Discard)
-                //        log.SetErrWriter(ioutil.Discard)
-                //}
-                //
-                //// Log level 7 or greater enables debug level logs
-                //if glog.V(7) {
-                //        log.SetDebug(true)
-                //}
+		// Log level 3 or greater enables libmachine logs
+		//if !glog.V(3) {
+		//        log.SetOutWriter(ioutil.Discard)
+		//        log.SetErrWriter(ioutil.Discard)
+		//}
+		//
+		//// Log level 7 or greater enables debug level logs
+		//if glog.V(7) {
+		//        log.SetDebug(true)
+		//}
 
-                //logDir := pflag.Lookup("log_dir")
-                //if !logDir.Changed {
-                //        logDir.Value.Set(constants.MakeMiniPath("logs"))
-                //}
-        },
+		//logDir := pflag.Lookup("log_dir")
+		//if !logDir.Changed {
+		//        logDir.Value.Set(constants.MakeMiniPath("logs"))
+		//}
+
+		if debug {
+			log.SetDebug(true)
+		}
+	},
 }
 
 func Execute() {
-        _ = RootCmd.Execute()
+	_ = RootCmd.Execute()
 }
 
 // Handle config values for flags used in external packages (e.g. glog)
 // by setting them directly, using values from viper when not passed in as args
 func setFlagsUsingViper() {
-        //for _, config := range viperWhiteList {
-        //        var a = pflag.Lookup(config)
-        //        viper.SetDefault(a.Name, a.DefValue)
-        //        // If the flag is set, override viper value
-        //        if a.Changed {
-        //                viper.Set(a.Name, a.Value.String())
-        //        }
-        //        // Viper will give precedence first to calls to the Set command,
-        //        // then to values from the config.yml
-        //        a.Value.Set(viper.GetString(a.Name))
-        //        a.Changed = true
-        //}
+	//for _, config := range viperWhiteList {
+	//        var a = pflag.Lookup(config)
+	//        viper.SetDefault(a.Name, a.DefValue)
+	//        // If the flag is set, override viper value
+	//        if a.Changed {
+	//                viper.Set(a.Name, a.Value.String())
+	//        }
+	//        // Viper will give precedence first to calls to the Set command,
+	//        // then to values from the config.yml
+	//        a.Value.Set(viper.GetString(a.Name))
+	//        a.Changed = true
+	//}
+}
+
+func filterArgs(args []string) []string {
+	var filtered []string
+
+	for _, arg := range args {
+		if arg == "-d" || arg == "--debug" {
+			log.SetDebug(true)
+		} else {
+			filtered = append(filtered, arg)
+		}
+	}
+
+	return filtered
+}
+
+func combineArgs(args []string) string {
+	filtered := filterArgs(args)
+	return strings.Join(filtered, " ")
 }
 
 func init() {
-        RootCmd.PersistentFlags().StringP(config.MachineProfile, "p", constants.DefaultMachineName, `The name of the minikube VM being used.
-	This can be modified to allow for multiple minikube instances to be run independently`)
+	RootCmd.PersistentFlags().StringP(config.MachineProfile, "p", constants.DefaultMachineName, `The name of the VM being used.
+	This can be modified to allow for multiple VMs to be run independently`)
 
-        //pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
-        //viper.BindPFlags(RootCmd.PersistentFlags())
+	//pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
+	//viper.BindPFlags(RootCmd.PersistentFlags())
 
-        cobra.OnInitialize(initConfig)
+	RootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Turn on debug logging")
+	cobra.OnInitialize(initConfig)
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-        configPath := constants.ConfigFile
-        viper.SetConfigFile(configPath)
-        viper.SetConfigType("json")
-        err := viper.ReadInConfig()
-        if err != nil {
-                //glog.Warningf("Error reading config file at %s: %s", configPath, err)
-        }
-        setupViper()
+	configPath := constants.ConfigFile
+	viper.SetConfigFile(configPath)
+	viper.SetConfigType("json")
+	err := viper.ReadInConfig()
+	if err != nil {
+		//glog.Warningf("Error reading config file at %s: %s", configPath, err)
+	}
+	setupViper()
 }
 
 func setupViper() {
-        viper.SetEnvPrefix(constants.MinikubeEnvPrefix)
-        // Replaces '-' in flags with '_' in env variables
-        // e.g. iso-url => $ENVPREFIX_ISO_URL
-        viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-        viper.AutomaticEnv()
+	viper.SetEnvPrefix(constants.MinikubeEnvPrefix)
+	// Replaces '-' in flags with '_' in env variables
+	// e.g. iso-url => $ENVPREFIX_ISO_URL
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.AutomaticEnv()
 
-        setFlagsUsingViper()
+	setFlagsUsingViper()
 }

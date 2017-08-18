@@ -1,171 +1,192 @@
 package workflows
 
 import (
-        "context"
-        "fmt"
+	"context"
+	"fmt"
+	"strconv"
 
-        "k8s.io/client-go/tools/cache"
-        "k8s.io/apimachinery/pkg/conversion"
-        "k8s.io/apimachinery/pkg/fields"
-        "k8s.io/client-go/pkg/api/v1"
-        "k8s.io/client-go/rest"
-        "time"
+	"github.com/pborman/uuid"
+	"k8s.io/apimachinery/pkg/conversion"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
+
+	"github.com/stackfoundation/core/pkg/log"
 )
 
-type WorkflowController struct {
-        context context.Context
-        cloner *conversion.Cloner
-        client *rest.RESTClient
+type workflowController struct {
+	cancel         context.CancelFunc
+	context        context.Context
+	cloner         *conversion.Cloner
+	podsClient     *kubernetes.Clientset
+	workflowClient *rest.RESTClient
 }
 
-func (controller *WorkflowController) deleteWorkflow(workflow *Workflow) error {
-        return controller.client.Delete().
-                Name(workflow.ObjectMeta.Name).
-                Namespace(workflow.ObjectMeta.Namespace).
-                Resource(WorkflowsPluralName).
-                Do().
-                Error()
+func (controller *workflowController) deleteWorkflow(workflow *Workflow) error {
+	log.Debugf(`Deleting workflow "%v"`, workflow.ObjectMeta.Name)
+	return controller.workflowClient.Delete().
+		Name(workflow.ObjectMeta.Name).
+		Namespace(workflow.ObjectMeta.Namespace).
+		Resource(WorkflowsPluralName).
+		Do().
+		Error()
 }
 
-func (controller *WorkflowController) saveWorkflow(workflow *Workflow) error {
-        return controller.client.Put().
-                Name(workflow.ObjectMeta.Name).
-                Namespace(workflow.ObjectMeta.Namespace).
-                Resource(WorkflowsPluralName).
-                Body(workflow).
-                Do().
-                Error()
+func (controller *workflowController) saveWorkflow(workflow *Workflow) error {
+	log.Debugf(`Saving updated workflow "%v" - status is now %v`, workflow.ObjectMeta.Name, workflow.Spec.Status.Status)
+	return controller.workflowClient.Put().
+		Name(workflow.ObjectMeta.Name).
+		Namespace(workflow.ObjectMeta.Namespace).
+		Resource(WorkflowsPluralName).
+		Body(workflow).
+		Do().
+		Error()
 }
 
-func (controller *WorkflowController) buildImageForStep(workflowSpec *WorkflowSpec, stepNumber int) error {
-        step := workflowSpec.Steps[stepNumber]
+func workflowStep(workflowSpec *WorkflowSpec, stepNumber int) (*WorkflowStep, string) {
+	step := &workflowSpec.Steps[stepNumber]
+	stepName := strconv.Itoa(stepNumber)
 
-        fmt.Println("Image is from " + step.ImageSource)
+	if len(step.Name) > 0 {
+		stepName = stepName + " (" + step.Name + ")"
+	}
 
-        if step.ImageSource == SourceCatalog || step.ImageSource == SourceManual {
-                dockerClient, err := createDockerClient()
-                if err != nil {
-                        return err
-                }
-
-                err = buildImage(controller.context, dockerClient, workflowSpec, &step)
-                if err != nil {
-                        return err
-                }
-        }
-
-        workflowSpec.Status.Status = StatusStepImageBuilt
-        return nil
+	return step, stepName
 }
 
-func (controller *WorkflowController) proceedToNextStep(workflow *Workflow) error {
-        if len(workflow.Spec.Status.Status) > 0 {
-                if (StatusStepFinished == workflow.Spec.Status.Status) {
-                        controller.buildImageForStep(&workflow.Spec, workflow.Spec.Status.Step)
-                        return controller.saveWorkflow(workflow)
-                } else if (StatusStepImageBuilt == workflow.Spec.Status.Status) {
-                        if workflow.Spec.Status.Step < len(workflow.Spec.Steps) {
-                                workflow.Spec.Status.Status = StatusFinished
-                        } else {
-                                workflow.Spec.Status.Step++
-                        }
+func (controller *workflowController) buildImageForStep(workflowSpec *WorkflowSpec, stepNumber int) error {
+	step, stepName := workflowStep(workflowSpec, stepNumber)
+	fmt.Println("Building image for step " + stepName + ":")
 
-                        return controller.saveWorkflow(workflow)
-                } else if (StatusFinished == workflow.Spec.Status.Status) {
-                        // Delete workflow
-                        controller.deleteWorkflow(workflow)
-                }
-        } else if len(workflow.Spec.Steps) > 0 {
-                err := controller.buildImageForStep(&workflow.Spec, 0)
-                if err != nil {
-                        panic(err)
-                }
-                fmt.Println("Workflow save")
-                fmt.Println(workflow)
-                return controller.saveWorkflow(workflow)
-        }
+	uuid := uuid.NewUUID()
+	step.StepImage = "step:" + uuid.String()
 
-        return nil
+	dockerClient, err := createDockerClient()
+	if err != nil {
+		return err
+	}
+
+	err = buildImage(controller.context, dockerClient, workflowSpec, step)
+	if err != nil {
+		return err
+	}
+
+	log.Debugf(`Image %v was built for step "%v"`, step.StepImage, stepName)
+
+	workflowSpec.Status.Status = StatusStepImageBuilt
+	return nil
 }
 
-func RunController() {
-        controller := WorkflowController{
-                cloner: conversion.NewCloner(),
-        }
+func (controller *workflowController) runStepContainer(workflowSpec *WorkflowSpec, stepNumber int) error {
+	step, stepName := workflowStep(workflowSpec, stepNumber)
+	fmt.Println("Running step " + stepName + ":")
 
-        ctx, cancelFunc := context.WithCancel(context.Background())
-        defer cancelFunc()
-        go controller.Run(ctx)
+	pods := controller.podsClient.Pods("default")
 
-        time.Sleep(10 * time.Second)
+	uuid := uuid.NewUUID()
+	podName := "pod-" + uuid.String()
+
+	pod, err := createPod(pods, podName, step.StepImage, []string{"/bin/sh", "/app/" + step.StepScript})
+	if err != nil {
+		return err
+	}
+
+	printLogsUntilPodFinished(pods, pod)
+
+	workflowSpec.Status.Status = StatusStepFinished
+	return nil
 }
 
-func (c *WorkflowController) Run(ctx context.Context) error {
-        fmt.Print("Watch workflow objects\n")
+func (controller *workflowController) proceedToNextStep(workflow *Workflow) error {
+	log.Debugf(`Proceeding to next step in workflow "%v"`, workflow.ObjectMeta.Name)
 
-        _, err := c.watchWorkflows(ctx)
-        if err != nil {
-                fmt.Printf("Failed to register watch for workflow resource: %v\n", err)
-                return err
-        }
+	if len(workflow.Spec.Status.Status) > 0 {
+		if StatusStepFinished == workflow.Spec.Status.Status {
+			controller.buildImageForStep(&workflow.Spec, workflow.Spec.Status.Step)
+			return controller.saveWorkflow(workflow)
+		} else if StatusStepImageBuilt == workflow.Spec.Status.Status {
+			controller.runStepContainer(&workflow.Spec, workflow.Spec.Status.Step)
 
-        <-ctx.Done()
-        return ctx.Err()
+			if workflow.Spec.Status.Step < len(workflow.Spec.Steps) {
+				workflow.Spec.Status.Status = StatusFinished
+			} else {
+				workflow.Spec.Status.Step++
+			}
+
+			return controller.saveWorkflow(workflow)
+		} else if StatusFinished == workflow.Spec.Status.Status {
+			// Delete workflow
+			controller.deleteWorkflow(workflow)
+			controller.cancel()
+		}
+	} else if len(workflow.Spec.Steps) > 0 {
+		err := controller.buildImageForStep(&workflow.Spec, 0)
+		if err != nil {
+			panic(err)
+		}
+
+		return controller.saveWorkflow(workflow)
+	}
+
+	return nil
 }
 
-func (c *WorkflowController) watchWorkflows(ctx context.Context) (cache.Controller, error) {
-        client, err := createRestClient()
-        if err != nil {
-                panic(err)
-        }
+func (controller *workflowController) run() error {
+	_, err := controller.watchWorkflows()
+	if err != nil {
+		return err
+	}
 
-        c.client = client
+	clientSet, err := createKubeClient()
+	if err != nil {
+		return err
+	}
+	controller.podsClient = clientSet
 
-        source := cache.NewListWatchFromClient(
-                client, WorkflowsPluralName, v1.NamespaceDefault, fields.Everything())
-
-        _, controller := cache.NewInformer(
-                source,
-                &Workflow{},
-                0,
-                cache.ResourceEventHandlerFuncs{
-                        AddFunc:    c.onAdd,
-                        UpdateFunc: c.onUpdate,
-                        DeleteFunc: c.onDelete,
-                })
-
-        go controller.Run(ctx.Done())
-        return controller, nil
+	<-controller.context.Done()
+	return controller.context.Err()
 }
 
-func (c *WorkflowController) onAdd(obj interface{}) {
-        workflow := obj.(*Workflow)
-        fmt.Printf("[CONTROLLER] OnAdd %s\n", workflow.Spec)
+func (controller *workflowController) watchWorkflows() (cache.Controller, error) {
+	client, err := createRestClient()
+	if err != nil {
+		return nil, err
+	}
 
-        copyObj, err := c.cloner.DeepCopy(workflow)
-        if err != nil {
-                fmt.Printf("ERROR creating a deep copy of example object: %v\n", err)
-                return
-        }
+	controller.workflowClient = client
 
-        workflowCopy := copyObj.(*Workflow)
-        c.proceedToNextStep(workflowCopy)
+	source := cache.NewListWatchFromClient(
+		client, WorkflowsPluralName, v1.NamespaceDefault, fields.Everything())
+
+	_, cacheController := cache.NewInformer(
+		source,
+		&Workflow{},
+		0,
+		cache.ResourceEventHandlerFuncs{
+			AddFunc:    controller.workflowAdded,
+			UpdateFunc: controller.workflowUpdated,
+		})
+
+	go cacheController.Run(controller.context.Done())
+	return cacheController, nil
 }
 
-func (c *WorkflowController) onUpdate(oldObj, newObj interface{}) {
-        newWorkflow := newObj.(*Workflow)
+func (controller *workflowController) processWorkflow(workflow *Workflow) {
+	copyObj, err := controller.cloner.DeepCopy(workflow)
+	if err != nil {
+		return
+	}
 
-        copyObj, err := c.cloner.DeepCopy(newWorkflow)
-        if err != nil {
-                fmt.Printf("ERROR creating a deep copy of example object: %v\n", err)
-                return
-        }
-
-        workflowCopy := copyObj.(*Workflow)
-        c.proceedToNextStep(workflowCopy)
+	workflowCopy := copyObj.(*Workflow)
+	controller.proceedToNextStep(workflowCopy)
 }
 
-func (c *WorkflowController) onDelete(obj interface{}) {
-        example := obj.(*Workflow)
-        fmt.Printf("[CONTROLLER] OnDelete %s\n", example.Spec)
+func (controller *workflowController) workflowAdded(obj interface{}) {
+	controller.processWorkflow(obj.(*Workflow))
+}
+
+func (controller *workflowController) workflowUpdated(oldObj, newObj interface{}) {
+	controller.processWorkflow(newObj.(*Workflow))
 }

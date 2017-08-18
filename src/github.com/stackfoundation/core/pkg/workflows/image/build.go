@@ -5,38 +5,45 @@ package image
 
 import "io"
 
-func BuildImageStream(contextDir, dockerfilePath string, dockerfileContent io.Reader) (io.ReadCloser, string, error) {
-        excludes, err := readDockerignore(contextDir)
-        if err != nil {
-                return nil, "", err
-        }
+// BuildImageStream Build the tar stream for the context to send to a docker build
+func BuildImageStream(
+	contextDir, dockerfilePath string,
+	dockerfileContent, scriptContent io.Reader) (io.ReadCloser, string, string, error) {
 
-        dockerfileTarEntry := ""
-        _, contextDirRelativeDockerfilePath, err := getContextFromLocalDir(contextDir, dockerfilePath)
-        if err == nil {
-                dockerfileTarEntry, _ = canonicalTarNameForPath(contextDirRelativeDockerfilePath)
-        }
+	excludes, err := readDockerignore(contextDir)
+	if err != nil {
+		return nil, "", "", err
+	}
 
-        err = validateContextDirectory(contextDir, excludes)
-        if err != nil {
-                return nil, "", err
-        }
+	dockerfileTarEntry := ""
+	_, contextDirRelativeDockerfilePath, err := getContextFromLocalDir(contextDir, dockerfilePath)
+	if err == nil {
+		dockerfileTarEntry, _ = canonicalTarNameForPath(contextDirRelativeDockerfilePath)
+	}
 
-        excludes = trimBuildFilesFromExcludes(excludes, dockerfileTarEntry, true)
+	scriptTarEntry := ""
 
-        tarOptions := &TarOptions{
-                ExcludePatterns: excludes,
-                Compression:     Uncompressed,
-        }
+	err = validateContextDirectory(contextDir, excludes)
+	if err != nil {
+		return nil, "", "", err
+	}
 
-        buildContext, err := tarWithOptions(contextDir, tarOptions)
+	excludes = trimBuildFilesFromExcludes(excludes, dockerfileTarEntry, true)
 
-        if buildContext != nil {
-                buildContext, dockerfileTarEntry, err = addDockerfileToBuildContext(dockerfileContent, buildContext)
-                if err != nil {
-                        return nil, "", err
-                }
-        }
+	tarOptions := &TarOptions{
+		ExcludePatterns: excludes,
+		Compression:     Uncompressed,
+	}
 
-        return buildContext, dockerfileTarEntry, err
+	buildContext, err := tarWithOptions(contextDir, tarOptions)
+
+	if buildContext != nil && dockerfileContent != nil {
+		buildContext, dockerfileTarEntry, scriptTarEntry, err =
+			addBuildFilesToBuildContext(dockerfileContent, scriptContent, buildContext)
+		if err != nil {
+			return nil, "", "", err
+		}
+	}
+
+	return buildContext, dockerfileTarEntry, scriptTarEntry, err
 }
