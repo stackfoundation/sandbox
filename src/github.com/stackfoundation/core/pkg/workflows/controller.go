@@ -47,10 +47,12 @@ func (controller *workflowController) saveWorkflow(workflow *Workflow) error {
 
 func workflowStep(workflowSpec *WorkflowSpec, stepNumber int) (*WorkflowStep, string) {
 	step := &workflowSpec.Steps[stepNumber]
-	stepName := strconv.Itoa(stepNumber)
 
+	var stepName string
 	if len(step.Name) > 0 {
-		stepName = stepName + " (" + step.Name + ")"
+		stepName = `"` + step.Name + `"`
+	} else {
+		stepName = "step " + strconv.Itoa(stepNumber)
 	}
 
 	return step, stepName
@@ -58,7 +60,7 @@ func workflowStep(workflowSpec *WorkflowSpec, stepNumber int) (*WorkflowStep, st
 
 func (controller *workflowController) buildImageForStep(workflowSpec *WorkflowSpec, stepNumber int) error {
 	step, stepName := workflowStep(workflowSpec, stepNumber)
-	fmt.Println("Building image for step " + stepName + ":")
+	fmt.Println("Building image for " + stepName + ":")
 
 	uuid := uuid.NewUUID()
 	step.StepImage = "step:" + uuid.String()
@@ -81,7 +83,7 @@ func (controller *workflowController) buildImageForStep(workflowSpec *WorkflowSp
 
 func (controller *workflowController) runStepContainer(workflowSpec *WorkflowSpec, stepNumber int) error {
 	step, stepName := workflowStep(workflowSpec, stepNumber)
-	fmt.Println("Running step " + stepName + ":")
+	fmt.Println("Running " + stepName + ":")
 
 	pods := controller.podsClient.Pods("default")
 
@@ -109,10 +111,9 @@ func (controller *workflowController) proceedToNextStep(workflow *Workflow) erro
 		} else if StatusStepImageBuilt == workflow.Spec.Status.Status {
 			controller.runStepContainer(&workflow.Spec, workflow.Spec.Status.Step)
 
-			if workflow.Spec.Status.Step < len(workflow.Spec.Steps) {
+			workflow.Spec.Status.Step++
+			if workflow.Spec.Status.Step >= len(workflow.Spec.Steps) {
 				workflow.Spec.Status.Status = StatusFinished
-			} else {
-				workflow.Spec.Status.Step++
 			}
 
 			return controller.saveWorkflow(workflow)
