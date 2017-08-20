@@ -35,7 +35,7 @@ func (controller *workflowController) deleteWorkflow(workflow *Workflow) error {
 }
 
 func (controller *workflowController) saveWorkflow(workflow *Workflow) error {
-	log.Debugf(`Saving updated workflow "%v" - status is now %v`, workflow.ObjectMeta.Name, workflow.Spec.Status.Status)
+	log.Debugf(`Workflow "%v" status updated to %v`, workflow.ObjectMeta.Name, workflow.Spec.Status.Status)
 	return controller.workflowClient.Put().
 		Name(workflow.ObjectMeta.Name).
 		Namespace(workflow.ObjectMeta.Namespace).
@@ -58,7 +58,9 @@ func workflowStep(workflowSpec *WorkflowSpec, stepNumber int) (*WorkflowStep, st
 	return step, stepName
 }
 
-func (controller *workflowController) buildImageForStep(workflowSpec *WorkflowSpec, stepNumber int) error {
+func (controller *workflowController) buildImageForStep(workflow *Workflow, stepNumber int) error {
+	workflowSpec := &workflow.Spec
+
 	step, stepName := workflowStep(workflowSpec, stepNumber)
 	fmt.Println("Building image for " + stepName + ":")
 
@@ -78,24 +80,17 @@ func (controller *workflowController) buildImageForStep(workflowSpec *WorkflowSp
 	log.Debugf(`Image %v was built for step "%v"`, step.StepImage, stepName)
 
 	workflowSpec.Status.Status = StatusStepImageBuilt
-	return nil
+	return controller.saveWorkflow(workflow)
 }
 
 func (controller *workflowController) runStepContainer(workflowSpec *WorkflowSpec, stepNumber int) error {
 	step, stepName := workflowStep(workflowSpec, stepNumber)
 	fmt.Println("Running " + stepName + ":")
 
-	pods := controller.podsClient.Pods("default")
-
-	uuid := uuid.NewUUID()
-	podName := "pod-" + uuid.String()
-
-	pod, err := createPod(pods, podName, step.StepImage, []string{"/bin/sh", "/app/" + step.StepScript})
+	err := createAndRunPod(controller.podsClient, step.StepImage, []string{"/bin/sh", "/app/" + step.StepScript})
 	if err != nil {
 		return err
 	}
-
-	printLogsUntilPodFinished(pods, pod)
 
 	workflowSpec.Status.Status = StatusStepFinished
 	return nil
@@ -106,8 +101,7 @@ func (controller *workflowController) proceedToNextStep(workflow *Workflow) erro
 
 	if len(workflow.Spec.Status.Status) > 0 {
 		if StatusStepFinished == workflow.Spec.Status.Status {
-			controller.buildImageForStep(&workflow.Spec, workflow.Spec.Status.Step)
-			return controller.saveWorkflow(workflow)
+			return controller.buildImageForStep(workflow, workflow.Spec.Status.Step)
 		} else if StatusStepImageBuilt == workflow.Spec.Status.Status {
 			controller.runStepContainer(&workflow.Spec, workflow.Spec.Status.Step)
 
@@ -118,17 +112,11 @@ func (controller *workflowController) proceedToNextStep(workflow *Workflow) erro
 
 			return controller.saveWorkflow(workflow)
 		} else if StatusFinished == workflow.Spec.Status.Status {
-			// Delete workflow
 			controller.deleteWorkflow(workflow)
 			controller.cancel()
 		}
 	} else if len(workflow.Spec.Steps) > 0 {
-		err := controller.buildImageForStep(&workflow.Spec, 0)
-		if err != nil {
-			panic(err)
-		}
-
-		return controller.saveWorkflow(workflow)
+		return controller.buildImageForStep(workflow, 0)
 	}
 
 	return nil

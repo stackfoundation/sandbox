@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/pborman/uuid"
 	log "github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/minikube/config"
 	"github.com/stackfoundation/core/pkg/minikube/constants"
@@ -91,6 +92,21 @@ func createRestClientConfig() (*rest.Config, error) {
 	k8sClientConfig := clientcmd.NewNonInteractiveClientConfig(
 		*kubeConfig, config.GetMachineName(), configOverrides, nil)
 	return k8sClientConfig.ClientConfig()
+}
+
+func createAndRunPod(clientSet *kubernetes.Clientset, image string, command []string) error {
+	pods := clientSet.Pods("default")
+
+	uuid := uuid.NewUUID()
+	containerName := "sbox-" + uuid.String()
+
+	pod, err := createPod(pods, containerName, image, command)
+	if err != nil {
+		return err
+	}
+
+	printLogsUntilPodFinished(pods, pod)
+	return nil
 }
 
 func createPod(pods corev1.PodInterface, name string, image string, command []string) (*v1.Pod, error) {
