@@ -3,15 +3,15 @@ package workflows
 import "bytes"
 
 func writeFromInstruction(dockerfile *bytes.Buffer, step *WorkflowStep) {
-	if step.ImageSource == SourceCatalog || step.ImageSource == SourceManual {
+	if step.ImageSource == SourceStep {
+		// Use previous step image
+	} else {
 		dockerfile.WriteString("FROM ")
 		dockerfile.WriteString(step.Image)
 		if len(step.Tag) > 0 {
 			dockerfile.WriteString(":")
 			dockerfile.WriteString(step.Tag)
 		}
-	} else if step.ImageSource == SourceStep {
-		// Use previous step image
 	}
 
 	dockerfile.WriteString("\n")
@@ -42,13 +42,24 @@ func writePorts(dockerfile *bytes.Buffer, step *WorkflowStep) {
 	}
 }
 
+func writeSourceMount(dockerfile *bytes.Buffer, step *WorkflowStep) {
+	if !step.OmitSource {
+		sourceLocation := "/app/"
+		if len(step.SourceLocation) > 0 {
+			sourceLocation = step.SourceLocation
+		}
+		dockerfile.WriteString("COPY . ")
+		dockerfile.WriteString(sourceLocation)
+	}
+}
+
 func buildDockerfile(step *WorkflowStep) string {
 	var dockerfile bytes.Buffer
 
 	writeFromInstruction(&dockerfile, step)
+	writeSourceMount(&dockerfile, step)
 	writeVariables(&dockerfile, step)
 	writePorts(&dockerfile, step)
-	dockerfile.WriteString("COPY . /app/")
 
 	return dockerfile.String()
 }

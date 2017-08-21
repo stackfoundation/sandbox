@@ -17,15 +17,17 @@ type WorkflowStep struct {
 	StepImage  string `json:"stepImage" yaml:"stepImage"`
 	StepScript string `json:"stepScript" yaml:"stepScript"`
 
-	Name        string                `json:"name" yaml:"name"`
-	Type        string                `json:"type" yaml:"type"`
-	Image       string                `json:"image" yaml:"image"`
-	ImageSource string                `json:"imageSource" yaml:"imageSource"`
-	Tag         string                `json:"tag" yaml:"tag"`
-	Dockerfile  string                `json:"dockerfile" yaml:"dockerfile"`
-	Script      string                `json:"script" yaml:"script"`
-	Ports       []string              `json:"ports" yaml:"ports"`
-	Variables   []EnvironmentVariable `json:"variables" yaml:"variables"`
+	Name           string                `json:"name" yaml:"name"`
+	Type           string                `json:"type" yaml:"type"`
+	OmitSource     bool                  `json:"omitSource" yaml:"omitSource"`
+	Image          string                `json:"image" yaml:"image"`
+	ImageSource    string                `json:"imageSource" yaml:"imageSource"`
+	Tag            string                `json:"tag" yaml:"tag"`
+	Dockerfile     string                `json:"dockerfile" yaml:"dockerfile"`
+	Script         string                `json:"script" yaml:"script"`
+	SourceLocation string                `json:"sourceLocation" yaml:"sourceLocation"`
+	Ports          []string              `json:"ports" yaml:"ports"`
+	Variables      []EnvironmentVariable `json:"variables" yaml:"variables"`
 }
 
 // WorkflowStatus Overall status of workflow in K8s
