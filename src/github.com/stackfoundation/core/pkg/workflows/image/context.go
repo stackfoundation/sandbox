@@ -194,17 +194,18 @@ func isUNC(path string) bool {
 }
 
 func addBuildFilesToBuildContext(
+	scriptName string,
 	dockerfileContent, scriptContent io.Reader,
-	buildContext io.ReadCloser) (io.ReadCloser, string, string, error) {
+	buildContext io.ReadCloser) (io.ReadCloser, string, error) {
 
 	dockerfile, err := ioutil.ReadAll(dockerfileContent)
 	if err != nil {
-		return nil, "", "", err
+		return nil, "", err
 	}
 
 	script, err := ioutil.ReadAll(scriptContent)
 	if err != nil {
-		return nil, "", "", err
+		return nil, "", err
 	}
 
 	now := time.Now()
@@ -230,7 +231,6 @@ func addBuildFilesToBuildContext(
 	}
 
 	dockerfileName := ".dockerfile." + GenerateRandomID()[:20]
-	scriptName := "script-" + GenerateRandomID()[:20] + ".sh"
 
 	buildContext = replaceFileTarWrapper(buildContext, map[string]TarModifierFunc{
 		// Add the dockerfile with a random filename
@@ -260,5 +260,5 @@ func addBuildFilesToBuildContext(
 		},
 	})
 
-	return buildContext, dockerfileName, scriptName, nil
+	return buildContext, dockerfileName, nil
 }

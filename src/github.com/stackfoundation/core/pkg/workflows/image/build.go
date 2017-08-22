@@ -5,27 +5,33 @@ package image
 
 import "io"
 
-// BuildImageStream Build the tar stream for the context to send to a docker build
-func BuildImageStream(
-	contextDir, dockerfilePath string,
-	dockerfileContent, scriptContent io.Reader) (io.ReadCloser, string, string, error) {
+// BuildOptions Options for building an image
+type BuildOptions struct {
+	ContextDirectory  string
+	DockerfilePath    string
+	ScriptName        string
+	DockerfileContent io.Reader
+	ScriptContent     io.Reader
+}
 
-	excludes, err := readDockerignore(contextDir)
+// BuildImageStream Build the tar stream for the context to send to a docker build
+func BuildImageStream(options *BuildOptions) (io.ReadCloser, string, error) {
+
+	excludes, err := readDockerignore(options.ContextDirectory)
 	if err != nil {
-		return nil, "", "", err
+		return nil, "", err
 	}
 
 	dockerfileTarEntry := ""
-	_, contextDirRelativeDockerfilePath, err := getContextFromLocalDir(contextDir, dockerfilePath)
+	_, contextDirRelativeDockerfilePath, err :=
+		getContextFromLocalDir(options.ContextDirectory, options.DockerfilePath)
 	if err == nil {
 		dockerfileTarEntry, _ = canonicalTarNameForPath(contextDirRelativeDockerfilePath)
 	}
 
-	scriptTarEntry := ""
-
-	err = validateContextDirectory(contextDir, excludes)
+	err = validateContextDirectory(options.ContextDirectory, excludes)
 	if err != nil {
-		return nil, "", "", err
+		return nil, "", err
 	}
 
 	excludes = trimBuildFilesFromExcludes(excludes, dockerfileTarEntry, true)
@@ -35,15 +41,15 @@ func BuildImageStream(
 		Compression:     Uncompressed,
 	}
 
-	buildContext, err := tarWithOptions(contextDir, tarOptions)
+	buildContext, err := tarWithOptions(options.ContextDirectory, tarOptions)
 
-	if buildContext != nil && dockerfileContent != nil {
-		buildContext, dockerfileTarEntry, scriptTarEntry, err =
-			addBuildFilesToBuildContext(dockerfileContent, scriptContent, buildContext)
+	if buildContext != nil && options.DockerfileContent != nil {
+		buildContext, dockerfileTarEntry, err =
+			addBuildFilesToBuildContext(options.ScriptName, options.DockerfileContent, options.ScriptContent, buildContext)
 		if err != nil {
-			return nil, "", "", err
+			return nil, "", err
 		}
 	}
 
-	return buildContext, dockerfileTarEntry, scriptTarEntry, err
+	return buildContext, dockerfileTarEntry, err
 }

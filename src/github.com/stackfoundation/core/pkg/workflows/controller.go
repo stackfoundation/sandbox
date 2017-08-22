@@ -87,7 +87,14 @@ func (controller *workflowController) runStepContainer(workflowSpec *WorkflowSpe
 	step, stepName := workflowStep(workflowSpec, stepNumber)
 	fmt.Println("Running " + stepName + ":")
 
-	err := createAndRunPod(controller.podsClient, step.StepImage, []string{"/bin/sh", "/app/" + step.StepScript})
+	err := createAndRunPod(
+		controller.podsClient,
+		&podCreationSpec{
+			projectRoot: workflowSpec.ProjectRoot,
+			image:       step.StepImage,
+			command:     []string{"/bin/sh", "/" + step.StepScript},
+			volumes:     step.Volumes,
+		})
 	if err != nil {
 		return err
 	}

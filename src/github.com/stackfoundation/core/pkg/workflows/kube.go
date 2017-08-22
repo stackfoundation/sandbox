@@ -3,6 +3,10 @@ package workflows
 import (
 	"io"
 	"os"
+	"path"
+	"path/filepath"
+	"regexp"
+	"strings"
 
 	extensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -24,6 +28,15 @@ import (
 	"github.com/stackfoundation/core/pkg/util/kubeconfig"
 	"k8s.io/client-go/dynamic"
 )
+
+var driveLetterReplacement = regexp.MustCompile("^([a-zA-Z])\\:")
+
+type podCreationSpec struct {
+	image       string
+	projectRoot string
+	command     []string
+	volumes     []Volume
+}
 
 func createDynamicClient() (*dynamic.Client, error) {
 	restClientConfig, err := createRestClientConfig()
@@ -94,13 +107,13 @@ func createRestClientConfig() (*rest.Config, error) {
 	return k8sClientConfig.ClientConfig()
 }
 
-func createAndRunPod(clientSet *kubernetes.Clientset, image string, command []string) error {
+func createAndRunPod(clientSet *kubernetes.Clientset, creationSpec *podCreationSpec) error {
 	pods := clientSet.Pods("default")
 
 	uuid := uuid.NewUUID()
 	containerName := "sbox-" + uuid.String()
 
-	pod, err := createPod(pods, containerName, image, command)
+	pod, err := createPod(pods, containerName, creationSpec)
 	if err != nil {
 		return err
 	}
@@ -109,7 +122,68 @@ func createAndRunPod(clientSet *kubernetes.Clientset, image string, command []st
 	return nil
 }
 
-func createPod(pods corev1.PodInterface, name string, image string, command []string) (*v1.Pod, error) {
+func lowercaseDriveLetter(text []byte) []byte {
+	lowercase := strings.ToLower(string(text))
+	return []byte("/" + lowercase[:len(lowercase)-1])
+}
+
+func createVolumes(projectRoot string, volumes []Volume) ([]v1.VolumeMount, []v1.Volume) {
+	var mounts []v1.VolumeMount
+	var podVolumes []v1.Volume
+
+	if len(volumes) > 0 {
+		for _, volume := range volumes {
+			if len(volume.Name) < 1 {
+				if len(volume.HostPath) > 0 {
+					uuid := uuid.NewUUID()
+					volume.Name = "vol-" + uuid.String()
+				} else {
+					log.Debugf("No name was specified for non-host volume, ignoring")
+					continue
+				}
+			}
+
+			var volumeSource v1.VolumeSource
+
+			if len(volume.HostPath) > 0 {
+				absoluteHostPath := path.Join(filepath.ToSlash(projectRoot), volume.HostPath)
+				absoluteHostPath = string(driveLetterReplacement.ReplaceAllFunc(
+					[]byte(absoluteHostPath),
+					lowercaseDriveLetter))
+
+				volumeSource = v1.VolumeSource{
+					HostPath: &v1.HostPathVolumeSource{
+						Path: absoluteHostPath,
+					},
+				}
+
+				log.Debugf("Mounting host path \"%v\" at \"%v\"", absoluteHostPath, volume.MountPath)
+			} else {
+				volumeSource = v1.VolumeSource{
+					EmptyDir: &v1.EmptyDirVolumeSource{},
+				}
+
+				log.Debugf("Mounting volume \"%v\" at \"%v\"", volume.Name, volume.MountPath)
+			}
+
+			podVolumes = append(podVolumes, v1.Volume{
+				Name:         volume.Name,
+				VolumeSource: volumeSource,
+			})
+
+			mounts = append(mounts, v1.VolumeMount{
+				Name:      volume.Name,
+				MountPath: volume.MountPath,
+			})
+		}
+	}
+
+	return mounts, podVolumes
+}
+
+func createPod(pods corev1.PodInterface, name string, creationSpec *podCreationSpec) (*v1.Pod, error) {
+	mounts, podVolumes := createVolumes(creationSpec.projectRoot, creationSpec.volumes)
+
 	return pods.Create(&v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "sbox-",
@@ -118,18 +192,20 @@ func createPod(pods corev1.PodInterface, name string, image string, command []st
 			Containers: []v1.Container{
 				{
 					Name:            name,
-					Image:           image,
-					Command:         command,
+					Image:           creationSpec.image,
+					Command:         creationSpec.command,
 					ImagePullPolicy: v1.PullIfNotPresent,
+					VolumeMounts:    mounts,
 				},
 			},
+			Volumes:       podVolumes,
 			RestartPolicy: v1.RestartPolicyNever,
 		},
 	})
 }
 
 func createWorkflowResourceIfRequired(customResourceDefintions extensionsclient.CustomResourceDefinitionInterface) error {
-	_, err := customResourceDefintions.Get("workflows.stack.foundation", metav1.GetOptions{})
+	_, err := customResourceDefintions.Get(WorkflowsCustomResource, metav1.GetOptions{})
 	if err != nil {
 		log.Debugf("Creating custom resource definition for workflows in Kubernetes")
 		_, err = customResourceDefintions.Create(&extensions.CustomResourceDefinition{

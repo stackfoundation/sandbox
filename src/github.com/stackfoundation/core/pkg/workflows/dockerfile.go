@@ -50,7 +50,14 @@ func writeSourceMount(dockerfile *bytes.Buffer, step *WorkflowStep) {
 		}
 		dockerfile.WriteString("COPY . ")
 		dockerfile.WriteString(sourceLocation)
+		dockerfile.WriteString("\n")
 	}
+
+	dockerfile.WriteString("COPY ")
+	dockerfile.WriteString(step.StepScript)
+	dockerfile.WriteString(" /")
+	dockerfile.WriteString(step.StepScript)
+	dockerfile.WriteString("\n")
 }
 
 func buildDockerfile(step *WorkflowStep) string {

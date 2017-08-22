@@ -12,6 +12,13 @@ type EnvironmentVariable struct {
 	Value string `json:"value" yaml:"value"`
 }
 
+// Volume Volume to mount for a workflow step
+type Volume struct {
+	Name      string `json:"name" yaml:"name"`
+	MountPath string `json:"mountPath" yaml:"mountPath"`
+	HostPath  string `json:"hostPath" yaml:"hostPath"`
+}
+
 // WorkflowStep Step within a workflow
 type WorkflowStep struct {
 	StepImage  string `json:"stepImage" yaml:"stepImage"`
@@ -28,6 +35,7 @@ type WorkflowStep struct {
 	SourceLocation string                `json:"sourceLocation" yaml:"sourceLocation"`
 	Ports          []string              `json:"ports" yaml:"ports"`
 	Variables      []EnvironmentVariable `json:"variables" yaml:"variables"`
+	Volumes        []Volume              `json:"volumes" yaml:"volumes"`
 }
 
 // WorkflowStatus Overall status of workflow in K8s

@@ -13,6 +13,7 @@ import (
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/go-connections/tlsconfig"
+	"github.com/pborman/uuid"
 
 	"github.com/stackfoundation/core/pkg/minikube/cluster"
 	"github.com/stackfoundation/core/pkg/minikube/constants"
@@ -71,21 +72,34 @@ func getHostDockerEnv() (map[string]string, error) {
 	return cluster.GetHostDockerEnv(machineClient)
 }
 
+func buildImageStream(workflowSpec *WorkflowSpec, step *WorkflowStep) (io.ReadCloser, string, error) {
+	uuid := uuid.NewUUID()
+	step.StepScript = "script-" + uuid.String()[:8] + ".sh"
+
+	if len(step.Dockerfile) > 0 {
+		return image.BuildImageStream(&image.BuildOptions{
+			ContextDirectory: workflowSpec.ProjectRoot,
+			DockerfilePath:   step.Dockerfile,
+			ScriptName:       step.StepScript,
+		})
+	}
+
+	dockerfileContent := buildDockerfile(step)
+	return image.BuildImageStream(&image.BuildOptions{
+		ContextDirectory:  workflowSpec.ProjectRoot,
+		DockerfilePath:    "",
+		ScriptName:        step.StepScript,
+		DockerfileContent: strings.NewReader(dockerfileContent),
+		ScriptContent:     strings.NewReader(step.Script),
+	})
+}
+
 func buildImage(ctx context.Context, dockerClient *client.Client, workflowSpec *WorkflowSpec, step *WorkflowStep) error {
 	var imageStream io.ReadCloser
 	var err error
 	var dockerfileTarEntry string
-	var scriptTarEntry string
 
-	if len(step.Dockerfile) > 0 {
-		imageStream, dockerfileTarEntry, scriptTarEntry, err =
-			image.BuildImageStream(workflowSpec.ProjectRoot, step.Dockerfile, nil, nil)
-	} else {
-		dockerfileContent := buildDockerfile(step)
-		imageStream, dockerfileTarEntry, scriptTarEntry, err = image.BuildImageStream(
-			workflowSpec.ProjectRoot, "", strings.NewReader(dockerfileContent), strings.NewReader(step.Script))
-	}
-
+	imageStream, dockerfileTarEntry, err = buildImageStream(workflowSpec, step)
 	if err != nil {
 		return err
 	}
@@ -96,8 +110,6 @@ func buildImage(ctx context.Context, dockerClient *client.Client, workflowSpec *
 		Dockerfile: dockerfileTarEntry,
 		Tags:       []string{step.StepImage},
 	}
-
-	step.StepScript = scriptTarEntry
 
 	response, err := dockerClient.ImageBuild(context.Background(), imageStream, buildOptions)
 	if err != nil {
