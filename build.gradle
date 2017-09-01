@@ -4,10 +4,10 @@ apply from: '../../gradle/binaries.gradle'
 
 goBinData 'github.com/stackfoundation/core',
         'pkg/minikube/assets/assets.go',
-        ['./out/localkube', 'deploy/addons/...'],
+        ['./out/localkube', './out/docker-machine-driver-xhyve', 'deploy/addons/...'],
         'assets'
 goBinary 'Core',
-        ['windows'],
+        ['windows', 'darwin'],
         ['amd64'],
         false,
         [],

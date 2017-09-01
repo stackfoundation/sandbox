@@ -27,20 +27,23 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/docker/machine/drivers/virtualbox"
 	"github.com/docker/machine/libmachine"
-	"github.com/docker/machine/libmachine/host"
-	"github.com/golang/glog"
-	"github.com/docker/machine/libmachine/state"
-	"github.com/docker/machine/libmachine/mcnerror"
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/engine"
-	"github.com/docker/machine/drivers/virtualbox"
+	"github.com/docker/machine/libmachine/host"
+	"github.com/docker/machine/libmachine/mcnerror"
+	"github.com/docker/machine/libmachine/state"
+	"github.com/golang/glog"
 
+	"github.com/docker/machine/libmachine/ssh"
+	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/clientcmd/api/latest"
-	"github.com/docker/machine/libmachine/ssh"
-	"github.com/pkg/errors"
+
+	"path"
 
 	"github.com/stackfoundation/core/pkg/minikube/assets"
 	cfg "github.com/stackfoundation/core/pkg/minikube/config"
@@ -48,7 +51,6 @@ import (
 	"github.com/stackfoundation/core/pkg/minikube/sshutil"
 	"github.com/stackfoundation/core/pkg/util"
 	"github.com/stackfoundation/core/pkg/util/kubeconfig"
-	"path"
 )
 
 var (
@@ -398,7 +400,7 @@ func createHost(api libmachine.API, config MachineConfig) (*host.Host, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Error marshalling json")
 	}
-
+	fmt.Println("creating new host")
 	h, err := api.NewHost(config.VMDriver, data)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error creating new host")
