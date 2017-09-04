@@ -112,7 +112,7 @@ func checkXhyvePlugin() {
 
 		fmt.Println("For using xhyve as a driver for the sandbox cluster, the xhyve plugin needs to be given root:wheel ownership. You may need to authorize this superuser operation.")
 		cmd := exec.Command("/bin/sh", "-c", "sudo chown root:wheel "+binaryPath+" && sudo chmod u+s "+binaryPath)
-		output, err := cmd.CombinedOutput()
+		_, err = cmd.CombinedOutput()
 		if err != nil {
 			fmt.Println(err)
 		}

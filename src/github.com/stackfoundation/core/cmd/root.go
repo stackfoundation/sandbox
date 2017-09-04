@@ -83,6 +83,9 @@ var RootCmd = &cobra.Command{
 }
 
 func Execute() {
+	if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "--original-path-callee") {
+		RootCmd.Use = os.Args[1][23:]
+	}
 	_ = RootCmd.Execute()
 }
 
@@ -131,6 +134,9 @@ func init() {
 
 	RootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Turn on debug logging")
 	cobra.OnInitialize(initConfig)
+
+	RootCmd.Flags().String("original-path-callee", "", "")
+	RootCmd.Flags().MarkHidden("original-path-callee")
 }
 
 // initConfig reads in config file and ENV variables if set.
