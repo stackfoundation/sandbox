@@ -30,7 +30,6 @@ func main() {
 	//cmd.RootCmd.Execute()
 
 	viper.Set("vm-driver", "xhyve")
-	fmt.Println(os.Args[0])
 
 	newInstallation, core, err := install.EnsureCoreInstalled()
 

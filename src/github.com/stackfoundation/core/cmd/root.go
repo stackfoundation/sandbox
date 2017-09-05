@@ -135,8 +135,8 @@ func init() {
 	RootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Turn on debug logging")
 	cobra.OnInitialize(initConfig)
 
-	RootCmd.Flags().String("original-path-callee", "", "")
-	RootCmd.Flags().MarkHidden("original-path-callee")
+	RootCmd.PersistentFlags().String("original-path-callee", "", "")
+	RootCmd.PersistentFlags().MarkHidden("original-path-callee")
 }
 
 // initConfig reads in config file and ENV variables if set.
