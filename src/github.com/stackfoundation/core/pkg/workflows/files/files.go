@@ -1,4 +1,4 @@
-package workflows
+package files
 
 import (
 	"io/ioutil"
@@ -6,81 +6,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	log "github.com/stackfoundation/core/pkg/log"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/pkg/api/v1"
+
+	log "github.com/stackfoundation/core/pkg/log"
+	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
-const workflowExtension = ".wflow"
-
-func directoryExists(path string) (bool, error) {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false, err
-	}
-
-	return info.IsDir(), nil
-}
-
-func fileExists(path string) (bool, error) {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false, err
-	}
-
-	return !info.IsDir(), nil
-}
-
-func getSandboxDirectory() (string, error) {
-	path, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(path, ".sbox"), nil
-}
-
-func getAlternativeWorkflowsDirectory() (string, error) {
-	sboxDirectory, err := getSandboxDirectory()
-	if err != nil {
-		return "", err
-	}
-
-	sboxDirectoryExists, err := directoryExists(sboxDirectory)
-	if err != nil || !sboxDirectoryExists {
-		return "", err
-	}
-
-	alternativeWorkflowsConfigFile := filepath.Join(sboxDirectory, "workflows")
-	alternativeWorkflowsConfigFileExists, err := fileExists(alternativeWorkflowsConfigFile)
-	if err != nil || !alternativeWorkflowsConfigFileExists {
-		return "", err
-	}
-
-	alternativeWorkflowsDirectory, err := ioutil.ReadFile(alternativeWorkflowsConfigFile)
-	if err != nil {
-		return "", err
-	}
-
-	return strings.TrimSpace(string(alternativeWorkflowsDirectory)), nil
-}
-
-func getWorkflowsDirectory() (string, error) {
-	path, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	alternativeWorkflowsDirectory, err := getAlternativeWorkflowsDirectory()
-	if err == nil && len(alternativeWorkflowsDirectory) > 0 {
-		return filepath.Join(path, alternativeWorkflowsDirectory), nil
-	}
-
-	return filepath.Join(path, "workflows"), nil
-}
-
-func readWorkflow(workflowName string) (*Workflow, error) {
+// ReadWorkflow Read the workflow with the specified name from the current project directory
+func ReadWorkflow(workflowName string) (*workflowsv1.Workflow, error) {
 	workflowsDirectory, err := getWorkflowsDirectory()
 	if err != nil {
 		return nil, err
@@ -104,7 +39,7 @@ func readWorkflow(workflowName string) (*Workflow, error) {
 		return nil, err
 	}
 
-	var workflowSpec WorkflowSpec
+	var workflowSpec workflowsv1.WorkflowSpec
 	err = yaml.Unmarshal(workflowFileContent, &workflowSpec)
 	if err != nil {
 		return nil, err
@@ -114,10 +49,10 @@ func readWorkflow(workflowName string) (*Workflow, error) {
 	workflowSpec.ProjectRoot, err = os.Getwd()
 	workflowSpec.Status.Status = ""
 
-	workflow := Workflow{
+	workflow := workflowsv1.Workflow{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: WorkflowsGroupName + "/" + WorkflowsGroupVersion,
-			Kind:       WorkflowsKind,
+			APIVersion: workflowsv1.WorkflowsGroupName + "/" + workflowsv1.WorkflowsGroupVersion,
+			Kind:       workflowsv1.WorkflowsKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      workflowName,

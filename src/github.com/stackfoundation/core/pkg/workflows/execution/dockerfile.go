@@ -1,4 +1,4 @@
-package workflows
+package execution
 
 import "bytes"
 
@@ -15,20 +15,6 @@ func writeFromInstruction(dockerfile *bytes.Buffer, step *WorkflowStep) {
 	}
 
 	dockerfile.WriteString("\n")
-}
-
-func writeVariables(dockerfile *bytes.Buffer, step *WorkflowStep) {
-	if step.Variables != nil && len(step.Variables) > 0 {
-		dockerfile.WriteString("ENV")
-		for _, variable := range step.Variables {
-			dockerfile.WriteString(" ")
-			dockerfile.WriteString(variable.Name)
-			dockerfile.WriteString("=\"")
-			dockerfile.WriteString(variable.Value)
-			dockerfile.WriteString("\"")
-		}
-		dockerfile.WriteString("\n")
-	}
 }
 
 func writePorts(dockerfile *bytes.Buffer, step *WorkflowStep) {
@@ -53,11 +39,13 @@ func writeSourceMount(dockerfile *bytes.Buffer, step *WorkflowStep) {
 		dockerfile.WriteString("\n")
 	}
 
-	dockerfile.WriteString("COPY ")
-	dockerfile.WriteString(step.StepScript)
-	dockerfile.WriteString(" /")
-	dockerfile.WriteString(step.StepScript)
-	dockerfile.WriteString("\n")
+	if len(step.StepScript) > 0 {
+		dockerfile.WriteString("COPY ")
+		dockerfile.WriteString(step.StepScript)
+		dockerfile.WriteString(" /")
+		dockerfile.WriteString(step.StepScript)
+		dockerfile.WriteString("\n")
+	}
 }
 
 func buildDockerfile(step *WorkflowStep) string {
@@ -65,7 +53,6 @@ func buildDockerfile(step *WorkflowStep) string {
 
 	writeFromInstruction(&dockerfile, step)
 	writeSourceMount(&dockerfile, step)
-	writeVariables(&dockerfile, step)
 	writePorts(&dockerfile, step)
 
 	return dockerfile.String()

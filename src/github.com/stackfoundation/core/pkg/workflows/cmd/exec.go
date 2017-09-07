@@ -1,11 +1,11 @@
-package workflows
+package cmd
 
 import (
 	"os"
 )
 
-// ExecuteCommand Execute a command in a container created with an image
-func ExecuteCommand(image string, command []string) error {
+// Execute Execute a command in a container created with an image
+func Execute(image string, command []string) error {
 	dockerClient, err := createDockerClient()
 	if err != nil {
 		return err
