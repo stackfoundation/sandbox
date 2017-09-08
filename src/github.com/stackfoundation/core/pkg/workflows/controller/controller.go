@@ -14,7 +14,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/stackfoundation/core/pkg/log"
-	"github.com/stackfoundation/core/pkg/workflows/kube"
+	"github.com/stackfoundation/core/pkg/workflows/execution"
+	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
 type workflowController struct {
@@ -24,40 +25,6 @@ type workflowController struct {
 	cloner         *conversion.Cloner
 	podsClient     *kubernetes.Clientset
 	workflowClient *rest.RESTClient
-}
-
-func (controller *workflowController) updateWorkflow(workflow *Workflow, updater func(*Workflow)) error {
-	return kube.UpdateWorkflow(controller.workflowClient, workflow)
-}
-
-func workflowStep(workflowSpec *WorkflowSpec, stepSelector []int) (*WorkflowStep, string) {
-	step := selectStep(workflowSpec, stepSelector)
-
-	return step, stepName(step, stepSelector)
-}
-
-func (controller *workflowController) proceedToNextStep(workflow *Workflow) error {
-	log.Debugf(`Proceeding to next step in workflow "%v"`, workflow.ObjectMeta.Name)
-
-	if len(workflow.Spec.Status.Status) > 0 {
-		if StatusStepFinished == workflow.Spec.Status.Status {
-			return controller.buildImageForStep(workflow)
-		} else if StatusStepImageBuilt == workflow.Spec.Status.Status {
-			controller.runStepContainer(workflow, workflow.Spec.Status.Step)
-
-			return controller.updateWorkflow(workflow, nextStep)
-		} else if StatusFinished == workflow.Spec.Status.Status {
-			kube.DeleteWorkflow(controller.workflowClient, workflow)
-			controller.cancel()
-		}
-	} else if len(workflow.Spec.Steps) > 0 {
-		initial := make([]int, 0, 2)
-		workflow.Spec.Status.Step = append(initial, 0)
-
-		return controller.buildImageForStep(workflow)
-	}
-
-	return nil
 }
 
 func (controller *workflowController) run() error {
@@ -101,14 +68,14 @@ func (controller *workflowController) watchWorkflows() (cache.Controller, error)
 	return cacheController, nil
 }
 
-func (controller *workflowController) processWorkflow(workflow *Workflow) {
+func (controller *workflowController) processWorkflow(workflow *workflowsv1.Workflow) {
 	copyObj, err := controller.cloner.DeepCopy(workflow)
 	if err != nil {
 		return
 	}
 
 	workflowCopy := copyObj.(*Workflow)
-	controller.proceedToNextStep(workflowCopy)
+	execution.ExecuteNextStep(controller, workflowCopy)
 }
 
 func (controller *workflowController) workflowAdded(obj interface{}) {

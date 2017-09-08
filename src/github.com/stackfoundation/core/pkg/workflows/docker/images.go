@@ -56,7 +56,7 @@ func buildImage(ctx context.Context, dockerClient *client.Client, workflowSpec *
 		Tags:       []string{step.StepImage},
 	}
 
-	response, err := dockerClient.ImageBuild(context.Background(), imageStream, buildOptions)
+	response, err := dockerClient.ImageBuild(ctx, imageStream, buildOptions)
 	if err != nil {
 		panic(err)
 	}

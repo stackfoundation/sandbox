@@ -22,7 +22,7 @@ func getHostDockerEnv() (map[string]string, error) {
 	return cluster.GetHostDockerEnv(machineClient)
 }
 
-func createDockerHttpClient(hostDockerEnv map[string]string) (*http.Client, error) {
+func createDockerHTTPClient(hostDockerEnv map[string]string) (*http.Client, error) {
 	if dockerCertPath := hostDockerEnv["DOCKER_CERT_PATH"]; dockerCertPath != "" {
 		tlsConfigOptions := tlsconfig.Options{
 			CAFile:             filepath.Join(dockerCertPath, "ca.pem"),
@@ -48,13 +48,14 @@ func createDockerHttpClient(hostDockerEnv map[string]string) (*http.Client, erro
 	return nil, errors.New("Unable to determine Docker configuration")
 }
 
-func createDockerClient() (*client.Client, error) {
+// CreateDockerClient Create a new docker client pointing to the Sandbox VM's Docker daemon
+func CreateDockerClient() (*client.Client, error) {
 	hostDockerEnv, err := getHostDockerEnv()
 	if err != nil {
 		return nil, err
 	}
 
-	httpClient, err := createDockerHttpClient(hostDockerEnv)
+	httpClient, err := createDockerHTTPClient(hostDockerEnv)
 	if err != nil {
 		return nil, err
 	}

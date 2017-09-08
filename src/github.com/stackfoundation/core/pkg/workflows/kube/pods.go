@@ -2,8 +2,6 @@ package kube
 
 import (
 	"context"
-	"io"
-	"os"
 	"sync"
 
 	"github.com/magiconair/properties"
@@ -59,9 +57,9 @@ func createAndRunPod(clientSet *kubernetes.Clientset, creationSpec *podCreationS
 	}()
 
 	if creationSpec.updater != nil {
-		go printLogsUntilPodFinished(creationSpec.updater, pods, pod)
+		go waitForCompletion(creationSpec.updater, pods, pod)
 	} else {
-		printLogsUntilPodFinished(creationSpec.updater, pods, pod)
+		waitForCompletion(creationSpec.updater, pods, pod)
 		creationSpec.cleanup.Done()
 		podDeleted = true
 	}
@@ -96,60 +94,30 @@ func createPod(pods corev1.PodInterface, name string, creationSpec *podCreationS
 	})
 }
 
-func openAndPrintLogStream(pods corev1.PodInterface, podName string, follow bool) (io.ReadCloser, error) {
-	logsRequest := pods.GetLogs(podName, &v1.PodLogOptions{Follow: follow})
-	logStream, err := logsRequest.Stream()
-	if err != nil {
-		return nil, err
-	}
-
-	if follow {
-		go func() {
-			_, _ = io.Copy(os.Stdout, logStream)
-		}()
-		return logStream, nil
-	}
-
-	defer logStream.Close()
-	_, _ = io.Copy(os.Stdout, logStream)
-	return nil, nil
-}
-
-func printLogsUntilPodFinished(updater PodStatusUpdater, pods corev1.PodInterface, pod *v1.Pod) {
+func waitForCompletion(updater PodStatusUpdater, pods corev1.PodInterface, pod *v1.Pod) {
 	podWatch, err := pods.Watch(metav1.ListOptions{Watch: true})
 	if err != nil {
 		//MaybeReportErrorAndExit(err)
 	}
 
-	var logStream io.ReadCloser
+	var printer podLogPrinter
 	var podReady bool
 
 	channel := podWatch.ResultChan()
 	for event := range channel {
-		podStatus, ok := event.Object.(*v1.Pod)
-		if ok && podStatus.Name == pod.Name {
-			if logStream == nil {
-				logStream, err = printLogsIfAvailable(pods, podStatus)
-				if err != nil {
-					panic(err.Error())
-				}
-			}
+		eventPod, ok := event.Object.(*v1.Pod)
+		if ok && eventPod.Name == pod.Name {
+			printer.printLogs(pods, eventPod)
 
 			if updater != nil && !podReady {
-				if len(podStatus.Status.Conditions) > 0 {
-					for _, condition := range podStatus.Status.Conditions {
-						if condition.Type == v1.PodReady && condition.Status == v1.ConditionTrue {
-							podReady = true
-							updater.Ready()
-						}
-					}
+				if isPodReady(eventPod) {
+					podReady = true
+					updater.Ready()
 				}
 			}
 
-			if isPodFinished(podStatus) {
-				if logStream != nil {
-					logStream.Close()
-				}
+			if isPodFinished(eventPod) {
+				printer.close()
 
 				if updater != nil {
 					updater.Done()
@@ -159,14 +127,4 @@ func printLogsUntilPodFinished(updater PodStatusUpdater, pods corev1.PodInterfac
 			}
 		}
 	}
-}
-
-func printLogsIfAvailable(pods corev1.PodInterface, pod *v1.Pod) (io.ReadCloser, error) {
-	if isContainerRunning(&pod.Status) {
-		return openAndPrintLogStream(pods, pod.Name, true)
-	} else if isContainerTerminated(&pod.Status) {
-		return openAndPrintLogStream(pods, pod.Name, false)
-	}
-
-	return nil, nil
 }
