@@ -12,7 +12,6 @@ import (
 
 	"github.com/stackfoundation/bootstrap/install"
 
-	"github.com/spf13/viper"
 	"github.com/stackfoundation/core/cmd"
 )
 
@@ -29,7 +28,7 @@ func main() {
 	//cmd.RootCmd.SetArgs([]string{"dashboard"})
 	//cmd.RootCmd.Execute()
 
-	viper.Set("vm-driver", "xhyve")
+	// viper.Set("vm-driver", "xhyve")
 
 	newInstallation, core, err := install.EnsureCoreInstalled()
 

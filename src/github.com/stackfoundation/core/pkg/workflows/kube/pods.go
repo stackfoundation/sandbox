@@ -3,6 +3,7 @@ package kube
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	"github.com/magiconair/properties"
 
@@ -20,19 +21,20 @@ type PodStatusUpdater interface {
 	Done()
 }
 
-type podCreationSpec struct {
-	context     context.Context
-	cleanup     *sync.WaitGroup
-	updater     PodStatusUpdater
-	image       string
-	projectRoot string
-	command     []string
-	volumes     []workflowsv1.Volume
-	health      *workflowsv1.Health
-	environment *properties.Properties
+// PodCreationSpec Specification for creating a pod
+type PodCreationSpec struct {
+	Context     context.Context
+	Cleanup     *sync.WaitGroup
+	Updater     PodStatusUpdater
+	Image       string
+	Command     []string
+	Volumes     []workflowsv1.Volume
+	Readiness   *workflowsv1.HealthCheck
+	Environment *properties.Properties
 }
 
-func createAndRunPod(clientSet *kubernetes.Clientset, creationSpec *podCreationSpec) error {
+// CreateAndRunPod Create and run a pod according to the given specifications
+func CreateAndRunPod(clientSet *kubernetes.Clientset, creationSpec *PodCreationSpec) error {
 	pods := clientSet.Pods("default")
 
 	containerName := workflowsv1.GenerateContainerName()
@@ -42,12 +44,12 @@ func createAndRunPod(clientSet *kubernetes.Clientset, creationSpec *podCreationS
 		return err
 	}
 
-	creationSpec.cleanup.Add(1)
+	creationSpec.Cleanup.Add(1)
 	var podDeleted bool
 	go func() {
-		defer creationSpec.cleanup.Done()
+		defer creationSpec.Cleanup.Done()
 
-		<-creationSpec.context.Done()
+		<-creationSpec.Context.Done()
 
 		if !podDeleted {
 			log.Debugf("Deleting pod %v", pod.Name)
@@ -56,21 +58,21 @@ func createAndRunPod(clientSet *kubernetes.Clientset, creationSpec *podCreationS
 		}
 	}()
 
-	if creationSpec.updater != nil {
-		go waitForCompletion(creationSpec.updater, pods, pod)
+	if creationSpec.Updater != nil {
+		go waitForPod(creationSpec.Updater, pods, pod)
 	} else {
-		waitForCompletion(creationSpec.updater, pods, pod)
-		creationSpec.cleanup.Done()
+		waitForPod(creationSpec.Updater, pods, pod)
+		creationSpec.Cleanup.Done()
 		podDeleted = true
 	}
 
 	return nil
 }
 
-func createPod(pods corev1.PodInterface, name string, creationSpec *podCreationSpec) (*v1.Pod, error) {
-	mounts, podVolumes := createVolumes(creationSpec.projectRoot, creationSpec.volumes)
-	environment := createEnvironment(creationSpec.environment)
-	readinessProbe := createReadinessProbe(creationSpec.health)
+func createPod(pods corev1.PodInterface, name string, creationSpec *PodCreationSpec) (*v1.Pod, error) {
+	mounts, podVolumes := createVolumes(creationSpec.Volumes)
+	environment := createEnvironment(creationSpec.Environment)
+	readinessProbe := createReadinessProbe(creationSpec.Readiness)
 
 	return pods.Create(&v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -80,8 +82,8 @@ func createPod(pods corev1.PodInterface, name string, creationSpec *podCreationS
 			Containers: []v1.Container{
 				{
 					Name:            name,
-					Image:           creationSpec.image,
-					Command:         creationSpec.command,
+					Image:           creationSpec.Image,
+					Command:         creationSpec.Command,
 					ImagePullPolicy: v1.PullIfNotPresent,
 					VolumeMounts:    mounts,
 					Env:             environment,
@@ -94,14 +96,14 @@ func createPod(pods corev1.PodInterface, name string, creationSpec *podCreationS
 	})
 }
 
-func waitForCompletion(updater PodStatusUpdater, pods corev1.PodInterface, pod *v1.Pod) {
+func waitForPod(updater PodStatusUpdater, pods corev1.PodInterface, pod *v1.Pod) {
 	podWatch, err := pods.Watch(metav1.ListOptions{Watch: true})
 	if err != nil {
 		//MaybeReportErrorAndExit(err)
 	}
 
 	var printer podLogPrinter
-	var podReady bool
+	var podReady int32
 
 	channel := podWatch.ResultChan()
 	for event := range channel {
@@ -109,10 +111,11 @@ func waitForCompletion(updater PodStatusUpdater, pods corev1.PodInterface, pod *
 		if ok && eventPod.Name == pod.Name {
 			printer.printLogs(pods, eventPod)
 
-			if updater != nil && !podReady {
+			if updater != nil {
 				if isPodReady(eventPod) {
-					podReady = true
-					updater.Ready()
+					if atomic.CompareAndSwapInt32(&podReady, 0, 1) {
+						updater.Ready()
+					}
 				}
 			}
 

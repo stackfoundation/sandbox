@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/stackfoundation/core/pkg/workflows"
+	"github.com/stackfoundation/core/pkg/workflows/cmd"
 )
 
 var execCmd = &cobra.Command{
@@ -41,7 +41,7 @@ the container runs till the command finishes. Log output from the container is s
 
 		image := args[0]
 
-		workflows.ExecuteCommand(image, filterArgs(args[1:]))
+		cmd.Execute(image, filterArgs(args[1:]))
 	},
 }
 

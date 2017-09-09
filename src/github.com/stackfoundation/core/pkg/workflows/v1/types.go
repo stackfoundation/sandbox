@@ -25,52 +25,107 @@ type HTTPHeader struct {
 	Value string `json:"value" yaml:"value"`
 }
 
-// Health Health checks for a workflow step
-type Health struct {
-	Type     string       `json:"type" yaml:"type"`
-	Port     int32        `json:"port" yaml:"port"`
-	Script   string       `json:"script" yaml:"script"`
-	Path     string       `json:"path" yaml:"path"`
-	Headers  []HTTPHeader `json:"headers" yaml:"headers"`
-	Interval *int32       `json:"interval" yaml:"interval"`
-	Timeout  *int32       `json:"timeout" yaml:"timeout"`
-	Retries  *int32       `json:"retries" yaml:"retries"`
-	Grace    *int32       `json:"grace" yaml:"grace"`
+// HealthCheckType Health check type
+type HealthCheckType string
+
+// TCPCheck TCP health check
+const TCPCheck HealthCheckType = "tcp"
+
+// HTTPCheck HTTP health check
+const HTTPCheck HealthCheckType = "http"
+
+// HTTPSCheck HTTPS health check
+const HTTPSCheck HealthCheckType = "https"
+
+// ScriptCheck Script health check
+const ScriptCheck HealthCheckType = "script"
+
+// HealthCheck HealthCheck checks for a workflow step
+type HealthCheck struct {
+	SkipWait bool            `json:"skipWait" yaml:"skipWait"`
+	Type     HealthCheckType `json:"type" yaml:"type"`
+	Port     int32           `json:"port" yaml:"port"`
+	Script   string          `json:"script" yaml:"script"`
+	Path     string          `json:"path" yaml:"path"`
+	Headers  []HTTPHeader    `json:"headers" yaml:"headers"`
+	Interval *int32          `json:"interval" yaml:"interval"`
+	Timeout  *int32          `json:"timeout" yaml:"timeout"`
+	Retries  *int32          `json:"retries" yaml:"retries"`
+	Grace    *int32          `json:"grace" yaml:"grace"`
+}
+
+// ImageSource Image source
+type ImageSource string
+
+// SourceImage Docker image
+const SourceImage ImageSource = "image"
+
+// SourceStep Source is previous step image
+const SourceStep ImageSource = "step"
+
+// StepStatus Status of step
+type StepStatus string
+
+// StatusStepReady A parallel or service step is ready
+const StatusStepReady StepStatus = "stepReady"
+
+// StatusStepDone A parallel or service step is done
+const StatusStepDone StepStatus = "stepDone"
+
+// StepState State of step
+type StepState struct {
+	GeneratedImage  string     `json:"generatedImage" yaml:"generatedImage"`
+	GeneratedScript string     `json:"generatedScript" yaml:"generatedScript"`
+	Status          StepStatus `json:"status" yaml:"status"`
 }
 
 // WorkflowStep Step within a workflow
 type WorkflowStep struct {
-	StepImage  string `json:"stepImage" yaml:"stepImage"`
-	StepScript string `json:"stepScript" yaml:"stepScript"`
-	StepStatus string `json:"stepStatus" yaml:"stepStatus"`
-
-	Name           string              `json:"name" yaml:"name"`
-	Type           string              `json:"type" yaml:"type"`
-	OmitSource     bool                `json:"omitSource" yaml:"omitSource"`
-	Image          string              `json:"image" yaml:"image"`
-	ImageSource    string              `json:"imageSource" yaml:"imageSource"`
-	Dockerfile     string              `json:"dockerfile" yaml:"dockerfile"`
-	Script         string              `json:"script" yaml:"script"`
-	SourceLocation string              `json:"sourceLocation" yaml:"sourceLocation"`
-	Ports          []string            `json:"ports" yaml:"ports"`
-	Health         *Health             `json:"health" yaml:"health"`
-	Environment    []EnvironmentSource `json:"environment" yaml:"environment"`
-	Volumes        []Volume            `json:"volumes" yaml:"volumes"`
-	Steps          []WorkflowStep      `json:"steps" yaml:"steps"`
+	State            StepState           `json:"state" yaml:"state"`
+	Name             string              `json:"name" yaml:"name"`
+	Type             string              `json:"type" yaml:"type"`
+	OmitSource       bool                `json:"omitSource" yaml:"omitSource"`
+	Image            string              `json:"image" yaml:"image"`
+	ImageSource      ImageSource         `json:"imageSource" yaml:"imageSource"`
+	Dockerfile       string              `json:"dockerfile" yaml:"dockerfile"`
+	Script           string              `json:"script" yaml:"script"`
+	SourceLocation   string              `json:"sourceLocation" yaml:"sourceLocation"`
+	Ports            []string            `json:"ports" yaml:"ports"`
+	Readiness        *HealthCheck        `json:"readiness" yaml:"readiness"`
+	Health           *HealthCheck        `json:"health" yaml:"health"`
+	Environment      []EnvironmentSource `json:"environment" yaml:"environment"`
+	Volumes          []Volume            `json:"volumes" yaml:"volumes"`
+	Steps            []WorkflowStep      `json:"steps" yaml:"steps"`
+	TerminationGrace *int32              `json:"terminationGrace" yaml:"terminationGrace"`
 }
 
-// WorkflowStatus Overall status of workflow in K8s
-type WorkflowStatus struct {
-	Step   []int  `json:"step" yaml:"step"`
-	Status string `json:"status" yaml:"status"`
+// WorkflowStatus Status of workflow
+type WorkflowStatus string
+
+// StatusStepImageBuilt Image for step has been built
+const StatusStepImageBuilt WorkflowStatus = "imageBuilt"
+
+// StatusCompoundStepFinished A compound step has finished
+const StatusCompoundStepFinished WorkflowStatus = "compoundStepFinished"
+
+// StatusStepFinished Running of step has finished
+const StatusStepFinished WorkflowStatus = "stepFinished"
+
+// StatusFinished Whole workflows has finished
+const StatusFinished WorkflowStatus = "finished"
+
+// WorkflowState State of workflow in K8s
+type WorkflowState struct {
+	ProjectRoot string         `json:"projectRoot" yaml:"projectRoot"`
+	File        string         `json:"file" yaml:"file"`
+	Step        []int          `json:"step" yaml:"step"`
+	Status      WorkflowStatus `json:"status" yaml:"status"`
 }
 
 // WorkflowSpec Specification of workflow
 type WorkflowSpec struct {
-	ProjectRoot string         `json:"projectRoot" yaml:"projectRoot"`
-	File        string         `json:"file" yaml:"file"`
-	Steps       []WorkflowStep `json:"steps" yaml:"steps"`
-	Status      WorkflowStatus `json:"status" yaml:"status"`
+	State WorkflowState  `json:"state" yaml:"state"`
+	Steps []WorkflowStep `json:"steps" yaml:"steps"`
 }
 
 // Workflow Custom workflow resource
@@ -86,27 +141,6 @@ type WorkflowList struct {
 	metav1.ListMeta `json:"metadata"`
 	Items           []Workflow `json:"items"`
 }
-
-// SourceImage Docker image
-const SourceImage = "image"
-
-// SourceStep Source is previous step image
-const SourceStep = "step"
-
-// StatusStepImageBuilt Image for step has been built
-const StatusStepImageBuilt = "imageBuilt"
-
-// StatusStepFinished Running of step has finished
-const StatusStepFinished = "stepFinished"
-
-// StatusStepReady A parallel or service step is ready
-const StatusStepReady = "stepReady"
-
-// StatusStepDone A parallel or service step is done
-const StatusStepDone = "stepDone"
-
-// StatusFinished Whole workflows has finished
-const StatusFinished = "finished"
 
 // WorkflowsGroupName Group name for workflows
 const WorkflowsGroupName = "stack.foundation"
@@ -137,18 +171,6 @@ const DefaultRetries = 3
 
 // DefaultTimeout Default timeout in seconds
 const DefaultTimeout = 30
-
-// TCPCheck TCP health check
-const TCPCheck = "tcp"
-
-// HTTPCheck HTTP health check
-const HTTPCheck = "http"
-
-// HTTPSCheck HTTPS health check
-const HTTPSCheck = "https"
-
-// ScriptCheck Script health check
-const ScriptCheck = "script"
 
 // StepSequential Sequential step
 const StepSequential = "sequential"

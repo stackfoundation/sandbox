@@ -1,28 +1,26 @@
 package cmd
 
 import (
-	"os"
+	"github.com/stackfoundation/core/pkg/workflows/docker"
+	"github.com/stackfoundation/core/pkg/workflows/kube"
 )
 
 // Execute Execute a command in a container created with an image
 func Execute(image string, command []string) error {
-	dockerClient, err := createDockerClient()
+	dockerClient, err := docker.CreateDockerClient()
 	if err != nil {
 		return err
 	}
 
-	pullImageIfNecessary(dockerClient, image)
+	docker.PullImageIfNecessary(dockerClient, image)
 
-	clientSet, err := createKubeClient()
+	clientSet, err := kube.CreateKubeClient()
 	if err != nil {
 		return err
 	}
 
-	workingDirectory, err := os.Getwd()
-
-	return createAndRunPod(clientSet, &podCreationSpec{
-		projectRoot: workingDirectory,
-		image:       image,
-		command:     command,
+	return kube.CreateAndRunPod(clientSet, &kube.PodCreationSpec{
+		Image:   image,
+		Command: command,
 	})
 }

@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -28,22 +27,6 @@ func createRestClientConfig() (*rest.Config, error) {
 	return k8sClientConfig.ClientConfig()
 }
 
-func createDynamicClient() (*dynamic.Client, error) {
-	restClientConfig, err := createRestClientConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	restClientConfig.ContentConfig.GroupVersion = &schema.GroupVersion{
-		Group:   workflowsv1.WorkflowsGroupName,
-		Version: workflowsv1.WorkflowsGroupVersion,
-	}
-
-	restClientConfig.APIPath = "/apis"
-
-	return dynamic.NewClient(restClientConfig)
-}
-
 // CreateExtensionsClient Create a K8s extensions client
 func CreateExtensionsClient() (*clientset.Clientset, error) {
 	restClientConfig, err := createRestClientConfig()
@@ -54,7 +37,8 @@ func CreateExtensionsClient() (*clientset.Clientset, error) {
 	return clientset.NewForConfig(restClientConfig)
 }
 
-func createKubeClient() (*kubernetes.Clientset, error) {
+// CreateKubeClient Create a K8s client
+func CreateKubeClient() (*kubernetes.Clientset, error) {
 	restClientConfig, err := createRestClientConfig()
 	if err != nil {
 		return nil, err
@@ -72,7 +56,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	return nil
 }
 
-func createRestClient() (*rest.RESTClient, error) {
+// CreateWorkflowsClient Create a K8s client for workflow resources
+func CreateWorkflowsClient() (*rest.RESTClient, error) {
 	restClientConfig, err := createRestClientConfig()
 	if err != nil {
 		return nil, err

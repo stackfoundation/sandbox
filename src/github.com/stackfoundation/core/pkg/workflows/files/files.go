@@ -45,9 +45,13 @@ func ReadWorkflow(workflowName string) (*workflowsv1.Workflow, error) {
 		return nil, err
 	}
 
-	workflowSpec.File = workflowFile
-	workflowSpec.ProjectRoot, err = os.Getwd()
-	workflowSpec.Status.Status = ""
+	projectRoot, err := os.Getwd()
+
+	workflowSpec.State = workflowsv1.WorkflowState{
+		File:        workflowFile,
+		ProjectRoot: projectRoot,
+		Status:      "",
+	}
 
 	workflow := workflowsv1.Workflow{
 		TypeMeta: metav1.TypeMeta{

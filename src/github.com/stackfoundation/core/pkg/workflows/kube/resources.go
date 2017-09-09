@@ -117,7 +117,7 @@ func UpdateWorkflow(client *rest.RESTClient, workflow *workflowsv1.Workflow, upd
 		return err
 	}
 
-	log.Debugf(`Workflow "%v" status updated to %v`, workflow.ObjectMeta.Name, workflow.Spec.Status.Status)
+	log.Debugf(`Workflow "%v" status updated to %v`, workflow.ObjectMeta.Name, workflow.Spec.State.Status)
 	return nil
 }
 
@@ -135,7 +135,7 @@ func uploadWorkflow(client *rest.RESTClient, workflow *workflowsv1.Workflow) err
 func UploadWorkflow(workflow *workflowsv1.Workflow) error {
 	log.Debugf(`Uploading workflow "%v"`, workflow.ObjectMeta.Name)
 
-	client, err := createRestClient()
+	client, err := CreateWorkflowsClient()
 	if err != nil {
 		return err
 	}

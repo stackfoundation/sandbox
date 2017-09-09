@@ -13,6 +13,18 @@ func GenerateContainerName() string {
 	return "sbox-" + uuid.String()
 }
 
+// GenerateImageName Generates a name for a step image
+func GenerateImageName() string {
+	uuid := uuid.NewUUID()
+	return "step:" + uuid.String()
+}
+
+// GenerateScriptName Generates a name for a step script
+func GenerateScriptName() string {
+	uuid := uuid.NewUUID()
+	return "script-" + uuid.String()[:8] + ".sh"
+}
+
 // GenerateVolumeName Generates a name for a step volume
 func GenerateVolumeName() string {
 	uuid := uuid.NewUUID()

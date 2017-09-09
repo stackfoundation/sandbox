@@ -1,0 +1,59 @@
+package execution
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/stackfoundation/core/pkg/log"
+	"github.com/stackfoundation/core/pkg/workflows/docker"
+	"github.com/stackfoundation/core/pkg/workflows/image"
+	"github.com/stackfoundation/core/pkg/workflows/v1"
+)
+
+func createBuildOptionsForStepImage(workflowSpec *v1.WorkflowSpec, step *v1.WorkflowStep) *image.BuildOptions {
+	if len(step.Script) > 0 {
+		step.State.GeneratedScript = v1.GenerateScriptName()
+	}
+
+	if len(step.Dockerfile) > 0 {
+		return &image.BuildOptions{
+			ContextDirectory: workflowSpec.State.ProjectRoot,
+			DockerfilePath:   step.Dockerfile,
+		}
+	}
+
+	dockerfileContent := buildDockerfile(step)
+	return &image.BuildOptions{
+		ContextDirectory:  workflowSpec.State.ProjectRoot,
+		DockerfilePath:    "",
+		ScriptName:        step.State.GeneratedScript,
+		DockerfileContent: strings.NewReader(dockerfileContent),
+		ScriptContent:     strings.NewReader(step.Script),
+	}
+}
+
+func buildStepImage(context *stepExecutionContext) error {
+	workflowSpec := &context.workflow.Spec
+
+	step := context.step
+	stepName := v1.StepName(step, context.stepSelector)
+
+	fmt.Println("Building image for " + stepName + ":")
+
+	step.State.GeneratedImage = v1.GenerateImageName()
+
+	dockerClient, err := docker.CreateDockerClient()
+	if err != nil {
+		return err
+	}
+
+	options := createBuildOptionsForStepImage(workflowSpec, step)
+	err = docker.BuildImage(context.context.Context(), dockerClient, step.State.GeneratedImage, options)
+	if err != nil {
+		return err
+	}
+
+	log.Debugf(`Image %v was built for step "%v"`, step.State.GeneratedImage, stepName)
+
+	return nil
+}

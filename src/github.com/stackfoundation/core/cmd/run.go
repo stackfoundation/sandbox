@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/stackfoundation/core/pkg/workflows"
+	"github.com/stackfoundation/core/pkg/workflows/cmd"
 )
 
 var runCmd = &cobra.Command{
@@ -31,7 +31,7 @@ var runCmd = &cobra.Command{
 		startKube()
 
 		workflowName := combineArgs(args)
-		err := workflows.RunCommand(workflowName)
+		err := cmd.Run(workflowName)
 		if err != nil {
 			if os.IsNotExist(err) {
 				fmt.Printf("No workflow named %v", workflowName)

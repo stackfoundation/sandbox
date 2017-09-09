@@ -6,7 +6,7 @@ import (
 	"k8s.io/client-go/pkg/api/v1"
 )
 
-func createTCPProbe(health *workflowsv1.Health) *v1.Probe {
+func createTCPProbe(health *workflowsv1.HealthCheck) *v1.Probe {
 	return &v1.Probe{
 		Handler: v1.Handler{
 			TCPSocket: &v1.TCPSocketAction{
@@ -19,7 +19,7 @@ func createTCPProbe(health *workflowsv1.Health) *v1.Probe {
 	}
 }
 
-func createHTTPHeaders(health *workflowsv1.Health) []v1.HTTPHeader {
+func createHTTPHeaders(health *workflowsv1.HealthCheck) []v1.HTTPHeader {
 	numHeaders := len(health.Headers)
 	if numHeaders > 0 {
 		headers := make([]v1.HTTPHeader, 0, numHeaders)
@@ -36,7 +36,7 @@ func createHTTPHeaders(health *workflowsv1.Health) []v1.HTTPHeader {
 	return nil
 }
 
-func createHTTPGetProbe(health *workflowsv1.Health) *v1.Probe {
+func createHTTPGetProbe(health *workflowsv1.HealthCheck) *v1.Probe {
 	scheme := v1.URISchemeHTTP
 	if health.Type == workflowsv1.HTTPSCheck {
 		scheme = v1.URISchemeHTTPS
@@ -59,7 +59,7 @@ func createHTTPGetProbe(health *workflowsv1.Health) *v1.Probe {
 	}
 }
 
-func createExecProbe(health *workflowsv1.Health) *v1.Probe {
+func createExecProbe(health *workflowsv1.HealthCheck) *v1.Probe {
 	return &v1.Probe{
 		Handler: v1.Handler{
 			Exec: &v1.ExecAction{
@@ -69,7 +69,7 @@ func createExecProbe(health *workflowsv1.Health) *v1.Probe {
 	}
 }
 
-func setupProbeOptions(probe *v1.Probe, health *workflowsv1.Health) {
+func setupProbeOptions(probe *v1.Probe, health *workflowsv1.HealthCheck) {
 	if health.Grace != nil {
 		probe.InitialDelaySeconds = *health.Grace
 	} else {
@@ -95,7 +95,7 @@ func setupProbeOptions(probe *v1.Probe, health *workflowsv1.Health) {
 	}
 }
 
-func createReadinessProbe(health *workflowsv1.Health) *v1.Probe {
+func createReadinessProbe(health *workflowsv1.HealthCheck) *v1.Probe {
 	if health != nil {
 		var probe *v1.Probe
 		switch health.Type {

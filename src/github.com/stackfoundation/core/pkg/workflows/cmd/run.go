@@ -14,7 +14,7 @@ func Run(workflowName string) error {
 		return err
 	}
 
-	err := v1.Validate(&workflow.Spec)
+	err = v1.Validate(&workflow.Spec)
 	if err != nil {
 		return err
 	}

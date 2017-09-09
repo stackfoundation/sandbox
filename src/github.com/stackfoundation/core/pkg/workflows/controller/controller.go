@@ -15,16 +15,37 @@ import (
 
 	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/workflows/execution"
+	"github.com/stackfoundation/core/pkg/workflows/kube"
 	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
 type workflowController struct {
-	cancel         context.CancelFunc
-	context        context.Context
-	cleanup        sync.WaitGroup
-	cloner         *conversion.Cloner
-	podsClient     *kubernetes.Clientset
-	workflowClient *rest.RESTClient
+	cancel          context.CancelFunc
+	context         context.Context
+	cleanup         sync.WaitGroup
+	cloner          *conversion.Cloner
+	podsClient      *kubernetes.Clientset
+	workflowsClient *rest.RESTClient
+}
+
+func (controller *workflowController) Cancel() {
+	controller.cancel()
+}
+
+func (controller *workflowController) CleanupWaitGroup() *sync.WaitGroup {
+	return &controller.cleanup
+}
+
+func (controller *workflowController) Context() context.Context {
+	return controller.context
+}
+
+func (controller *workflowController) PodsClient() *kubernetes.Clientset {
+	return controller.podsClient
+}
+
+func (controller *workflowController) WorkflowsClient() *rest.RESTClient {
+	return controller.workflowsClient
 }
 
 func (controller *workflowController) run() error {
@@ -33,7 +54,7 @@ func (controller *workflowController) run() error {
 		return err
 	}
 
-	clientSet, err := createKubeClient()
+	clientSet, err := kube.CreateKubeClient()
 	if err != nil {
 		return err
 	}
@@ -45,19 +66,19 @@ func (controller *workflowController) run() error {
 }
 
 func (controller *workflowController) watchWorkflows() (cache.Controller, error) {
-	client, err := createRestClient()
+	client, err := kube.CreateWorkflowsClient()
 	if err != nil {
 		return nil, err
 	}
 
-	controller.workflowClient = client
+	controller.workflowsClient = client
 
 	source := cache.NewListWatchFromClient(
-		client, WorkflowsPluralName, v1.NamespaceDefault, fields.Everything())
+		client, workflowsv1.WorkflowsPluralName, v1.NamespaceDefault, fields.Everything())
 
 	_, cacheController := cache.NewInformer(
 		source,
-		&Workflow{},
+		&workflowsv1.Workflow{},
 		0,
 		cache.ResourceEventHandlerFuncs{
 			AddFunc:    controller.workflowAdded,
@@ -68,22 +89,22 @@ func (controller *workflowController) watchWorkflows() (cache.Controller, error)
 	return cacheController, nil
 }
 
-func (controller *workflowController) processWorkflow(workflow *workflowsv1.Workflow) {
+func (controller *workflowController) processWorkflowUpdate(workflow *workflowsv1.Workflow) {
 	copyObj, err := controller.cloner.DeepCopy(workflow)
 	if err != nil {
 		return
 	}
 
-	workflowCopy := copyObj.(*Workflow)
+	workflowCopy := copyObj.(*workflowsv1.Workflow)
 	execution.ExecuteNextStep(controller, workflowCopy)
 }
 
 func (controller *workflowController) workflowAdded(obj interface{}) {
-	controller.processWorkflow(obj.(*Workflow))
+	controller.processWorkflowUpdate(obj.(*workflowsv1.Workflow))
 }
 
 func (controller *workflowController) workflowUpdated(oldObj, newObj interface{}) {
-	controller.processWorkflow(newObj.(*Workflow))
+	controller.processWorkflowUpdate(newObj.(*workflowsv1.Workflow))
 }
 
 // RunWorkflowController Start and run the workflow controller
