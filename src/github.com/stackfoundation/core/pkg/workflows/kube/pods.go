@@ -47,13 +47,12 @@ func CreateAndRunPod(clientSet *kubernetes.Clientset, creationSpec *PodCreationS
 	creationSpec.Cleanup.Add(1)
 	var podDeleted bool
 	go func() {
-		defer creationSpec.Cleanup.Done()
-
 		<-creationSpec.Context.Done()
 
 		if !podDeleted {
 			log.Debugf("Deleting pod %v", pod.Name)
 			pods.Delete(pod.Name, &metav1.DeleteOptions{})
+			creationSpec.Cleanup.Done()
 			podDeleted = true
 		}
 	}()

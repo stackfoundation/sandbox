@@ -7,7 +7,7 @@ import (
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
-func collectStepEnvironment(environment []v1.EnvironmentSource) *properties.Properties {
+func collectStepEnvironment(environment []v1.VariableSource) *properties.Properties {
 	numSources := len(environment)
 
 	if numSources > 0 {

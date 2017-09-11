@@ -5,8 +5,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// EnvironmentSource Environment source defined for a step
-type EnvironmentSource struct {
+// VariableSource A source of a variable
+type VariableSource struct {
 	Name  string `json:"name" yaml:"name"`
 	Value string `json:"value" yaml:"value"`
 	File  string `json:"file" yaml:"file"`
@@ -81,22 +81,22 @@ type StepState struct {
 
 // WorkflowStep Step within a workflow
 type WorkflowStep struct {
-	State            StepState           `json:"state" yaml:"state"`
-	Name             string              `json:"name" yaml:"name"`
-	Type             string              `json:"type" yaml:"type"`
-	OmitSource       bool                `json:"omitSource" yaml:"omitSource"`
-	Image            string              `json:"image" yaml:"image"`
-	ImageSource      ImageSource         `json:"imageSource" yaml:"imageSource"`
-	Dockerfile       string              `json:"dockerfile" yaml:"dockerfile"`
-	Script           string              `json:"script" yaml:"script"`
-	SourceLocation   string              `json:"sourceLocation" yaml:"sourceLocation"`
-	Ports            []string            `json:"ports" yaml:"ports"`
-	Readiness        *HealthCheck        `json:"readiness" yaml:"readiness"`
-	Health           *HealthCheck        `json:"health" yaml:"health"`
-	Environment      []EnvironmentSource `json:"environment" yaml:"environment"`
-	Volumes          []Volume            `json:"volumes" yaml:"volumes"`
-	Steps            []WorkflowStep      `json:"steps" yaml:"steps"`
-	TerminationGrace *int32              `json:"terminationGrace" yaml:"terminationGrace"`
+	State            StepState        `json:"state" yaml:"state"`
+	Name             string           `json:"name" yaml:"name"`
+	Type             string           `json:"type" yaml:"type"`
+	OmitSource       bool             `json:"omitSource" yaml:"omitSource"`
+	Image            string           `json:"image" yaml:"image"`
+	ImageSource      ImageSource      `json:"imageSource" yaml:"imageSource"`
+	Dockerfile       string           `json:"dockerfile" yaml:"dockerfile"`
+	Script           string           `json:"script" yaml:"script"`
+	SourceLocation   string           `json:"sourceLocation" yaml:"sourceLocation"`
+	Ports            []string         `json:"ports" yaml:"ports"`
+	Readiness        *HealthCheck     `json:"readiness" yaml:"readiness"`
+	Health           *HealthCheck     `json:"health" yaml:"health"`
+	Environment      []VariableSource `json:"environment" yaml:"environment"`
+	Volumes          []Volume         `json:"volumes" yaml:"volumes"`
+	Steps            []WorkflowStep   `json:"steps" yaml:"steps"`
+	TerminationGrace *int32           `json:"terminationGrace" yaml:"terminationGrace"`
 }
 
 // WorkflowStatus Status of workflow
@@ -124,8 +124,9 @@ type WorkflowState struct {
 
 // WorkflowSpec Specification of workflow
 type WorkflowSpec struct {
-	State WorkflowState  `json:"state" yaml:"state"`
-	Steps []WorkflowStep `json:"steps" yaml:"steps"`
+	State     WorkflowState    `json:"state" yaml:"state"`
+	Steps     []WorkflowStep   `json:"steps" yaml:"steps"`
+	Variables []VariableSource `json:"variables" yaml:"variables"`
 }
 
 // Workflow Custom workflow resource
@@ -164,13 +165,13 @@ const WorkflowsCustomResource = WorkflowsPluralName + "." + WorkflowsGroupName
 const DefaultGrace = 0
 
 // DefaultInterval Default interval in seconds
-const DefaultInterval = 30
+const DefaultInterval = 10
 
 // DefaultRetries Default number of retries
 const DefaultRetries = 3
 
 // DefaultTimeout Default timeout in seconds
-const DefaultTimeout = 30
+const DefaultTimeout = 10
 
 // StepSequential Sequential step
 const StepSequential = "sequential"

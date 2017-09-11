@@ -2,12 +2,15 @@ package sync
 
 import (
 	"context"
+	"os"
+	"os/signal"
 	"sync"
 	"sync/atomic"
 
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/docker/engine-api/client"
+	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/workflows/docker"
 	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/image"
@@ -16,6 +19,7 @@ import (
 )
 
 type syncExecution struct {
+	cancel           context.CancelFunc
 	cleanupWaitGroup sync.WaitGroup
 	complete         int32
 	context          context.Context
@@ -36,8 +40,20 @@ func NewSyncExecution(workflow *v1.Workflow) (execution.Execution, error) {
 		return nil, err
 	}
 
+	context, cancel := context.WithCancel(context.Background())
+
+	interruptChannel := make(chan os.Signal, 1)
+	signal.Notify(interruptChannel, os.Interrupt)
+	go func() {
+		for _ = range interruptChannel {
+			log.Debugf("An interrupt was requested, stopping controller!")
+			cancel()
+		}
+	}()
+
 	return &syncExecution{
-		context:      context.Background(),
+		cancel:       cancel,
+		context:      context,
 		dockerClient: dockerClient,
 		podsClient:   podsClient,
 		workflow:     workflow,
@@ -50,6 +66,8 @@ func (e *syncExecution) BuildStepImage(image string, options *image.BuildOptions
 
 func (e *syncExecution) Complete() {
 	atomic.CompareAndSwapInt32(&e.complete, 0, 1)
+	e.cancel()
+	e.cleanupWaitGroup.Wait()
 }
 
 func (e *syncExecution) RunStep(spec *execution.RunStepSpec) error {

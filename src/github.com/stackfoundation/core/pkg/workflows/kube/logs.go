@@ -1,8 +1,11 @@
 package kube
 
 import (
+	"fmt"
 	"io"
 	"os"
+
+	"github.com/stackfoundation/core/pkg/workflows/util"
 
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/pkg/api/v1"
@@ -12,6 +15,10 @@ type podLogPrinter struct {
 	stream io.ReadCloser
 }
 
+func variablePrinter(name string, value string) {
+	fmt.Println("Variable " + name + "=" + value)
+}
+
 func openAndPrintPodLogs(pods corev1.PodInterface, podName string, follow bool) (io.ReadCloser, error) {
 	logsRequest := pods.GetLogs(podName, &v1.PodLogOptions{Follow: follow})
 	logStream, err := logsRequest.Stream()
@@ -19,15 +26,22 @@ func openAndPrintPodLogs(pods corev1.PodInterface, podName string, follow bool) 
 		return nil, err
 	}
 
-	if follow {
-		go func() {
-			_, _ = io.Copy(os.Stdout, logStream)
-		}()
-		return logStream, nil
+	if logStream != nil {
+		logStream = util.NewDetector(logStream, variablePrinter)
+		// logStream = util.NewPrefixer(logStream, "["+podName+"] ")
+
+		if follow {
+			go func() {
+				_, _ = io.Copy(os.Stdout, logStream)
+			}()
+
+			return logStream, nil
+		}
+
+		defer logStream.Close()
+		_, _ = io.Copy(os.Stdout, logStream)
 	}
 
-	defer logStream.Close()
-	_, _ = io.Copy(os.Stdout, logStream)
 	return nil, nil
 }
 

@@ -21,8 +21,10 @@ func (e *compositeError) Error() string {
 		var text bytes.Buffer
 
 		for _, err := range e.errors {
-			text.WriteString(err.Error())
-			text.WriteString("\n")
+			if err != nil {
+				text.WriteString(err.Error())
+				text.WriteString("\n")
+			}
 		}
 
 		return text.String()
@@ -35,16 +37,18 @@ func newValidationError(text string) error {
 }
 
 func newCompositeError() *compositeError {
-	return &compositeError{
+	err := &compositeError{
 		errors: make([]error, 0, 2),
 	}
+
+	return err
 }
 
 func (e *compositeError) append(err error) {
 	e.errors = append(e.errors, err)
 }
 
-func (e *compositeError) orNilIfEmpty() error {
+func (e *compositeError) orNilIfEmpty() *compositeError {
 	if len(e.errors) > 0 {
 		return e
 	}
@@ -95,9 +99,40 @@ func validateStepImage(step *WorkflowStep, stepSelector []int) error {
 	return nil
 }
 
+func validateStepHealth(step *WorkflowStep, stepSelector []int) error {
+	if step.Readiness != nil {
+		if len(step.Type) > 0 && step.Type != StepService {
+			return newValidationError("Readiness is only vaild for service steps, and cannot be specified for " +
+				StepName(step, stepSelector))
+		}
+	}
+
+	if step.Health != nil {
+		if len(step.Type) > 0 && step.Type != StepService {
+			return newValidationError("Health is only vaild for service steps, and cannot be specified for " +
+				StepName(step, stepSelector))
+		}
+	}
+
+	return nil
+}
+
 func validateCompoundStep(step *WorkflowStep, stepSelector []int) error {
 	if len(step.Type) == 0 || step.Type == StepCompound {
+		errors := newCompositeError()
 
+		for stepNumber, subStep := range step.Steps {
+			subStepSelector := append(stepSelector, stepNumber)
+			err := validateStep(&subStep, subStepSelector)
+			if err != nil {
+				errors.append(err)
+			}
+		}
+
+		err := errors.orNilIfEmpty()
+		if err != nil {
+			return err
+		}
 	} else if len(step.Steps) > 0 {
 		return newValidationError("Sub-steps are only valid in compound steps, and cannot be specified for " +
 			StepName(step, stepSelector))
@@ -106,7 +141,7 @@ func validateCompoundStep(step *WorkflowStep, stepSelector []int) error {
 	return nil
 }
 
-func validateStep(step *WorkflowStep, stepSelector []int) error {
+func validateStep(step *WorkflowStep, stepSelector []int) *compositeError {
 	errors := newCompositeError()
 
 	err := validateStepType(step, stepSelector)
@@ -120,6 +155,16 @@ func validateStep(step *WorkflowStep, stepSelector []int) error {
 	}
 
 	err = validateStepImage(step, stepSelector)
+	if err != nil {
+		errors.append(err)
+	}
+
+	err = validateStepHealth(step, stepSelector)
+	if err != nil {
+		errors.append(err)
+	}
+
+	err = validateCompoundStep(step, stepSelector)
 	if err != nil {
 		errors.append(err)
 	}
