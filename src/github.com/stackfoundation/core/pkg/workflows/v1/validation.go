@@ -95,6 +95,17 @@ func validateStepImage(step *WorkflowStep, stepSelector []int) error {
 	return nil
 }
 
+func validateCompoundStep(step *WorkflowStep, stepSelector []int) error {
+	if len(step.Type) == 0 || step.Type == StepCompound {
+
+	} else if len(step.Steps) > 0 {
+		return newValidationError("Sub-steps are only valid in compound steps, and cannot be specified for " +
+			StepName(step, stepSelector))
+	}
+
+	return nil
+}
+
 func validateStep(step *WorkflowStep, stepSelector []int) error {
 	errors := newCompositeError()
 

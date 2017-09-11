@@ -1,11 +1,11 @@
-package execution
+package sync
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/stackfoundation/core/pkg/log"
-	"github.com/stackfoundation/core/pkg/workflows/docker"
+	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/image"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
@@ -32,23 +32,18 @@ func createBuildOptionsForStepImage(workflowSpec *v1.WorkflowSpec, step *v1.Work
 	}
 }
 
-func buildStepImage(context *stepExecutionContext) error {
-	workflowSpec := &context.workflow.Spec
+func buildStepImage(c *execution.StepExecutionContext) error {
+	workflowSpec := &c.Workflow.Spec
 
-	step := context.step
-	stepName := v1.StepName(step, context.stepSelector)
+	step := c.Step
+	stepName := v1.StepName(step, c.StepSelector)
 
 	fmt.Println("Building image for " + stepName + ":")
 
 	step.State.GeneratedImage = v1.GenerateImageName()
 
-	dockerClient, err := docker.CreateDockerClient()
-	if err != nil {
-		return err
-	}
-
 	options := createBuildOptionsForStepImage(workflowSpec, step)
-	err = docker.BuildImage(context.context.Context(), dockerClient, step.State.GeneratedImage, options)
+	err := c.Execution.BuildStepImage(step.State.GeneratedImage, options)
 	if err != nil {
 		return err
 	}
@@ -56,4 +51,15 @@ func buildStepImage(context *stepExecutionContext) error {
 	log.Debugf(`Image %v was built for step "%v"`, step.State.GeneratedImage, stepName)
 
 	return nil
+}
+
+func buildStepImageAndTransitionNext(c *execution.StepExecutionContext) error {
+	err := buildStepImage(c)
+	if err != nil {
+		return err
+	}
+
+	return c.Execution.UpdateWorkflow(c.Workflow, func(w *v1.Workflow) {
+		w.Spec.State.Status = v1.StatusStepImageBuilt
+	})
 }

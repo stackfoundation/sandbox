@@ -1,9 +1,8 @@
 package cmd
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/controller"
+	"github.com/stackfoundation/core/pkg/workflows/execution/sync"
 	"github.com/stackfoundation/core/pkg/workflows/files"
-	"github.com/stackfoundation/core/pkg/workflows/kube"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
@@ -19,20 +18,11 @@ func Run(workflowName string) error {
 		return err
 	}
 
-	clientSet, err := kube.CreateExtensionsClient()
+	execution, err := sync.NewSyncExecution(workflow)
 	if err != nil {
 		return err
 	}
 
-	err = kube.CreateWorkflowResourceDefinitionIfRequired(clientSet.CustomResourceDefinitions())
-	if err != nil {
-		return err
-	}
-
-	err = kube.UploadWorkflow(workflow)
-	if err != nil {
-		return err
-	}
-
-	return controller.RunWorkflowController()
+	execution.Start()
+	return nil
 }

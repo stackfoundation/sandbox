@@ -1,4 +1,4 @@
-package controller
+package execution
 
 import (
 	"context"
@@ -14,7 +14,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/stackfoundation/core/pkg/log"
-	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/kube"
 	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
 )
@@ -96,7 +95,7 @@ func (controller *workflowController) processWorkflowUpdate(workflow *workflowsv
 	}
 
 	workflowCopy := copyObj.(*workflowsv1.Workflow)
-	execution.ExecuteNextStep(controller, workflowCopy)
+	ExecuteNextStep(controller, workflowCopy)
 }
 
 func (controller *workflowController) workflowAdded(obj interface{}) {
