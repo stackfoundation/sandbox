@@ -24,12 +24,14 @@ func (p *prefixer) copyBufferPortion(dest []byte, destStart, srcEnd int) int {
 
 func (p *prefixer) copyNextPrefixedLine(dest []byte, destPos int) int {
 	lineBreak := bytes.IndexByte(p.buffer[p.read:], '\n')
-	if lineBreak > 0 {
+	if lineBreak > -1 {
 		destPos = p.copyBufferPortion(dest, destPos, p.read+lineBreak+1)
 
-		p.prefixWritePos = 0
-		if (destPos < len(dest)) && (p.read < len(p.buffer)) {
+		if destPos < len(dest) && p.read < len(p.buffer) {
+			p.prefixWritePos = 0
 			destPos += p.copyPrefix(dest[destPos:])
+		} else {
+			p.prefixWritePos = 0
 		}
 	} else {
 		destPos = p.copyBufferPortion(dest, destPos, len(p.buffer))
@@ -60,6 +62,8 @@ func (p *prefixer) readIntoBuffer() error {
 	if n > 0 {
 		p.read = 0
 		p.buffer = p.buffer[:n]
+	} else {
+		p.buffer = p.buffer[:0]
 	}
 
 	return err
@@ -73,7 +77,7 @@ func (p *prefixer) Read(dest []byte) (int, error) {
 	destPos := 0
 
 	for {
-		if p.prefixWritePos > -1 {
+		if p.prefixWritePos > -1 && p.read < len(p.buffer) {
 			destPos += p.copyPrefix(dest)
 		}
 
@@ -101,7 +105,7 @@ func (p *prefixer) Read(dest []byte) (int, error) {
 	return destPos, io.EOF
 }
 
-// NewPrefixer Create a new read closer that adds a prefix to each line
+// NewPrefixer Create a new log processor that adds a prefix to each line
 func NewPrefixer(reader io.ReadCloser, prefix string) io.ReadCloser {
 	return &prefixer{
 		ReadCloser:     reader,

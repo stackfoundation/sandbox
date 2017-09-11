@@ -1,7 +1,6 @@
 package kube
 
 import (
-	"fmt"
 	"io"
 	"os"
 
@@ -15,11 +14,11 @@ type podLogPrinter struct {
 	stream io.ReadCloser
 }
 
-func variablePrinter(name string, value string) {
-	fmt.Println("Variable " + name + "=" + value)
-}
-
-func openAndPrintPodLogs(pods corev1.PodInterface, podName string, follow bool) (io.ReadCloser, error) {
+func openAndPrintPodLogs(
+	pods corev1.PodInterface,
+	podName string,
+	follow bool,
+	variableReceiver func(string, string)) (io.ReadCloser, error) {
 	logsRequest := pods.GetLogs(podName, &v1.PodLogOptions{Follow: follow})
 	logStream, err := logsRequest.Stream()
 	if err != nil {
@@ -27,8 +26,8 @@ func openAndPrintPodLogs(pods corev1.PodInterface, podName string, follow bool) 
 	}
 
 	if logStream != nil {
-		logStream = util.NewDetector(logStream, variablePrinter)
-		// logStream = util.NewPrefixer(logStream, "["+podName+"] ")
+		logStream = util.NewDetector(logStream, variableReceiver)
+		logStream = util.NewPrefixer(logStream, "["+podName+"] ")
 
 		if follow {
 			go func() {
@@ -53,14 +52,17 @@ func (printer *podLogPrinter) close() {
 	printer.stream = nil
 }
 
-func (printer *podLogPrinter) printLogs(pods corev1.PodInterface, pod *v1.Pod) error {
+func (printer *podLogPrinter) printLogs(
+	pods corev1.PodInterface,
+	pod *v1.Pod,
+	variableReceiver func(string, string)) error {
 	var err error
 
 	if printer.stream == nil {
 		if isContainerRunning(&pod.Status) {
-			printer.stream, err = openAndPrintPodLogs(pods, pod.Name, true)
+			printer.stream, err = openAndPrintPodLogs(pods, pod.Name, true, variableReceiver)
 		} else if isContainerTerminated(&pod.Status) {
-			printer.stream, err = openAndPrintPodLogs(pods, pod.Name, false)
+			printer.stream, err = openAndPrintPodLogs(pods, pod.Name, false, variableReceiver)
 		}
 	}
 

@@ -2,7 +2,6 @@ package util
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"strings"
 )
@@ -72,7 +71,7 @@ func (b *detectionBuffer) Write(src []byte) (int, error) {
 		srcPos := 0
 		for srcPos < srcLength {
 			lineBreak := bytes.IndexByte(src[srcPos:], '\n')
-			if lineBreak > 0 {
+			if lineBreak > -1 {
 				lineEnd := srcPos + lineBreak
 
 				_, err := b.copyToLineBuffer(src[srcPos:lineEnd])
@@ -85,7 +84,6 @@ func (b *detectionBuffer) Write(src []byte) (int, error) {
 
 				srcPos = lineEnd + 1
 			} else {
-				fmt.Println("Non line break copy")
 				n, err := b.copyToLineBuffer(src[srcPos:])
 				if err != nil {
 					return 0, err
@@ -99,8 +97,12 @@ func (b *detectionBuffer) Write(src []byte) (int, error) {
 	return srcLength, nil
 }
 
-// NewDetector Create a new read closer that detects variables declared in lines
+// NewDetector Create a new log processor that detects variables declared in lines
 func NewDetector(reader io.ReadCloser, receiver func(string, string)) io.ReadCloser {
+	if receiver == nil {
+		receiver = func(string, string) {}
+	}
+
 	buffer := &detectionBuffer{
 		receiver: receiver,
 	}

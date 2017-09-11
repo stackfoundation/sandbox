@@ -23,14 +23,15 @@ type PodStatusUpdater interface {
 
 // PodCreationSpec Specification for creating a pod
 type PodCreationSpec struct {
-	Context     context.Context
-	Cleanup     *sync.WaitGroup
-	Updater     PodStatusUpdater
-	Image       string
-	Command     []string
-	Volumes     []workflowsv1.Volume
-	Readiness   *workflowsv1.HealthCheck
-	Environment *properties.Properties
+	Context          context.Context
+	Cleanup          *sync.WaitGroup
+	Updater          PodStatusUpdater
+	Image            string
+	Command          []string
+	VariableReceiver func(string, string)
+	Volumes          []workflowsv1.Volume
+	Readiness        *workflowsv1.HealthCheck
+	Environment      *properties.Properties
 }
 
 // CreateAndRunPod Create and run a pod according to the given specifications
@@ -58,9 +59,9 @@ func CreateAndRunPod(clientSet *kubernetes.Clientset, creationSpec *PodCreationS
 	}()
 
 	if creationSpec.Updater != nil {
-		go waitForPod(creationSpec.Updater, pods, pod)
+		go waitForPod(creationSpec.Updater, pods, pod, creationSpec.VariableReceiver)
 	} else {
-		waitForPod(creationSpec.Updater, pods, pod)
+		waitForPod(creationSpec.Updater, pods, pod, creationSpec.VariableReceiver)
 		creationSpec.Cleanup.Done()
 		podDeleted = true
 	}
@@ -95,7 +96,11 @@ func createPod(pods corev1.PodInterface, name string, creationSpec *PodCreationS
 	})
 }
 
-func waitForPod(updater PodStatusUpdater, pods corev1.PodInterface, pod *v1.Pod) {
+func waitForPod(
+	updater PodStatusUpdater,
+	pods corev1.PodInterface,
+	pod *v1.Pod,
+	variableReceiver func(string, string)) {
 	podWatch, err := pods.Watch(metav1.ListOptions{Watch: true})
 	if err != nil {
 		//MaybeReportErrorAndExit(err)
@@ -108,7 +113,7 @@ func waitForPod(updater PodStatusUpdater, pods corev1.PodInterface, pod *v1.Pod)
 	for event := range channel {
 		eventPod, ok := event.Object.(*v1.Pod)
 		if ok && eventPod.Name == pod.Name {
-			printer.printLogs(pods, eventPod)
+			printer.printLogs(pods, eventPod, variableReceiver)
 
 			if updater != nil {
 				if isPodReady(eventPod) {
