@@ -18,6 +18,7 @@ type Execution interface {
 
 // RunStepSpec Spec for a step to run
 type RunStepSpec struct {
+	Name        string
 	Image       string
 	Command     []string
 	Volumes     []v1.Volume

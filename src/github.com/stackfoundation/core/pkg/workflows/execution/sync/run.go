@@ -68,6 +68,7 @@ func runStep(c *execution.StepExecutionContext) error {
 	}
 
 	err := c.Execution.RunStep(&execution.RunStepSpec{
+		Name:        stepName,
 		Image:       step.State.GeneratedImage,
 		Command:     command,
 		Environment: collectStepEnvironment(step.Environment),
@@ -93,22 +94,27 @@ func runStepAndTransitionNext(c *execution.StepExecutionContext) error {
 		return err
 	}
 
-	return c.Execution.UpdateWorkflow(c.Workflow, func(w *v1.Workflow) {
-		previousSegmentCount := len(w.Spec.State.Step)
+	return c.Execution.UpdateWorkflow(c.Workflow, transitionNextStep)
+}
 
-		newSelector := v1.IncrementStepSelector(&w.Spec, w.Spec.State.Step)
-		newSegmentCount := len(newSelector)
-
-		w.Spec.State.Step = newSelector
-
-		if newSegmentCount < previousSegmentCount {
-			if newSegmentCount == 0 {
-				w.Spec.State.Status = v1.StatusFinished
-			} else {
-				w.Spec.State.Status = v1.StatusCompoundStepFinished
-			}
-		} else {
-			w.Spec.State.Status = v1.StatusStepFinished
-		}
-	})
+func (e *syncExecution) RunStep(spec *execution.RunStepSpec) error {
+	return kube.CreateAndRunPod(
+		e.podsClient,
+		&kube.PodCreationSpec{
+			LogPrefix:   spec.Name,
+			Image:       spec.Image,
+			Command:     spec.Command,
+			Environment: spec.Environment,
+			Readiness:   spec.Readiness,
+			Volumes:     spec.Volumes,
+			Context:     e.context,
+			Cleanup:     &e.cleanupWaitGroup,
+			Updater:     spec.Updater,
+			VariableReceiver: func(name string, val string) {
+				fmt.Printf("Variable: %v=%v\n", name, val)
+			},
+			WorkflowReceiver: func(workflow string) {
+				fmt.Printf("Workflow: %v", workflow)
+			},
+		})
 }

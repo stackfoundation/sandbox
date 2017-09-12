@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/stackfoundation/core/pkg/log"
+	"github.com/stackfoundation/core/pkg/workflows/docker"
 	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/image"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
@@ -59,7 +60,9 @@ func buildStepImageAndTransitionNext(c *execution.StepExecutionContext) error {
 		return err
 	}
 
-	return c.Execution.UpdateWorkflow(c.Workflow, func(w *v1.Workflow) {
-		w.Spec.State.Status = v1.StatusStepImageBuilt
-	})
+	return c.Execution.UpdateWorkflow(c.Workflow, transitionStepImageBuilt)
+}
+
+func (e *syncExecution) BuildStepImage(image string, options *image.BuildOptions) error {
+	return docker.BuildImage(e.context, e.dockerClient, image, options)
 }

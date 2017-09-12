@@ -4,30 +4,45 @@ import (
 	"io"
 	"os"
 
-	"github.com/stackfoundation/core/pkg/workflows/util"
+	"github.com/stackfoundation/core/pkg/workflows/processors"
 
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/pkg/api/v1"
 )
 
 type podLogPrinter struct {
-	stream io.ReadCloser
+	podsClient       corev1.PodInterface
+	logPrefix        string
+	stream           io.ReadCloser
+	variableReceiver func(string, string)
+	workflowReceiver func(string)
 }
 
-func openAndPrintPodLogs(
-	pods corev1.PodInterface,
-	podName string,
-	follow bool,
-	variableReceiver func(string, string)) (io.ReadCloser, error) {
-	logsRequest := pods.GetLogs(podName, &v1.PodLogOptions{Follow: follow})
+func (printer *podLogPrinter) addLogProcessors(stream io.ReadCloser) io.ReadCloser {
+	if printer.variableReceiver != nil {
+		stream = processors.NewVariableDetector(stream, printer.variableReceiver)
+	}
+
+	if printer.workflowReceiver != nil {
+		stream = processors.NewWorkflowDetector(stream, printer.workflowReceiver)
+	}
+
+	if len(printer.logPrefix) > 0 {
+		stream = processors.NewPrefixer(stream, "\x1b[30;1m["+printer.logPrefix+"]\x1b[0m ")
+	}
+
+	return stream
+}
+
+func (printer *podLogPrinter) openAndPrintPodLogs(pod *v1.Pod, follow bool) (io.ReadCloser, error) {
+	logsRequest := printer.podsClient.GetLogs(pod.Name, &v1.PodLogOptions{Follow: follow})
 	logStream, err := logsRequest.Stream()
 	if err != nil {
 		return nil, err
 	}
 
 	if logStream != nil {
-		logStream = util.NewDetector(logStream, variableReceiver)
-		logStream = util.NewPrefixer(logStream, "["+podName+"] ")
+		logStream = printer.addLogProcessors(logStream)
 
 		if follow {
 			go func() {
@@ -52,17 +67,14 @@ func (printer *podLogPrinter) close() {
 	printer.stream = nil
 }
 
-func (printer *podLogPrinter) printLogs(
-	pods corev1.PodInterface,
-	pod *v1.Pod,
-	variableReceiver func(string, string)) error {
+func (printer *podLogPrinter) printLogs(pod *v1.Pod) error {
 	var err error
 
 	if printer.stream == nil {
 		if isContainerRunning(&pod.Status) {
-			printer.stream, err = openAndPrintPodLogs(pods, pod.Name, true, variableReceiver)
+			printer.stream, err = printer.openAndPrintPodLogs(pod, true)
 		} else if isContainerTerminated(&pod.Status) {
-			printer.stream, err = openAndPrintPodLogs(pods, pod.Name, false, variableReceiver)
+			printer.stream, err = printer.openAndPrintPodLogs(pod, false)
 		}
 	}
 

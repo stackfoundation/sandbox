@@ -23,15 +23,17 @@ type PodStatusUpdater interface {
 
 // PodCreationSpec Specification for creating a pod
 type PodCreationSpec struct {
-	Context          context.Context
 	Cleanup          *sync.WaitGroup
-	Updater          PodStatusUpdater
-	Image            string
 	Command          []string
+	Context          context.Context
+	Environment      *properties.Properties
+	Image            string
+	LogPrefix        string
+	Readiness        *workflowsv1.HealthCheck
+	Updater          PodStatusUpdater
 	VariableReceiver func(string, string)
 	Volumes          []workflowsv1.Volume
-	Readiness        *workflowsv1.HealthCheck
-	Environment      *properties.Properties
+	WorkflowReceiver func(string)
 }
 
 // CreateAndRunPod Create and run a pod according to the given specifications
@@ -58,10 +60,17 @@ func CreateAndRunPod(clientSet *kubernetes.Clientset, creationSpec *PodCreationS
 		}
 	}()
 
+	printer := &podLogPrinter{
+		podsClient:       pods,
+		logPrefix:        creationSpec.LogPrefix,
+		variableReceiver: creationSpec.VariableReceiver,
+		workflowReceiver: creationSpec.WorkflowReceiver,
+	}
+
 	if creationSpec.Updater != nil {
-		go waitForPod(creationSpec.Updater, pods, pod, creationSpec.VariableReceiver)
+		go waitForPod(pod, printer, creationSpec.Updater)
 	} else {
-		waitForPod(creationSpec.Updater, pods, pod, creationSpec.VariableReceiver)
+		waitForPod(pod, printer, creationSpec.Updater)
 		creationSpec.Cleanup.Done()
 		podDeleted = true
 	}
@@ -96,24 +105,19 @@ func createPod(pods corev1.PodInterface, name string, creationSpec *PodCreationS
 	})
 }
 
-func waitForPod(
-	updater PodStatusUpdater,
-	pods corev1.PodInterface,
-	pod *v1.Pod,
-	variableReceiver func(string, string)) {
-	podWatch, err := pods.Watch(metav1.ListOptions{Watch: true})
+func waitForPod(pod *v1.Pod, logPrinter *podLogPrinter, updater PodStatusUpdater) {
+	podWatch, err := logPrinter.podsClient.Watch(metav1.ListOptions{Watch: true})
 	if err != nil {
 		//MaybeReportErrorAndExit(err)
 	}
 
-	var printer podLogPrinter
 	var podReady int32
 
 	channel := podWatch.ResultChan()
 	for event := range channel {
 		eventPod, ok := event.Object.(*v1.Pod)
 		if ok && eventPod.Name == pod.Name {
-			printer.printLogs(pods, eventPod, variableReceiver)
+			logPrinter.printLogs(eventPod)
 
 			if updater != nil {
 				if isPodReady(eventPod) {
@@ -124,7 +128,7 @@ func waitForPod(
 			}
 
 			if isPodFinished(eventPod) {
-				printer.close()
+				logPrinter.close()
 
 				if updater != nil {
 					updater.Done()

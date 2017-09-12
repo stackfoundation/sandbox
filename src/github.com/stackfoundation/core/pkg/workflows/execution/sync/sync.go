@@ -13,7 +13,6 @@ import (
 	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/workflows/docker"
 	"github.com/stackfoundation/core/pkg/workflows/execution"
-	"github.com/stackfoundation/core/pkg/workflows/image"
 	"github.com/stackfoundation/core/pkg/workflows/kube"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
@@ -60,29 +59,10 @@ func NewSyncExecution(workflow *v1.Workflow) (execution.Execution, error) {
 	}, nil
 }
 
-func (e *syncExecution) BuildStepImage(image string, options *image.BuildOptions) error {
-	return docker.BuildImage(e.context, e.dockerClient, image, options)
-}
-
 func (e *syncExecution) Complete() {
 	atomic.CompareAndSwapInt32(&e.complete, 0, 1)
 	e.cancel()
 	e.cleanupWaitGroup.Wait()
-}
-
-func (e *syncExecution) RunStep(spec *execution.RunStepSpec) error {
-	return kube.CreateAndRunPod(
-		e.podsClient,
-		&kube.PodCreationSpec{
-			Image:       spec.Image,
-			Command:     spec.Command,
-			Environment: spec.Environment,
-			Readiness:   spec.Readiness,
-			Volumes:     spec.Volumes,
-			Context:     e.context,
-			Cleanup:     &e.cleanupWaitGroup,
-			Updater:     spec.Updater,
-		})
 }
 
 func (e *syncExecution) Start() {
