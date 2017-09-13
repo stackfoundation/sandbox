@@ -1,22 +1,21 @@
 package sync
 
 import (
-	"github.com/magiconair/properties"
-
 	"github.com/stackfoundation/core/pkg/log"
+	"github.com/stackfoundation/core/pkg/workflows/properties"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
-func collectStepEnvironment(environment []v1.VariableSource) *properties.Properties {
-	numSources := len(environment)
+func collectVariables(variables []v1.VariableSource) *properties.Properties {
+	numSources := len(variables)
+	props := properties.NewProperties()
 
 	if numSources > 0 {
-		props := properties.NewProperties()
-
-		for _, variable := range environment {
+		for _, variable := range variables {
 			if len(variable.File) > 0 {
-				fileProperties, err := properties.LoadFile(variable.File, properties.UTF8)
-				if err != nil || fileProperties == nil {
+				fileProperties := properties.NewProperties()
+				err := fileProperties.Load(variable.File)
+				if err != nil {
 					log.Debugf("Error loading properties from file %v", variable.File)
 					continue
 				}
@@ -26,9 +25,7 @@ func collectStepEnvironment(environment []v1.VariableSource) *properties.Propert
 				props.Set(variable.Name, variable.Value)
 			}
 		}
-
-		return props
 	}
 
-	return nil
+	return props
 }

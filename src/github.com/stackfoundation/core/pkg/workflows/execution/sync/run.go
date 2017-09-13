@@ -8,38 +8,10 @@ import (
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
-type statusUpdater struct {
-	execution    execution.Execution
-	workflow     *v1.Workflow
-	stepSelector []int
-	ready        chan bool
-}
-
-func (updater *statusUpdater) updateStepStatus(stepStatus v1.StepStatus) {
-	updater.execution.UpdateWorkflow(updater.workflow, func(workflow *v1.Workflow) {
-		step := v1.SelectStep(&workflow.Spec, updater.stepSelector)
-		step.State.Status = stepStatus
-	})
-}
-
-func (updater *statusUpdater) Ready() {
-	if updater.ready != nil {
-		fmt.Println("Service is ready, continuing")
-		close(updater.ready)
-	} else {
-		updater.updateStepStatus(v1.StatusStepReady)
-	}
-}
-
-func (updater *statusUpdater) Done() {
-	updater.updateStepStatus(v1.StatusStepDone)
-}
-
 func runStep(c *execution.StepExecutionContext) error {
 	workflowSpec := &c.Workflow.Spec
 	step := c.Step
-	stepSelector := c.StepSelector
-	stepName := v1.StepName(step, stepSelector)
+	stepName := v1.StepName(step, c.StepSelector)
 
 	fmt.Println("Running " + stepName + ":")
 
@@ -50,31 +22,36 @@ func runStep(c *execution.StepExecutionContext) error {
 
 	step.Volumes = normalizeVolumePaths(workflowSpec.State.ProjectRoot, step.Volumes)
 
-	var updater kube.PodStatusUpdater
+	var completionListener *podCompletionListener
 	var ready chan bool
 
-	if step.Type == v1.StepParallel || step.Type == v1.StepService ||
-		(len(step.Type) == 0 && step.Readiness != nil) {
+	async := v1.IsAsyncStep(step)
+	if async {
 		if step.Readiness != nil && !step.Readiness.SkipWait {
 			ready = make(chan bool)
 		}
-
-		updater = &statusUpdater{
-			execution:    c.Execution,
-			workflow:     c.Workflow,
-			stepSelector: stepSelector,
-			ready:        ready,
-		}
 	}
 
+	completionListener = &podCompletionListener{
+		execution:    c.Execution,
+		workflow:     c.Workflow,
+		stepSelector: c.StepSelector,
+		ready:        ready,
+	}
+
+	environment := collectVariables(step.Environment)
+	environment.ResolveFrom(workflowSpec.State.Properties)
+
 	err := c.Execution.RunStep(&execution.RunStepSpec{
-		Name:        stepName,
-		Image:       step.State.GeneratedImage,
-		Command:     command,
-		Environment: collectStepEnvironment(step.Environment),
-		Readiness:   step.Readiness,
-		Volumes:     step.Volumes,
-		Updater:     updater,
+		Async:            async,
+		Command:          command,
+		Environment:      environment,
+		Image:            step.State.GeneratedImage,
+		Name:             stepName,
+		PodListener:      completionListener,
+		Readiness:        step.Readiness,
+		VariableReceiver: completionListener.addVariable,
+		Volumes:          step.Volumes,
 	})
 	if err != nil {
 		return err
@@ -101,18 +78,17 @@ func (e *syncExecution) RunStep(spec *execution.RunStepSpec) error {
 	return kube.CreateAndRunPod(
 		e.podsClient,
 		&kube.PodCreationSpec{
-			LogPrefix:   spec.Name,
-			Image:       spec.Image,
-			Command:     spec.Command,
-			Environment: spec.Environment,
-			Readiness:   spec.Readiness,
-			Volumes:     spec.Volumes,
-			Context:     e.context,
-			Cleanup:     &e.cleanupWaitGroup,
-			Updater:     spec.Updater,
-			VariableReceiver: func(name string, val string) {
-				fmt.Printf("Variable: %v=%v\n", name, val)
-			},
+			Async:            spec.Async,
+			LogPrefix:        spec.Name,
+			Image:            spec.Image,
+			Command:          spec.Command,
+			Environment:      spec.Environment,
+			Readiness:        spec.Readiness,
+			Volumes:          spec.Volumes,
+			Context:          e.context,
+			Cleanup:          &e.cleanupWaitGroup,
+			Listener:         spec.PodListener,
+			VariableReceiver: spec.VariableReceiver,
 			WorkflowReceiver: func(workflow string) {
 				fmt.Printf("Workflow: %v", workflow)
 			},

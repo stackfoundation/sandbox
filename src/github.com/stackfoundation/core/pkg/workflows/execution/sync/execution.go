@@ -7,9 +7,11 @@ import (
 )
 
 func executeInitialStep(e execution.Execution, workflow *v1.Workflow) error {
-	initial := make([]int, 0, 2)
-	initial = append(initial, 0)
-	workflow.Spec.State.Step = initial
+	workflow.Spec.State.Properties = collectVariables(workflow.Spec.Variables)
+
+	initialSelector := make([]int, 0, 2)
+	initialSelector = append(initialSelector, 0)
+	workflow.Spec.State.Step = initialSelector
 	workflow.Spec.State.Status = v1.StatusStepFinished
 
 	return executeStep(e, workflow)

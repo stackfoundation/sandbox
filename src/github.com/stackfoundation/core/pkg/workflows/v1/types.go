@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/stackfoundation/core/pkg/workflows/properties"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -99,6 +100,12 @@ type WorkflowStep struct {
 	TerminationGrace *int32           `json:"terminationGrace" yaml:"terminationGrace"`
 }
 
+// IsAsyncStep Is this an async step (a paralell or service step)?
+func IsAsyncStep(step *WorkflowStep) bool {
+	return step.Type == StepParallel || step.Type == StepService ||
+		(len(step.Type) == 0 && step.Readiness != nil)
+}
+
 // WorkflowStatus Status of workflow
 type WorkflowStatus string
 
@@ -116,10 +123,11 @@ const StatusFinished WorkflowStatus = "finished"
 
 // WorkflowState State of workflow in K8s
 type WorkflowState struct {
-	ProjectRoot string         `json:"projectRoot" yaml:"projectRoot"`
-	File        string         `json:"file" yaml:"file"`
-	Step        []int          `json:"step" yaml:"step"`
-	Status      WorkflowStatus `json:"status" yaml:"status"`
+	ProjectRoot string                 `json:"projectRoot" yaml:"projectRoot"`
+	File        string                 `json:"file" yaml:"file"`
+	Step        []int                  `json:"step" yaml:"step"`
+	Status      WorkflowStatus         `json:"status" yaml:"status"`
+	Properties  *properties.Properties `json:"-" yaml:"-"`
 }
 
 // WorkflowSpec Specification of workflow

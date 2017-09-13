@@ -1,24 +1,21 @@
 package kube
 
 import (
-	"github.com/magiconair/properties"
+	"github.com/stackfoundation/core/pkg/workflows/properties"
 	"k8s.io/client-go/pkg/api/v1"
 )
 
 func createEnvironment(environment *properties.Properties) []v1.EnvVar {
 	if environment != nil {
-		numVariables := environment.Len()
+		props := environment.Map()
+		numVariables := len(props)
 		if numVariables > 0 {
 			variables := make([]v1.EnvVar, 0, numVariables)
-			keys := environment.Keys()
-			for _, name := range keys {
-				value, ok := environment.Get(name)
-				if ok {
-					variables = append(variables, v1.EnvVar{
-						Name:  name,
-						Value: value,
-					})
-				}
+			for k, v := range props {
+				variables = append(variables, v1.EnvVar{
+					Name:  k,
+					Value: v,
+				})
 			}
 
 			return variables

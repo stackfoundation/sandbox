@@ -5,24 +5,25 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/magiconair/properties"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/pkg/api/v1"
 
 	log "github.com/stackfoundation/core/pkg/log"
+	"github.com/stackfoundation/core/pkg/workflows/properties"
 	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
-type PodStatusUpdater interface {
+// PodListener Listener which listens for pod events
+type PodListener interface {
 	Ready()
 	Done()
 }
 
 // PodCreationSpec Specification for creating a pod
 type PodCreationSpec struct {
+	Async            bool
 	Cleanup          *sync.WaitGroup
 	Command          []string
 	Context          context.Context
@@ -30,7 +31,7 @@ type PodCreationSpec struct {
 	Image            string
 	LogPrefix        string
 	Readiness        *workflowsv1.HealthCheck
-	Updater          PodStatusUpdater
+	Listener         PodListener
 	VariableReceiver func(string, string)
 	Volumes          []workflowsv1.Volume
 	WorkflowReceiver func(string)
@@ -67,10 +68,10 @@ func CreateAndRunPod(clientSet *kubernetes.Clientset, creationSpec *PodCreationS
 		workflowReceiver: creationSpec.WorkflowReceiver,
 	}
 
-	if creationSpec.Updater != nil {
-		go waitForPod(pod, printer, creationSpec.Updater)
+	if creationSpec.Async {
+		go waitForPod(pod, printer, creationSpec.Listener)
 	} else {
-		waitForPod(pod, printer, creationSpec.Updater)
+		waitForPod(pod, printer, creationSpec.Listener)
 		creationSpec.Cleanup.Done()
 		podDeleted = true
 	}
@@ -105,7 +106,7 @@ func createPod(pods corev1.PodInterface, name string, creationSpec *PodCreationS
 	})
 }
 
-func waitForPod(pod *v1.Pod, logPrinter *podLogPrinter, updater PodStatusUpdater) {
+func waitForPod(pod *v1.Pod, logPrinter *podLogPrinter, listener PodListener) {
 	podWatch, err := logPrinter.podsClient.Watch(metav1.ListOptions{Watch: true})
 	if err != nil {
 		//MaybeReportErrorAndExit(err)
@@ -119,10 +120,10 @@ func waitForPod(pod *v1.Pod, logPrinter *podLogPrinter, updater PodStatusUpdater
 		if ok && eventPod.Name == pod.Name {
 			logPrinter.printLogs(eventPod)
 
-			if updater != nil {
+			if listener != nil {
 				if isPodReady(eventPod) {
 					if atomic.CompareAndSwapInt32(&podReady, 0, 1) {
-						updater.Ready()
+						listener.Ready()
 					}
 				}
 			}
@@ -130,8 +131,8 @@ func waitForPod(pod *v1.Pod, logPrinter *podLogPrinter, updater PodStatusUpdater
 			if isPodFinished(eventPod) {
 				logPrinter.close()
 
-				if updater != nil {
-					updater.Done()
+				if listener != nil {
+					listener.Done()
 				}
 
 				break

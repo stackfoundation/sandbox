@@ -1,9 +1,9 @@
 package execution
 
 import (
-	"github.com/magiconair/properties"
 	"github.com/stackfoundation/core/pkg/workflows/image"
 	"github.com/stackfoundation/core/pkg/workflows/kube"
+	"github.com/stackfoundation/core/pkg/workflows/properties"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
@@ -18,13 +18,15 @@ type Execution interface {
 
 // RunStepSpec Spec for a step to run
 type RunStepSpec struct {
-	Name        string
-	Image       string
-	Command     []string
-	Volumes     []v1.Volume
-	Readiness   *v1.HealthCheck
-	Environment *properties.Properties
-	Updater     kube.PodStatusUpdater
+	Async            bool
+	Command          []string
+	Environment      *properties.Properties
+	Image            string
+	Name             string
+	PodListener      kube.PodListener
+	Readiness        *v1.HealthCheck
+	VariableReceiver func(string, string)
+	Volumes          []v1.Volume
 }
 
 // StepExecutionContext Context for a workflow step execution
