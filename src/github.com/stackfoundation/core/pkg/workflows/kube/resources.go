@@ -117,7 +117,7 @@ func UpdateWorkflow(client *rest.RESTClient, workflow *workflowsv1.Workflow, upd
 		return err
 	}
 
-	log.Debugf(`Workflow "%v" status updated to %v`, workflow.ObjectMeta.Name, workflow.Spec.State.Status)
+	log.Debugf(`Workflow "%v" updated`, workflow.ObjectMeta.Name)
 	return nil
 }
 

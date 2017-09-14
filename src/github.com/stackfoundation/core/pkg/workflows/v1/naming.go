@@ -31,17 +31,28 @@ func GenerateVolumeName() string {
 	return "vol-" + uuid.String()
 }
 
+// GenerateWorkflowID Generates an ID for a workflow
+func GenerateWorkflowID() string {
+	uuid := uuid.NewUUID()
+	return "wflow-" + uuid.String()
+}
+
+// GenerateChangeID Generates an ID for a change
+func GenerateChangeID() string {
+	uuid := uuid.NewUUID()
+	return "c-" + uuid.String()
+}
+
 // StepName Returns the name for a step
-func StepName(step *WorkflowStep, stepSelector []int) string {
+func (s *WorkflowStep) StepName(selector []int) string {
 	var stepName string
 
-	if len(step.Name) > 0 {
-		stepName = `"` + step.Name + `"`
+	if len(s.Name) > 0 {
+		stepName = `"` + s.Name + `"`
 	} else {
 		var nameBuilder bytes.Buffer
 
-		nameBuilder.WriteString("step ")
-		for i, segment := range stepSelector {
+		for i, segment := range selector {
 			if i > 0 {
 				nameBuilder.WriteString(".")
 			}

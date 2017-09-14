@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-	"sync/atomic"
 
 	"k8s.io/client-go/kubernetes"
 
@@ -20,11 +19,22 @@ import (
 type syncExecution struct {
 	cancel           context.CancelFunc
 	cleanupWaitGroup sync.WaitGroup
-	complete         int32
+	change           chan bool
 	context          context.Context
 	dockerClient     *client.Client
 	podsClient       *kubernetes.Clientset
 	workflow         *v1.Workflow
+}
+
+func (e *syncExecution) ChildExecution(workflow *v1.Workflow) (execution.Execution, error) {
+	return NewSyncExecution(workflow)
+}
+
+func (e *syncExecution) Complete() error {
+	close(e.change)
+	e.cancel()
+	e.cleanupWaitGroup.Wait()
+	return nil
 }
 
 // NewSyncExecution Create a new sync execution for a workflow
@@ -52,6 +62,7 @@ func NewSyncExecution(workflow *v1.Workflow) (execution.Execution, error) {
 
 	return &syncExecution{
 		cancel:       cancel,
+		change:       make(chan bool),
 		context:      context,
 		dockerClient: dockerClient,
 		podsClient:   podsClient,
@@ -59,20 +70,21 @@ func NewSyncExecution(workflow *v1.Workflow) (execution.Execution, error) {
 	}, nil
 }
 
-func (e *syncExecution) Complete() {
-	atomic.CompareAndSwapInt32(&e.complete, 0, 1)
-	e.cancel()
-	e.cleanupWaitGroup.Wait()
-}
-
 func (e *syncExecution) Start() {
-	for atomic.LoadInt32(&e.complete) == 0 {
-		ExecuteNextStep(e, e.workflow)
+	Execute(e, e.workflow)
+	for _ = range e.change {
+		Execute(e, e.workflow)
 	}
 }
 
-func (e *syncExecution) UpdateWorkflow(workflow *v1.Workflow, update func(*v1.Workflow)) error {
-	update(workflow)
+func (e *syncExecution) TransitionNext(context *execution.Context, update func(*execution.Context, *v1.Workflow)) error {
+	go func() {
+		workflow := context.Workflow
+		update(context, workflow)
+
+		e.change <- true
+	}()
+
 	return nil
 }
 

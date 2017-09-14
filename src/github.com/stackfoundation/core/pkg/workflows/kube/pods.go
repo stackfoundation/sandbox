@@ -23,7 +23,6 @@ type PodListener interface {
 
 // PodCreationSpec Specification for creating a pod
 type PodCreationSpec struct {
-	Async            bool
 	Cleanup          *sync.WaitGroup
 	Command          []string
 	Context          context.Context
@@ -68,14 +67,7 @@ func CreateAndRunPod(clientSet *kubernetes.Clientset, creationSpec *PodCreationS
 		workflowReceiver: creationSpec.WorkflowReceiver,
 	}
 
-	if creationSpec.Async {
-		go waitForPod(pod, printer, creationSpec.Listener)
-	} else {
-		waitForPod(pod, printer, creationSpec.Listener)
-		creationSpec.Cleanup.Done()
-		podDeleted = true
-	}
-
+	go waitForPod(pod, printer, creationSpec.Listener)
 	return nil
 }
 

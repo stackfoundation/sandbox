@@ -1,47 +1,68 @@
 package sync
 
-import "github.com/stackfoundation/core/pkg/workflows/v1"
+import (
+	"github.com/stackfoundation/core/pkg/workflows/execution"
+	"github.com/stackfoundation/core/pkg/workflows/v1"
+)
 
-type stepReadyTransition struct {
-	stepSelector []int
+func consumeTransition(c *execution.Context, w *v1.Workflow) {
+	w.MarkHandled(c.Change)
 }
 
-func (transition *stepReadyTransition) transitionStepReady(workflow *v1.Workflow) {
-	step := v1.SelectStep(&workflow.Spec, transition.stepSelector)
-	step.State.Status = v1.StatusStepReady
+func handleChangeAndAppend(c *execution.Context, w *v1.Workflow, selector []int) *v1.Change {
+	w.MarkHandled(c.Change)
+
+	change := v1.NewChange(selector)
+	return w.AppendChange(change)
+}
+
+func imageBuiltTransition(c *execution.Context, w *v1.Workflow) {
+	change := handleChangeAndAppend(c, w, c.NextStepSelector)
+	change.Type = v1.StepImageBuilt
+}
+
+func initialTransition(c *execution.Context, w *v1.Workflow) {
+	w.Spec.State.Properties = collectVariables(w.Spec.Variables)
+
+	change := v1.NewChange([]int{})
+	change.Type = v1.StepStarted
+
+	w.AppendChange(change)
 }
 
 type stepDoneTransition struct {
-	stepSelector []int
-	variables    []v1.VariableSource
+	generatedWorkfow string
+	variables        []v1.VariableSource
 }
 
-func (transition *stepDoneTransition) transitionStepDone(workflow *v1.Workflow) {
-	step := v1.SelectStep(&workflow.Spec, transition.stepSelector)
+func (t *stepDoneTransition) transition(c *execution.Context, w *v1.Workflow) {
+	w.Spec.State.Properties.Merge(collectVariables(t.variables))
 
-	workflow.Spec.State.Properties.Merge(collectVariables(transition.variables))
-	step.State.Status = v1.StatusStepDone
-}
-
-func transitionStepImageBuilt(w *v1.Workflow) {
-	w.Spec.State.Status = v1.StatusStepImageBuilt
-}
-
-func transitionNextStep(w *v1.Workflow) {
-	previousSegmentCount := len(w.Spec.State.Step)
-
-	newSelector := v1.IncrementStepSelector(&w.Spec, w.Spec.State.Step)
-	newSegmentCount := len(newSelector)
-
-	w.Spec.State.Step = newSelector
-
-	if newSegmentCount < previousSegmentCount {
-		if newSegmentCount == 0 {
-			w.Spec.State.Status = v1.StatusFinished
-		} else {
-			w.Spec.State.Status = v1.StatusCompoundStepFinished
-		}
-	} else {
-		w.Spec.State.Status = v1.StatusStepFinished
+	step := w.Select(c.StepSelector)
+	step.State.Done = true
+	if len(step.Generator) > 0 {
+		step.State.GeneratedWorkflow = t.generatedWorkfow
 	}
+
+	change := handleChangeAndAppend(c, w, c.StepSelector)
+	change.Type = v1.StepDone
+}
+
+func stepReadyTransition(c *execution.Context, w *v1.Workflow) {
+	change := handleChangeAndAppend(c, w, c.StepSelector)
+
+	step := w.Select(c.StepSelector)
+	step.State.Ready = true
+
+	change.Type = v1.StepReady
+}
+
+func stepStartedTransition(c *execution.Context, w *v1.Workflow) {
+	change := handleChangeAndAppend(c, w, c.StepSelector)
+	change.Type = v1.StepStarted
+}
+
+func workflowWaitTransition(c *execution.Context, w *v1.Workflow) {
+	change := handleChangeAndAppend(c, w, c.StepSelector)
+	change.Type = v1.WorkflowWait
 }

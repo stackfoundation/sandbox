@@ -33,18 +33,16 @@ func createBuildOptionsForStepImage(workflowSpec *v1.WorkflowSpec, step *v1.Work
 	}
 }
 
-func buildStepImage(c *execution.StepExecutionContext) error {
-	workflowSpec := &c.Workflow.Spec
-
-	step := c.Step
-	stepName := v1.StepName(step, c.StepSelector)
+func buildStepImage(e execution.Execution, c *execution.Context) error {
+	step := c.NextStep
+	stepName := step.StepName(c.NextStepSelector)
 
 	fmt.Println("Building image for " + stepName + ":")
 
 	step.State.GeneratedImage = v1.GenerateImageName()
 
-	options := createBuildOptionsForStepImage(workflowSpec, step)
-	err := c.Execution.BuildStepImage(step.State.GeneratedImage, options)
+	options := createBuildOptionsForStepImage(&c.Workflow.Spec, step)
+	err := e.BuildStepImage(step.State.GeneratedImage, options)
 	if err != nil {
 		return err
 	}
@@ -54,13 +52,15 @@ func buildStepImage(c *execution.StepExecutionContext) error {
 	return nil
 }
 
-func buildStepImageAndTransitionNext(c *execution.StepExecutionContext) error {
-	err := buildStepImage(c)
-	if err != nil {
-		return err
+func buildStepImageAndTransitionNext(e execution.Execution, c *execution.Context) error {
+	if c.NextStep.RequiresBuild() {
+		err := buildStepImage(e, c)
+		if err != nil {
+			return err
+		}
 	}
 
-	return c.Execution.UpdateWorkflow(c.Workflow, transitionStepImageBuilt)
+	return e.TransitionNext(c, imageBuiltTransition)
 }
 
 func (e *syncExecution) BuildStepImage(image string, options *image.BuildOptions) error {

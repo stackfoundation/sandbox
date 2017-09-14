@@ -6,10 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/pkg/api/v1"
-
 	log "github.com/stackfoundation/core/pkg/log"
 	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
 )
@@ -39,33 +35,9 @@ func ReadWorkflow(workflowName string) (*workflowsv1.Workflow, error) {
 		return nil, err
 	}
 
-	var workflowSpec workflowsv1.WorkflowSpec
-	err = yaml.Unmarshal(workflowFileContent, &workflowSpec)
-	if err != nil {
-		return nil, err
-	}
-
 	projectRoot, err := os.Getwd()
 
-	workflowSpec.State = workflowsv1.WorkflowState{
-		File:        workflowFile,
-		ProjectRoot: projectRoot,
-		Status:      "",
-	}
-
-	workflow := workflowsv1.Workflow{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: workflowsv1.WorkflowsGroupName + "/" + workflowsv1.WorkflowsGroupVersion,
-			Kind:       workflowsv1.WorkflowsKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      workflowName,
-			Namespace: v1.NamespaceDefault,
-		},
-		Spec: workflowSpec,
-	}
-
-	return &workflow, nil
+	return workflowsv1.ParseWorkflow(projectRoot, workflowName, workflowFileContent)
 }
 
 // DeleteWorkflow Delete the specified workflow from the project

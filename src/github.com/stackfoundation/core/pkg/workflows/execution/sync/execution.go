@@ -1,84 +1,57 @@
 package sync
 
 import (
-	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
-func executeInitialStep(e execution.Execution, workflow *v1.Workflow) error {
-	workflow.Spec.State.Properties = collectVariables(workflow.Spec.Variables)
+func shouldProceedToNextStep(c *execution.Context) bool {
+	if (c.Change.Type == v1.StepReady && c.Step.IsServiceWithWait()) ||
+		(c.Change.Type == v1.StepStarted && (c.Step == nil || c.Step.IsAsync())) ||
+		(c.Change.Type == v1.StepDone && !c.Step.IsAsync()) {
+		return true
+	}
 
-	initialSelector := make([]int, 0, 2)
-	initialSelector = append(initialSelector, 0)
-	workflow.Spec.State.Step = initialSelector
-	workflow.Spec.State.Status = v1.StatusStepFinished
-
-	return executeStep(e, workflow)
+	return false
 }
 
-func isCompoundStepComplete(step *v1.WorkflowStep) bool {
-	for _, step := range step.Steps {
-		if step.Type == v1.StepService {
-			if step.State.Status != v1.StatusStepReady &&
-				step.State.Status != v1.StatusStepDone {
-				return false
+func handleChangeAndTransitionNext(e execution.Execution, w *v1.Workflow, c *v1.Change) error {
+	context := execution.NewContext(w, c)
+
+	if c.Type == v1.StepImageBuilt {
+		return runStepAndTransitionNext(e, context)
+	}
+
+	if context.IsWorkflowComplete() {
+		if shouldProceedToNextStep(context) {
+			e.Complete()
+		}
+	} else {
+		if context.IsCompoundStepBoundary() {
+			parent := w.Parent(c.StepSelector)
+			if parent.IsCompoundStepComplete() {
+				return buildStepImageAndTransitionNext(e, context)
 			}
-		} else if step.Type == v1.StepParallel {
-			if step.State.Status != v1.StatusStepDone {
-				return false
+		} else {
+			if shouldProceedToNextStep(context) {
+				return buildStepImageAndTransitionNext(e, context)
 			}
 		}
 	}
 
-	return true
+	return e.TransitionNext(context, consumeTransition)
 }
 
-func executeStep(e execution.Execution, workflow *v1.Workflow) error {
-	workflowSpec := &workflow.Spec
-	stepSelector := workflowSpec.State.Step
-	step := v1.SelectStep(workflowSpec, stepSelector)
-
-	stepContext := &execution.StepExecutionContext{
-		Execution:    e,
-		Workflow:     workflow,
-		StepSelector: stepSelector,
-		Step:         step,
+// Execute Execute by making the next workflow transition
+func Execute(e execution.Execution, w *v1.Workflow) error {
+	if len(w.Spec.State.Changes) < 1 {
+		return e.TransitionNext(&execution.Context{Workflow: w}, initialTransition)
 	}
 
-	status := workflow.Spec.State.Status
-
-	if status == v1.StatusCompoundStepFinished {
-		if isCompoundStepComplete(step) {
-			err := buildStepImageAndTransitionNext(stepContext)
-			if err != nil {
-				return err
-			}
-		}
-	} else if status == v1.StatusStepFinished {
-		err := buildStepImageAndTransitionNext(stepContext)
-		if err != nil {
-			return err
-		}
-	} else if status == v1.StatusStepImageBuilt {
-		err := runStepAndTransitionNext(stepContext)
-		if err != nil {
-			return err
-		}
-	} else if status == v1.StatusFinished {
-		e.Complete()
+	c := w.NextUnhandled()
+	if c != nil {
+		return handleChangeAndTransitionNext(e, w, c)
 	}
 
 	return nil
-}
-
-// ExecuteNextStep Execute the next step of a workflow execution
-func ExecuteNextStep(e execution.Execution, workflow *v1.Workflow) error {
-	log.Debugf(`Executing next step in workflow "%v"`, workflow.ObjectMeta.Name)
-
-	if len(workflow.Spec.State.Status) < 1 {
-		return executeInitialStep(e, workflow)
-	}
-
-	return executeStep(e, workflow)
 }
