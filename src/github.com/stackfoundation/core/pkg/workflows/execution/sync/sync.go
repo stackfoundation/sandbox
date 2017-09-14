@@ -87,7 +87,3 @@ func (e *syncExecution) TransitionNext(context *execution.Context, update func(*
 
 	return nil
 }
-
-func (e *syncExecution) Workflow() *v1.Workflow {
-	return e.workflow
-}

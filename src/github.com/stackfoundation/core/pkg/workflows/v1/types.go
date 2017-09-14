@@ -118,22 +118,25 @@ func (s *WorkflowStep) IsServiceWithWait() bool {
 		((len(s.Type) == 0) && s.Readiness != nil && !s.Readiness.SkipWait)
 }
 
-// RequiresBuild Does the step require an image to be built (all except call steps)?
-func (s *WorkflowStep) RequiresBuild() bool {
-	return s.HasScript() || len(s.Dockerfile) > 0
+// ScriptlessImageBuild Does the step require an image to be built but doesn't have a script?
+func (s *WorkflowStep) ScriptlessImageBuild() bool {
+	return len(s.Image) > 0 &&
+		(len(s.Script) == 0 && len(s.Dockerfile) == 0 && len(s.Generator) == 0 && len(s.Target) == 0)
 }
 
-// AsyncStepStarted An async step was started
-const AsyncStepStarted ChangeType = "asyncStarted"
+// RequiresBuild Does the step require an image to be built (all except call steps)?
+func (s *WorkflowStep) RequiresBuild() bool {
+	return s.HasScript() || len(s.Dockerfile) > 0 || s.ScriptlessImageBuild()
+}
 
 // StepStarted A step was started
-const StepStarted ChangeType = "started"
+const StepStarted ChangeType = "stepStarted"
 
 // StepReady A parallel or service step is ready
-const StepReady ChangeType = "ready"
+const StepReady ChangeType = "stepReady"
 
 // StepDone A parallel or service step is done
-const StepDone ChangeType = "done"
+const StepDone ChangeType = "stepDone"
 
 // WorkflowWait A step is waiting for a workflow
 const WorkflowWait ChangeType = "workflowWait"
@@ -142,7 +145,7 @@ const WorkflowWait ChangeType = "workflowWait"
 const WorkflowWaitDone ChangeType = "workflowWaitDone"
 
 // StepImageBuilt Image for step has been built
-const StepImageBuilt ChangeType = "imageBuilt"
+const StepImageBuilt ChangeType = "stepImageBuilt"
 
 // ChangeType Type of change
 type ChangeType string

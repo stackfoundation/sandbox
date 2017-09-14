@@ -1,9 +1,14 @@
 package sync
 
 import (
+	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
+
+func logChange(c *v1.Change) {
+	log.Debugf("Raised %v event for step %v", c.Type, c.StepSelector)
+}
 
 func consumeTransition(c *execution.Context, w *v1.Workflow) {
 	w.MarkHandled(c.Change)
@@ -19,6 +24,8 @@ func handleChangeAndAppend(c *execution.Context, w *v1.Workflow, selector []int)
 func imageBuiltTransition(c *execution.Context, w *v1.Workflow) {
 	change := handleChangeAndAppend(c, w, c.NextStepSelector)
 	change.Type = v1.StepImageBuilt
+
+	logChange(change)
 }
 
 func initialTransition(c *execution.Context, w *v1.Workflow) {
@@ -28,6 +35,8 @@ func initialTransition(c *execution.Context, w *v1.Workflow) {
 	change.Type = v1.StepStarted
 
 	w.AppendChange(change)
+
+	logChange(change)
 }
 
 type stepDoneTransition struct {
@@ -47,6 +56,8 @@ func (t *stepDoneTransition) transition(c *execution.Context, w *v1.Workflow) {
 
 	change := handleChangeAndAppend(c, w, c.StepSelector)
 	change.Type = v1.StepDone
+
+	logChange(change)
 }
 
 func stepReadyTransition(c *execution.Context, w *v1.Workflow) {
@@ -56,19 +67,27 @@ func stepReadyTransition(c *execution.Context, w *v1.Workflow) {
 	step.State.Ready = true
 
 	change.Type = v1.StepReady
+
+	logChange(change)
 }
 
 func stepStartedTransition(c *execution.Context, w *v1.Workflow) {
 	change := handleChangeAndAppend(c, w, c.StepSelector)
 	change.Type = v1.StepStarted
+
+	logChange(change)
 }
 
 func workflowWaitDoneTransition(c *execution.Context, w *v1.Workflow) {
 	change := handleChangeAndAppend(c, w, c.StepSelector)
 	change.Type = v1.WorkflowWaitDone
+
+	logChange(change)
 }
 
 func workflowWaitTransition(c *execution.Context, w *v1.Workflow) {
 	change := handleChangeAndAppend(c, w, c.StepSelector)
 	change.Type = v1.WorkflowWait
+
+	logChange(change)
 }

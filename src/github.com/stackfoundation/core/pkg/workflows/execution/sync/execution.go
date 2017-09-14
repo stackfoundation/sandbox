@@ -1,49 +1,31 @@
 package sync
 
 import (
+	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
-func shouldProceedToNextStep(c *execution.Context) bool {
-	if (c.Change.Type == v1.StepReady && c.Step.IsServiceWithWait()) ||
-		(c.Change.Type == v1.StepStarted && (c.Step == nil || c.Step.IsAsync())) ||
-		(c.Change.Type == v1.StepDone && !c.Step.IsAsync()) ||
-		c.Change.Type == v1.WorkflowWaitDone {
-		return true
-	}
-
-	return false
-}
-
 func handleChangeAndTransitionNext(e execution.Execution, w *v1.Workflow, c *v1.Change) error {
 	context := execution.NewContext(w, c)
 
-	if c.Type == v1.StepImageBuilt {
+	log.Debugf("%v event for step %v", c.Type, c.StepSelector)
+
+	switch {
+	case context.IsStepReadyToRun():
 		return runStepAndTransitionNext(e, context)
-	}
-
-	if c.Type == v1.StepDone && context.Step.IsGenerator() {
+	case context.IsGeneratedWorkflowReadyToRun():
 		return runGeneratedWorfklowAndTransitionNext(e, context)
+	case context.IsWorkflowComplete():
+		return e.Complete()
+	case context.IsCompoundStepComplete():
+		return buildStepImageAndTransitionNext(e, context)
+	case context.CanProceedToNextStep():
+		return buildStepImageAndTransitionNext(e, context)
+	default:
 	}
 
-	if context.IsWorkflowComplete() {
-		if shouldProceedToNextStep(context) {
-			return e.Complete()
-		}
-	} else {
-		if context.IsCompoundStepBoundary() {
-			parent := w.Parent(c.StepSelector)
-			if parent.IsCompoundStepComplete() {
-				return buildStepImageAndTransitionNext(e, context)
-			}
-		} else {
-			if shouldProceedToNextStep(context) {
-				return buildStepImageAndTransitionNext(e, context)
-			}
-		}
-	}
-
+	log.Debugf("Performing no-op for %v event for step %v", c.Type, c.StepSelector)
 	return e.TransitionNext(context, consumeTransition)
 }
 
