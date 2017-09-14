@@ -8,7 +8,8 @@ import (
 func shouldProceedToNextStep(c *execution.Context) bool {
 	if (c.Change.Type == v1.StepReady && c.Step.IsServiceWithWait()) ||
 		(c.Change.Type == v1.StepStarted && (c.Step == nil || c.Step.IsAsync())) ||
-		(c.Change.Type == v1.StepDone && !c.Step.IsAsync()) {
+		(c.Change.Type == v1.StepDone && !c.Step.IsAsync()) ||
+		c.Change.Type == v1.WorkflowWaitDone {
 		return true
 	}
 
@@ -22,9 +23,13 @@ func handleChangeAndTransitionNext(e execution.Execution, w *v1.Workflow, c *v1.
 		return runStepAndTransitionNext(e, context)
 	}
 
+	if c.Type == v1.StepDone && context.Step.IsGenerator() {
+		return runGeneratedWorfklowAndTransitionNext(e, context)
+	}
+
 	if context.IsWorkflowComplete() {
 		if shouldProceedToNextStep(context) {
-			e.Complete()
+			return e.Complete()
 		}
 	} else {
 		if context.IsCompoundStepBoundary() {

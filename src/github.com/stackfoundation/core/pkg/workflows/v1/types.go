@@ -95,11 +95,21 @@ type WorkflowStep struct {
 	Volumes          []Volume         `json:"volumes" yaml:"volumes"`
 }
 
+// HasScript Does step have a script to run?
+func (s *WorkflowStep) HasScript() bool {
+	return len(s.Script) > 0 || s.IsGenerator()
+}
+
 // IsAsync Is this an async step (a paralell or service step that skips wait)?
 func (s *WorkflowStep) IsAsync() bool {
 	return s.Type == StepParallel ||
 		(s.Type == StepService && s.Readiness != nil && s.Readiness.SkipWait) ||
 		(len(s.Type) == 0 && s.Readiness != nil && s.Readiness.SkipWait)
+}
+
+// IsGenerator Is this a script generating step?
+func (s *WorkflowStep) IsGenerator() bool {
+	return len(s.Generator) > 0
 }
 
 // IsServiceWithWait Is this a service step that waits for readiness?
@@ -110,7 +120,7 @@ func (s *WorkflowStep) IsServiceWithWait() bool {
 
 // RequiresBuild Does the step require an image to be built (all except call steps)?
 func (s *WorkflowStep) RequiresBuild() bool {
-	return len(s.Script) > 0 || len(s.Generator) > 0 || len(s.Dockerfile) > 0
+	return s.HasScript() || len(s.Dockerfile) > 0
 }
 
 // AsyncStepStarted An async step was started
@@ -127,6 +137,9 @@ const StepDone ChangeType = "done"
 
 // WorkflowWait A step is waiting for a workflow
 const WorkflowWait ChangeType = "workflowWait"
+
+// WorkflowWaitDone Wait for a workflow to complete is done
+const WorkflowWaitDone ChangeType = "workflowWaitDone"
 
 // StepImageBuilt Image for step has been built
 const StepImageBuilt ChangeType = "imageBuilt"

@@ -12,7 +12,7 @@ import (
 )
 
 func createBuildOptionsForStepImage(workflowSpec *v1.WorkflowSpec, step *v1.WorkflowStep) *image.BuildOptions {
-	if len(step.Script) > 0 {
+	if step.HasScript() {
 		step.State.GeneratedScript = v1.GenerateScriptName()
 	}
 
@@ -24,12 +24,20 @@ func createBuildOptionsForStepImage(workflowSpec *v1.WorkflowSpec, step *v1.Work
 	}
 
 	dockerfileContent := buildDockerfile(step)
+
+	var script string
+	if len(step.Script) > 0 {
+		script = step.Script
+	} else if len(step.Generator) > 0 {
+		script = step.Generator
+	}
+
 	return &image.BuildOptions{
 		ContextDirectory:  workflowSpec.State.ProjectRoot,
 		DockerfilePath:    "",
 		ScriptName:        step.State.GeneratedScript,
 		DockerfileContent: strings.NewReader(dockerfileContent),
-		ScriptContent:     strings.NewReader(step.Script),
+		ScriptContent:     strings.NewReader(script),
 	}
 }
 
@@ -37,7 +45,7 @@ func buildStepImage(e execution.Execution, c *execution.Context) error {
 	step := c.NextStep
 	stepName := step.StepName(c.NextStepSelector)
 
-	fmt.Println("Building image for " + stepName + ":")
+	fmt.Println("Building image for step " + stepName + ":")
 
 	step.State.GeneratedImage = v1.GenerateImageName()
 
