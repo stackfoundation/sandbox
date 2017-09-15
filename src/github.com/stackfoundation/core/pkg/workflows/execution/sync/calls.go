@@ -34,7 +34,7 @@ func runGeneratedWorfklowAndTransitionNext(e execution.Execution, c *execution.C
 	return e.TransitionNext(c, workflowWaitTransition)
 }
 
-func runWorkflowStepAndTransitionNext(e execution.Execution, c *execution.Context) error {
+func runExternalWorkflowAndTransitionNext(e execution.Execution, c *execution.Context) error {
 	step := c.Step
 	stepName := step.StepName(c.Change.StepSelector)
 

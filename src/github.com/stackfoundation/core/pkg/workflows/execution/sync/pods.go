@@ -57,7 +57,7 @@ func runPodStepAndTransitionNext(e execution.Execution, c *execution.Context) er
 	}
 
 	environment := collectVariables(step.Environment)
-	environment.ResolveFrom(c.Workflow.Spec.State.Properties)
+	environment.ResolveFrom(c.Workflow.Spec.State.Variables)
 
 	err := e.RunStep(&execution.RunStepSpec{
 		Command:          command,

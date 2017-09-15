@@ -1,63 +1,36 @@
 package v1
 
 import (
-	"bytes"
+	"regexp"
+	"strconv"
+
+	"github.com/stackfoundation/core/pkg/workflows/errors"
 )
+
+var placeholderMatcher = regexp.MustCompile("\\$\\{[\\w]+\\}")
 
 type validationError struct {
 	text string
-}
-
-type compositeError struct {
-	errors []error
 }
 
 func (e *validationError) Error() string {
 	return e.text
 }
 
-func (e *compositeError) Error() string {
-	if e.errors != nil {
-		var text bytes.Buffer
-
-		for _, err := range e.errors {
-			if err != nil {
-				text.WriteString(err.Error())
-				text.WriteString("\n")
-			}
-		}
-
-		return text.String()
-	}
-	return ""
-}
-
 func newValidationError(text string) error {
 	return &validationError{text}
 }
 
-func newCompositeError() *compositeError {
-	err := &compositeError{
-		errors: make([]error, 0, 2),
-	}
-
-	return err
-}
-
-func (e *compositeError) append(err error) {
-	e.errors = append(e.errors, err)
-}
-
-func (e *compositeError) orNilIfEmpty() *compositeError {
-	if len(e.errors) > 0 {
-		return e
-	}
-
-	return nil
+func containsPlaceholders(text string) bool {
+	return placeholderMatcher.MatchString(text)
 }
 
 func validateStepType(step *WorkflowStep, stepSelector []int) error {
 	if len(step.Type) > 0 {
+		if containsPlaceholders(step.Type) {
+			return nil
+		}
+
 		if step.Type != StepSequential &&
 			step.Type != StepCompound &&
 			step.Type != StepService &&
@@ -70,29 +43,51 @@ func validateStepType(step *WorkflowStep, stepSelector []int) error {
 }
 
 func validateStepSource(step *WorkflowStep, stepSelector []int) error {
-	if step.OmitSource && len(step.SourceLocation) > 0 {
-		return newValidationError("Source location cannot be specified when source is omitted for " +
-			step.StepName(stepSelector))
+	if len(step.OmitSource) > 0 {
+		if containsPlaceholders(step.OmitSource) {
+			return nil
+		}
+
+		omitSource, err := strconv.ParseBool(step.OmitSource)
+		if err != nil {
+			return newValidationError("Omit source flag must be a boolean (true or false) in step " +
+				step.StepName(stepSelector))
+		}
+
+		if omitSource && len(step.SourceLocation) > 0 {
+			return newValidationError("Source location cannot be specified when source is omitted for " +
+				step.StepName(stepSelector))
+		}
 	}
 
 	return nil
 }
 
 func validateStepImage(step *WorkflowStep, stepSelector []int) error {
-	if len(step.ImageSource) > 0 &&
-		step.ImageSource != SourceStep &&
-		step.ImageSource != SourceImage {
-		return newValidationError("Invalid image source specified for " +
-			step.StepName(stepSelector))
+	if len(step.ImageSource) > 0 {
+		if containsPlaceholders(string(step.ImageSource)) {
+			return nil
+		}
+
+		if step.ImageSource != SourceStep &&
+			step.ImageSource != SourceImage {
+			return newValidationError("Invalid image source specified for " +
+				step.StepName(stepSelector))
+		}
 	}
 
-	if len(step.Image) < 1 && len(step.Dockerfile) < 1 {
+	if len(step.Image) < 1 && len(step.Dockerfile) < 1 && len(step.Target) < 1 {
 		return newValidationError("An image must be specified for " +
 			step.StepName(stepSelector))
 	}
 
 	if len(step.Image) > 1 && len(step.Dockerfile) > 1 {
 		return newValidationError("Both a Dockerfile and an image cannot be specified for " +
+			step.StepName(stepSelector))
+	}
+
+	if len(step.Image) > 1 && len(step.Target) > 1 {
+		return newValidationError("Both a target workflow and an image cannot be specified for " +
 			step.StepName(stepSelector))
 	}
 
@@ -119,20 +114,14 @@ func validateStepHealth(step *WorkflowStep, stepSelector []int) error {
 
 func validateCompoundStep(step *WorkflowStep, stepSelector []int) error {
 	if len(step.Type) == 0 || step.Type == StepCompound {
-		errors := newCompositeError()
+		composite := errors.NewCompositeError()
 
 		for stepNumber, subStep := range step.Steps {
 			subStepSelector := append(stepSelector, stepNumber)
-			err := validateStep(&subStep, subStepSelector)
-			if err != nil {
-				errors.append(err)
-			}
+			composite.Append(ValidateStep(&subStep, subStepSelector))
 		}
 
-		err := errors.orNilIfEmpty()
-		if err != nil {
-			return err
-		}
+		return composite.OrNilIfEmpty()
 	} else if len(step.Steps) > 0 {
 		return newValidationError("Sub-steps are only valid in compound steps, and cannot be specified for " +
 			step.StepName(stepSelector))
@@ -195,40 +184,18 @@ func validateStepSubType(step *WorkflowStep, stepSelector []int) error {
 	return nil
 }
 
-func validateStep(step *WorkflowStep, stepSelector []int) *compositeError {
-	errors := newCompositeError()
+// ValidateStep Validate the specified workflow step
+func ValidateStep(step *WorkflowStep, stepSelector []int) error {
+	composite := errors.NewCompositeError()
 
-	err := validateStepType(step, stepSelector)
-	if err != nil {
-		errors.append(err)
-	}
+	composite.Append(validateStepType(step, stepSelector))
+	composite.Append(validateStepSubType(step, stepSelector))
+	composite.Append(validateStepSource(step, stepSelector))
+	composite.Append(validateStepImage(step, stepSelector))
+	composite.Append(validateStepHealth(step, stepSelector))
+	composite.Append(validateCompoundStep(step, stepSelector))
 
-	err = validateStepSubType(step, stepSelector)
-	if err != nil {
-		errors.append(err)
-	}
-
-	err = validateStepSource(step, stepSelector)
-	if err != nil {
-		errors.append(err)
-	}
-
-	err = validateStepImage(step, stepSelector)
-	if err != nil {
-		errors.append(err)
-	}
-
-	err = validateStepHealth(step, stepSelector)
-	if err != nil {
-		errors.append(err)
-	}
-
-	err = validateCompoundStep(step, stepSelector)
-	if err != nil {
-		errors.append(err)
-	}
-
-	return errors.orNilIfEmpty()
+	return composite.OrNilIfEmpty()
 }
 
 // Validate Validate the specified workflow
@@ -241,7 +208,7 @@ func Validate(workflowSpec *WorkflowSpec) error {
 	for stepNumber, step := range workflowSpec.Steps {
 		stepSelector[0] = stepNumber
 
-		err := validateStep(&step, stepSelector)
+		err := ValidateStep(&step, stepSelector)
 		if err != nil {
 			return err
 		}

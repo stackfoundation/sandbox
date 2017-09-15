@@ -43,15 +43,15 @@ const ScriptCheck HealthCheckType = "script"
 
 // HealthCheck HealthCheck checks for a workflow step
 type HealthCheck struct {
-	Grace    *int32          `json:"grace" yaml:"grace"`
+	Grace    string          `json:"grace" yaml:"grace"`
 	Headers  []HTTPHeader    `json:"headers" yaml:"headers"`
-	Interval *int32          `json:"interval" yaml:"interval"`
+	Interval string          `json:"interval" yaml:"interval"`
 	Path     string          `json:"path" yaml:"path"`
-	Port     int32           `json:"port" yaml:"port"`
-	Retries  *int32          `json:"retries" yaml:"retries"`
+	Port     string          `json:"port" yaml:"port"`
+	Retries  string          `json:"retries" yaml:"retries"`
 	Script   string          `json:"script" yaml:"script"`
-	SkipWait bool            `json:"skipWait" yaml:"skipWait"`
-	Timeout  *int32          `json:"timeout" yaml:"timeout"`
+	SkipWait string          `json:"skipWait" yaml:"skipWait"`
+	Timeout  string          `json:"timeout" yaml:"timeout"`
 	Type     HealthCheckType `json:"type" yaml:"type"`
 }
 
@@ -71,6 +71,7 @@ type StepState struct {
 	GeneratedWorkflow string `json:"generatedWorkflow" yaml:"generatedWorkflow"`
 	Ready             bool   `json:"ready" yaml:"ready"`
 	Done              bool   `json:"done" yaml:"done"`
+	Prepared          bool   `json:"prepared" yaml:"prepared"`
 }
 
 // WorkflowStep Step within a workflow
@@ -81,8 +82,11 @@ type WorkflowStep struct {
 	Health           *HealthCheck     `json:"health" yaml:"health"`
 	Image            string           `json:"image" yaml:"image"`
 	ImageSource      ImageSource      `json:"imageSource" yaml:"imageSource"`
+	IgnoreFailure    *bool            `json:"ignoreFailure" yaml:"ignoreFailure"`
+	IgnoreMissing    *bool            `json:"ignoreMissing" yaml:"ignoreMissing"`
+	IgnoreValidation *bool            `json:"ignoreValidation" yaml:"ignoreValidation"`
 	Name             string           `json:"name" yaml:"name"`
-	OmitSource       bool             `json:"omitSource" yaml:"omitSource"`
+	OmitSource       string           `json:"omitSource" yaml:"omitSource"`
 	Ports            []string         `json:"ports" yaml:"ports"`
 	Readiness        *HealthCheck     `json:"readiness" yaml:"readiness"`
 	Script           string           `json:"script" yaml:"script"`
@@ -90,43 +94,9 @@ type WorkflowStep struct {
 	State            StepState        `json:"state" yaml:"state"`
 	Steps            []WorkflowStep   `json:"steps" yaml:"steps"`
 	Target           string           `json:"target" yaml:"target"`
-	TerminationGrace *int32           `json:"terminationGrace" yaml:"terminationGrace"`
+	TerminationGrace string           `json:"terminationGrace" yaml:"terminationGrace"`
 	Type             string           `json:"type" yaml:"type"`
 	Volumes          []Volume         `json:"volumes" yaml:"volumes"`
-}
-
-// HasScript Does step have a script to run?
-func (s *WorkflowStep) HasScript() bool {
-	return len(s.Script) > 0 || s.IsGenerator()
-}
-
-// IsAsync Is this an async step (a paralell or service step that skips wait)?
-func (s *WorkflowStep) IsAsync() bool {
-	return s.Type == StepParallel ||
-		(s.Type == StepService && s.Readiness != nil && s.Readiness.SkipWait) ||
-		(len(s.Type) == 0 && s.Readiness != nil && s.Readiness.SkipWait)
-}
-
-// IsGenerator Is this a script generating step?
-func (s *WorkflowStep) IsGenerator() bool {
-	return len(s.Generator) > 0
-}
-
-// IsServiceWithWait Is this a service step that waits for readiness?
-func (s *WorkflowStep) IsServiceWithWait() bool {
-	return (s.Type == StepService && s.Readiness != nil && !s.Readiness.SkipWait) ||
-		((len(s.Type) == 0) && s.Readiness != nil && !s.Readiness.SkipWait)
-}
-
-// ScriptlessImageBuild Does the step require an image to be built but doesn't have a script?
-func (s *WorkflowStep) ScriptlessImageBuild() bool {
-	return len(s.Image) > 0 &&
-		(len(s.Script) == 0 && len(s.Dockerfile) == 0 && len(s.Generator) == 0 && len(s.Target) == 0)
-}
-
-// RequiresBuild Does the step require an image to be built (all except call steps)?
-func (s *WorkflowStep) RequiresBuild() bool {
-	return s.HasScript() || len(s.Dockerfile) > 0 || s.ScriptlessImageBuild()
 }
 
 // StepStarted A step was started
@@ -170,16 +140,18 @@ func NewChange(selector []int) *Change {
 type WorkflowState struct {
 	ID          string                 `json:"id" yaml:"id"`
 	ProjectRoot string                 `json:"projectRoot" yaml:"projectRoot"`
-	Properties  *properties.Properties `json:"-" yaml:"-"`
+	Variables   *properties.Properties `json:"-" yaml:"-"`
 	Changes     []Change               `json:"changes" yaml:"changes"`
 	Step        []int                  `json:"step" yaml:"step"`
 }
 
 // WorkflowSpec Specification of workflow
 type WorkflowSpec struct {
-	State     WorkflowState    `json:"state" yaml:"state"`
-	Steps     []WorkflowStep   `json:"steps" yaml:"steps"`
-	Variables []VariableSource `json:"variables" yaml:"variables"`
+	State            WorkflowState    `json:"state" yaml:"state"`
+	Steps            []WorkflowStep   `json:"steps" yaml:"steps"`
+	Variables        []VariableSource `json:"variables" yaml:"variables"`
+	IgnoreMissing    bool             `json:"ignoreMissing" yaml:"ignoreMissing"`
+	IgnoreValidation bool             `json:"ignoreValidation" yaml:"ignoreValidation"`
 }
 
 // Workflow Custom workflow resource

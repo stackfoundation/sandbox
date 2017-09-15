@@ -1,29 +1,31 @@
 package kube
 
 import (
+	"strconv"
+
 	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/pkg/api/v1"
 )
 
-func createTCPProbe(health *workflowsv1.HealthCheck) *v1.Probe {
+func createTCPProbe(check *workflowsv1.HealthCheck) *v1.Probe {
 	return &v1.Probe{
 		Handler: v1.Handler{
 			TCPSocket: &v1.TCPSocketAction{
 				Port: intstr.IntOrString{
-					Type:   intstr.Int,
-					IntVal: health.Port,
+					Type:   intstr.String,
+					StrVal: check.Port,
 				},
 			},
 		},
 	}
 }
 
-func createHTTPHeaders(health *workflowsv1.HealthCheck) []v1.HTTPHeader {
-	numHeaders := len(health.Headers)
+func createHTTPHeaders(check *workflowsv1.HealthCheck) []v1.HTTPHeader {
+	numHeaders := len(check.Headers)
 	if numHeaders > 0 {
 		headers := make([]v1.HTTPHeader, 0, numHeaders)
-		for _, header := range health.Headers {
+		for _, header := range check.Headers {
 			headers = append(headers, v1.HTTPHeader{
 				Name:  header.Name,
 				Value: header.Value,
@@ -36,22 +38,22 @@ func createHTTPHeaders(health *workflowsv1.HealthCheck) []v1.HTTPHeader {
 	return nil
 }
 
-func createHTTPGetProbe(health *workflowsv1.HealthCheck) *v1.Probe {
+func createHTTPGetProbe(check *workflowsv1.HealthCheck) *v1.Probe {
 	scheme := v1.URISchemeHTTP
-	if health.Type == workflowsv1.HTTPSCheck {
+	if check.Type == workflowsv1.HTTPSCheck {
 		scheme = v1.URISchemeHTTPS
 	}
 
-	headers := createHTTPHeaders(health)
+	headers := createHTTPHeaders(check)
 
 	return &v1.Probe{
 		Handler: v1.Handler{
 			HTTPGet: &v1.HTTPGetAction{
 				Port: intstr.IntOrString{
-					Type:   intstr.Int,
-					IntVal: health.Port,
+					Type:   intstr.String,
+					StrVal: check.Port,
 				},
-				Path:        health.Path,
+				Path:        check.Path,
 				Scheme:      scheme,
 				HTTPHeaders: headers,
 			},
@@ -59,60 +61,53 @@ func createHTTPGetProbe(health *workflowsv1.HealthCheck) *v1.Probe {
 	}
 }
 
-func createExecProbe(health *workflowsv1.HealthCheck) *v1.Probe {
+func createExecProbe(check *workflowsv1.HealthCheck) *v1.Probe {
 	return &v1.Probe{
 		Handler: v1.Handler{
 			Exec: &v1.ExecAction{
-				Command: []string{"/bin/sh", health.Script},
+				Command: []string{"/bin/sh", check.Script},
 			},
 		},
 	}
 }
 
-func setupProbeOptions(probe *v1.Probe, health *workflowsv1.HealthCheck) {
-	if health.Grace != nil {
-		probe.InitialDelaySeconds = *health.Grace
-	} else {
-		probe.InitialDelaySeconds = workflowsv1.DefaultGrace
+func parseInt(value string, defaultValue int32) int32 {
+	if len(value) > 0 {
+		parsed, err := strconv.Atoi(value)
+		if err != nil {
+			return defaultValue
+		}
+		return int32(parsed)
 	}
 
-	if health.Interval != nil {
-		probe.PeriodSeconds = *health.Interval
-	} else {
-		probe.PeriodSeconds = workflowsv1.DefaultInterval
-	}
-
-	if health.Timeout != nil {
-		probe.TimeoutSeconds = *health.Timeout
-	} else {
-		probe.TimeoutSeconds = workflowsv1.DefaultTimeout
-	}
-
-	if health.Retries != nil {
-		probe.FailureThreshold = *health.Retries
-	} else {
-		probe.FailureThreshold = workflowsv1.DefaultRetries
-	}
+	return defaultValue
 }
 
-func createReadinessProbe(health *workflowsv1.HealthCheck) *v1.Probe {
-	if health != nil {
+func setupProbeOptions(probe *v1.Probe, check *workflowsv1.HealthCheck) {
+	probe.InitialDelaySeconds = parseInt(check.Grace, workflowsv1.DefaultGrace)
+	probe.PeriodSeconds = parseInt(check.Interval, workflowsv1.DefaultInterval)
+	probe.TimeoutSeconds = parseInt(check.Timeout, workflowsv1.DefaultTimeout)
+	probe.FailureThreshold = parseInt(check.Retries, workflowsv1.DefaultRetries)
+}
+
+func createProbe(check *workflowsv1.HealthCheck) *v1.Probe {
+	if check != nil {
 		var probe *v1.Probe
-		switch health.Type {
+		switch check.Type {
 		case workflowsv1.TCPCheck:
-			probe = createTCPProbe(health)
+			probe = createTCPProbe(check)
 		case workflowsv1.HTTPSCheck:
 			fallthrough
 		case workflowsv1.HTTPCheck:
-			probe = createHTTPGetProbe(health)
+			probe = createHTTPGetProbe(check)
 		case workflowsv1.ScriptCheck:
-			probe = createExecProbe(health)
+			probe = createExecProbe(check)
 		default:
 			probe = nil
 		}
 
 		if probe != nil {
-			setupProbeOptions(probe, health)
+			setupProbeOptions(probe, check)
 		}
 
 		return probe

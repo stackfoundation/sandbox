@@ -2,6 +2,7 @@ package sync
 
 import (
 	"bytes"
+	"strconv"
 
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
@@ -29,7 +30,8 @@ func writePorts(dockerfile *bytes.Buffer, step *v1.WorkflowStep) {
 }
 
 func writeSourceMount(dockerfile *bytes.Buffer, step *v1.WorkflowStep) {
-	if !step.OmitSource {
+	omitSource, _ := strconv.ParseBool(step.OmitSource)
+	if !omitSource {
 		sourceLocation := "/app/"
 		if len(step.SourceLocation) > 0 {
 			sourceLocation = step.SourceLocation

@@ -29,7 +29,7 @@ func imageBuiltTransition(c *execution.Context, w *v1.Workflow) {
 }
 
 func initialTransition(c *execution.Context, w *v1.Workflow) {
-	w.Spec.State.Properties = collectVariables(w.Spec.Variables)
+	w.Spec.State.Variables = collectVariables(w.Spec.Variables)
 
 	change := v1.NewChange([]int{})
 	change.Type = v1.StepStarted
@@ -45,7 +45,7 @@ type stepDoneTransition struct {
 }
 
 func (t *stepDoneTransition) transition(c *execution.Context, w *v1.Workflow) {
-	w.Spec.State.Properties.Merge(collectVariables(t.variables))
+	w.Spec.State.Variables.Merge(collectVariables(t.variables))
 
 	step := w.Select(c.StepSelector)
 	step.State.Done = true

@@ -61,6 +61,11 @@ func buildStepImage(e execution.Execution, c *execution.Context) error {
 }
 
 func buildStepImageAndTransitionNext(e execution.Execution, c *execution.Context) error {
+	err := prepareStepIfNecessary(c, c.NextStep, c.NextStepSelector)
+	if err != nil {
+		return err
+	}
+
 	if c.NextStep.RequiresBuild() {
 		err := buildStepImage(e, c)
 		if err != nil {

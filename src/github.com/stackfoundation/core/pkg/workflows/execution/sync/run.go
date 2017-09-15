@@ -6,11 +6,16 @@ import (
 )
 
 func runStepAndTransitionNext(e execution.Execution, c *execution.Context) error {
+	err := prepareStepIfNecessary(c, c.Step, c.StepSelector)
+	if err != nil {
+		return err
+	}
+
 	if c.Step.RequiresBuild() {
 		return runPodStepAndTransitionNext(e, c)
 	}
 
-	return runWorkflowStepAndTransitionNext(e, c)
+	return runExternalWorkflowAndTransitionNext(e, c)
 }
 
 func (e *syncExecution) RunStep(spec *execution.RunStepSpec) error {

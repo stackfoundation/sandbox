@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -24,6 +25,11 @@ type syncExecution struct {
 	dockerClient     *client.Client
 	podsClient       *kubernetes.Clientset
 	workflow         *v1.Workflow
+}
+
+func (e *syncExecution) abort(err error) {
+	e.Complete()
+	fmt.Println(err.Error())
 }
 
 func (e *syncExecution) ChildExecution(workflow *v1.Workflow) (execution.Execution, error) {
@@ -71,9 +77,16 @@ func NewSyncExecution(workflow *v1.Workflow) (execution.Execution, error) {
 }
 
 func (e *syncExecution) Start() {
-	Execute(e, e.workflow)
+	err := Execute(e, e.workflow)
+	if err != nil {
+		e.abort(err)
+	}
+
 	for _ = range e.change {
-		Execute(e, e.workflow)
+		err := Execute(e, e.workflow)
+		if err != nil {
+			e.abort(err)
+		}
 	}
 }
 

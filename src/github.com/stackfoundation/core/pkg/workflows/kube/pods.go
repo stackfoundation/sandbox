@@ -27,6 +27,7 @@ type PodCreationSpec struct {
 	Command          []string
 	Context          context.Context
 	Environment      *properties.Properties
+	Health           *workflowsv1.HealthCheck
 	Image            string
 	LogPrefix        string
 	Readiness        *workflowsv1.HealthCheck
@@ -74,7 +75,8 @@ func CreateAndRunPod(clientSet *kubernetes.Clientset, creationSpec *PodCreationS
 func createPod(pods corev1.PodInterface, name string, creationSpec *PodCreationSpec) (*v1.Pod, error) {
 	mounts, podVolumes := createVolumes(creationSpec.Volumes)
 	environment := createEnvironment(creationSpec.Environment)
-	readinessProbe := createReadinessProbe(creationSpec.Readiness)
+	readinessProbe := createProbe(creationSpec.Readiness)
+	healthProbe := createProbe(creationSpec.Health)
 
 	return pods.Create(&v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -90,6 +92,7 @@ func createPod(pods corev1.PodInterface, name string, creationSpec *PodCreationS
 					VolumeMounts:    mounts,
 					Env:             environment,
 					ReadinessProbe:  readinessProbe,
+					LivenessProbe:   healthProbe,
 				},
 			},
 			Volumes:       podVolumes,

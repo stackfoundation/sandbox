@@ -2,6 +2,7 @@ package properties
 
 import (
 	"github.com/magiconair/properties"
+	"github.com/stackfoundation/core/pkg/workflows/errors"
 )
 
 const placeholderPrefix = "${"
@@ -41,24 +42,39 @@ func (p *Properties) Map() map[string]string {
 }
 
 // Merge Merge properties from another set into this one
-func (p *Properties) Merge(other *Properties) {
+func (p *Properties) Merge(other *Properties) error {
 	if other != nil {
+		composite := errors.NewCompositeError()
 		for k, v := range other.m {
-			p.Set(k, v)
+			composite.Append(p.Set(k, v))
 		}
+
+		return composite.OrNilIfEmpty()
 	}
+
+	return nil
 }
 
 // ResolveFrom Expands all properties of this set using properties from another
-func (p *Properties) ResolveFrom(context *Properties) {
+func (p *Properties) ResolveFrom(context *Properties) error {
 	if context != nil {
+		composite := errors.NewCompositeError()
 		for k, v := range p.m {
-			p.m[k] = context.Expand(v)
+			v, err := context.Expand(v)
+			composite.Append(err)
+
+			p.m[k] = v
 		}
+
+		return composite.OrNilIfEmpty()
 	}
+
+	return nil
 }
 
 // Set Set a property, expanding the value before setting
-func (p *Properties) Set(key string, value string) {
-	p.m[key] = p.Expand(value)
+func (p *Properties) Set(key string, value string) error {
+	value, err := p.Expand(value)
+	p.m[key] = value
+	return err
 }
