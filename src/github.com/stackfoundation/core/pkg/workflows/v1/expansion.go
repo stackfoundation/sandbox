@@ -107,6 +107,10 @@ func ExpandStep(step *WorkflowStep, variables *properties.Properties) error {
 	step.Dockerfile = dockerfile
 	composite.Append(err)
 
+	dockerignore, err := variables.Expand(step.Dockerignore)
+	step.Dockerignore = dockerignore
+	composite.Append(err)
+
 	environment, err := expandEnvironment(step.Environment, variables)
 	step.Environment = environment
 	composite.Append(err)

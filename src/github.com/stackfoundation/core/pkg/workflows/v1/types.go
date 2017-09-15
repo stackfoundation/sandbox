@@ -77,6 +77,7 @@ type StepState struct {
 // WorkflowStep Step within a workflow
 type WorkflowStep struct {
 	Dockerfile       string           `json:"dockerfile" yaml:"dockerfile"`
+	Dockerignore     string           `json:"dockerignore" yaml:"dockerignore"`
 	Environment      []VariableSource `json:"environment" yaml:"environment"`
 	Generator        string           `json:"generator" yaml:"generator"`
 	Health           *HealthCheck     `json:"health" yaml:"health"`

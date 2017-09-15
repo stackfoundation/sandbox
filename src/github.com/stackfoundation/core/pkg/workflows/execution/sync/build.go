@@ -35,6 +35,7 @@ func createBuildOptionsForStepImage(workflowSpec *v1.WorkflowSpec, step *v1.Work
 	return &image.BuildOptions{
 		ContextDirectory:  workflowSpec.State.ProjectRoot,
 		DockerfilePath:    "",
+		Dockerignore:      step.Dockerignore,
 		ScriptName:        step.State.GeneratedScript,
 		DockerfileContent: strings.NewReader(dockerfileContent),
 		ScriptContent:     strings.NewReader(script),

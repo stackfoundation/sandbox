@@ -5,8 +5,24 @@ import (
 
 	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/workflows/execution"
+	"github.com/stackfoundation/core/pkg/workflows/files"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
+
+func runChildWorkflow(e execution.Execution, c *execution.Context, workflow *v1.Workflow) error {
+	child, err := e.ChildExecution(workflow)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		child.Start()
+		log.Debugf("Finished running workflow")
+		e.TransitionNext(c, workflowWaitDoneTransition)
+	}()
+
+	return e.TransitionNext(c, workflowWaitTransition)
+}
 
 func runGeneratedWorfklowAndTransitionNext(e execution.Execution, c *execution.Context) error {
 	step := c.Step
@@ -20,18 +36,7 @@ func runGeneratedWorfklowAndTransitionNext(e execution.Execution, c *execution.C
 		return err
 	}
 
-	child, err := e.ChildExecution(workflow)
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		child.Start()
-		log.Debugf("Finished running generated workflow")
-		e.TransitionNext(c, workflowWaitDoneTransition)
-	}()
-
-	return e.TransitionNext(c, workflowWaitTransition)
+	return runChildWorkflow(e, c, workflow)
 }
 
 func runExternalWorkflowAndTransitionNext(e execution.Execution, c *execution.Context) error {
@@ -40,5 +45,10 @@ func runExternalWorkflowAndTransitionNext(e execution.Execution, c *execution.Co
 
 	fmt.Println("Running step " + stepName + ":")
 
-	return e.TransitionNext(c, workflowWaitTransition)
+	workflow, err := files.ReadWorkflow(c.Step.Target)
+	if err != nil {
+		return err
+	}
+
+	return runChildWorkflow(e, c, workflow)
 }
