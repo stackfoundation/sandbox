@@ -99,6 +99,44 @@ func expandHealthCheck(check *HealthCheck, variables *properties.Properties) err
 	return nil
 }
 
+func expandPorts(ports []string, variables *properties.Properties) ([]string, error) {
+	expandedPorts := ports[:0]
+	composite := errors.NewCompositeError()
+
+	for _, port := range ports {
+		expandedPort, err := variables.Expand(port)
+		composite.Append(err)
+
+		expandedPorts = append(expandedPorts, expandedPort)
+	}
+
+	return expandedPorts, composite.OrNilIfEmpty()
+}
+
+func expandVolumes(volumes []Volume, variables *properties.Properties) ([]Volume, error) {
+	expandedVolumes := volumes[:0]
+	composite := errors.NewCompositeError()
+
+	for _, volume := range volumes {
+		name, err := variables.Expand(volume.Name)
+		composite.Append(err)
+
+		hostPath, err := variables.Expand(volume.HostPath)
+		composite.Append(err)
+
+		mountPath, err := variables.Expand(volume.MountPath)
+		composite.Append(err)
+
+		expandedVolumes = append(expandedVolumes, Volume{
+			Name:      name,
+			HostPath:  hostPath,
+			MountPath: mountPath,
+		})
+	}
+
+	return expandedVolumes, composite.OrNilIfEmpty()
+}
+
 // ExpandStep Expand any placeholders in this step that haven't been expanded yet
 func ExpandStep(step *WorkflowStep, variables *properties.Properties) error {
 	composite := errors.NewCompositeError()
@@ -137,10 +175,18 @@ func ExpandStep(step *WorkflowStep, variables *properties.Properties) error {
 	step.OmitSource = omitSource
 	composite.Append(err)
 
+	ports, err := expandPorts(step.Ports, variables)
+	step.Ports = ports
+	composite.Append(err)
+
 	composite.Append(expandHealthCheck(step.Readiness, variables))
 
 	script, err := variables.Expand(step.Script)
 	step.Script = script
+	composite.Append(err)
+
+	serviceName, err := variables.Expand(step.ServiceName)
+	step.ServiceName = serviceName
 	composite.Append(err)
 
 	sourceLocation, err := variables.Expand(step.SourceLocation)
@@ -159,7 +205,9 @@ func ExpandStep(step *WorkflowStep, variables *properties.Properties) error {
 	step.Type = stepType
 	composite.Append(err)
 
-	// Volumes
+	volumes, err := expandVolumes(step.Volumes, variables)
+	step.Volumes = volumes
+	composite.Append(err)
 
 	return composite.OrNilIfEmpty()
 }

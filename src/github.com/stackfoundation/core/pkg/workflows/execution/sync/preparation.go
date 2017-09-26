@@ -12,12 +12,12 @@ type stepExpansionError struct {
 }
 
 func (e *stepExpansionError) Error() string {
-	return "Error expanding variables in step " + e.step + ":\n" + e.err.Error()
+	return "Error replacing variable placeholders in step " + e.step + ":\n" + e.err.Error()
 }
 
 func expandStep(c *execution.Context, step *v1.WorkflowStep, stepSelector []int) error {
 	stepName := step.StepName(stepSelector)
-	log.Debugf("Expanding variables in step %v", stepName)
+	log.Debugf("Expanding variable placeholders in step %v", stepName)
 
 	err := v1.ExpandStep(step, c.Workflow.Spec.State.Variables)
 	if err != nil {
@@ -29,7 +29,7 @@ func expandStep(c *execution.Context, step *v1.WorkflowStep, stepSelector []int)
 			return &stepExpansionError{err: err, step: stepName}
 		}
 
-		log.Debugf("Ignoring missing variable references in step %v:\n%v", stepName, err)
+		log.Debugf("Ignoring missing variable placeholders in step %v:\n%v", stepName, err)
 	}
 
 	return nil
@@ -38,6 +38,11 @@ func expandStep(c *execution.Context, step *v1.WorkflowStep, stepSelector []int)
 func prepareStepIfNecessary(c *execution.Context, step *v1.WorkflowStep, stepSelector []int) error {
 	if step != nil && !step.State.Prepared {
 		err := expandStep(c, step, stepSelector)
+		if err != nil {
+			return err
+		}
+
+		err = v1.ValidateStep(step, stepSelector)
 		if err != nil {
 			return err
 		}

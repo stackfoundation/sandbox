@@ -8,10 +8,11 @@ import (
 )
 
 func writeFromInstruction(dockerfile *bytes.Buffer, step *v1.WorkflowStep) {
+	dockerfile.WriteString("FROM ")
+
 	if step.ImageSource == v1.SourceStep {
-		// Use previous step image
+		dockerfile.WriteString(step.State.GeneratedBaseImage)
 	} else {
-		dockerfile.WriteString("FROM ")
 		dockerfile.WriteString(step.Image)
 	}
 

@@ -25,9 +25,9 @@ func containsPlaceholders(text string) bool {
 	return placeholderMatcher.MatchString(text)
 }
 
-func validateStepType(step *WorkflowStep, stepSelector []int) error {
+func validateStepType(step *WorkflowStep, stepSelector []int, ignorePlaceholders bool) error {
 	if len(step.Type) > 0 {
-		if containsPlaceholders(step.Type) {
+		if ignorePlaceholders && containsPlaceholders(step.Type) {
 			return nil
 		}
 
@@ -42,9 +42,9 @@ func validateStepType(step *WorkflowStep, stepSelector []int) error {
 	return nil
 }
 
-func validateStepSource(step *WorkflowStep, stepSelector []int) error {
+func validateStepSource(step *WorkflowStep, stepSelector []int, ignorePlaceholders bool) error {
 	if len(step.OmitSource) > 0 {
-		if containsPlaceholders(step.OmitSource) {
+		if ignorePlaceholders && containsPlaceholders(step.OmitSource) {
 			return nil
 		}
 
@@ -63,15 +63,20 @@ func validateStepSource(step *WorkflowStep, stepSelector []int) error {
 	return nil
 }
 
-func validateStepImage(step *WorkflowStep, stepSelector []int) error {
+func validateStepImage(step *WorkflowStep, stepSelector []int, ignorePlaceholders bool) error {
 	if len(step.ImageSource) > 0 {
-		if containsPlaceholders(string(step.ImageSource)) {
+		if ignorePlaceholders && containsPlaceholders(string(step.ImageSource)) {
 			return nil
 		}
 
 		if step.ImageSource != SourceStep &&
 			step.ImageSource != SourceImage {
 			return newValidationError("Invalid image source specified for " +
+				step.StepName(stepSelector))
+		}
+
+		if len(step.Image) < 1 {
+			return newValidationError("An image must be specified for " +
 				step.StepName(stepSelector))
 		}
 	}
@@ -118,7 +123,7 @@ func validateCompoundStep(step *WorkflowStep, stepSelector []int) error {
 
 		for stepNumber, subStep := range step.Steps {
 			subStepSelector := append(stepSelector, stepNumber)
-			composite.Append(ValidateStep(&subStep, subStepSelector))
+			composite.Append(validateStepInternal(&subStep, subStepSelector, false))
 		}
 
 		return composite.OrNilIfEmpty()
@@ -184,18 +189,22 @@ func validateStepSubType(step *WorkflowStep, stepSelector []int) error {
 	return nil
 }
 
-// ValidateStep Validate the specified workflow step
-func ValidateStep(step *WorkflowStep, stepSelector []int) error {
+func validateStepInternal(step *WorkflowStep, stepSelector []int, ignorePlaceholders bool) error {
 	composite := errors.NewCompositeError()
 
-	composite.Append(validateStepType(step, stepSelector))
+	composite.Append(validateStepType(step, stepSelector, ignorePlaceholders))
 	composite.Append(validateStepSubType(step, stepSelector))
-	composite.Append(validateStepSource(step, stepSelector))
-	composite.Append(validateStepImage(step, stepSelector))
+	composite.Append(validateStepSource(step, stepSelector, ignorePlaceholders))
+	composite.Append(validateStepImage(step, stepSelector, ignorePlaceholders))
 	composite.Append(validateStepHealth(step, stepSelector))
 	composite.Append(validateCompoundStep(step, stepSelector))
 
 	return composite.OrNilIfEmpty()
+}
+
+// ValidateStep Validate the specified workflow step
+func ValidateStep(step *WorkflowStep, stepSelector []int) error {
+	return validateStepInternal(step, stepSelector, false)
 }
 
 // Validate Validate the specified workflow
@@ -208,7 +217,7 @@ func Validate(workflowSpec *WorkflowSpec) error {
 	for stepNumber, step := range workflowSpec.Steps {
 		stepSelector[0] = stepNumber
 
-		err := ValidateStep(&step, stepSelector)
+		err := validateStepInternal(&step, stepSelector, false)
 		if err != nil {
 			return err
 		}

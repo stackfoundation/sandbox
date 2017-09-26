@@ -8,10 +8,11 @@ import (
 )
 
 type podCompletionListener struct {
-	execution         execution.Execution
-	context           *execution.Context
-	generatedWorkflow string
-	variables         []v1.VariableSource
+	execution          execution.Execution
+	context            *execution.Context
+	generatedContainer string
+	generatedWorkflow  string
+	variables          []v1.VariableSource
 }
 
 func (listener *podCompletionListener) addVariable(name string, value string) {
@@ -25,14 +26,19 @@ func (listener *podCompletionListener) addGeneratedWorkflow(content string) {
 	listener.generatedWorkflow = content
 }
 
+func (listener *podCompletionListener) Container(containerID string) {
+	listener.generatedContainer = containerID
+}
+
 func (listener *podCompletionListener) Ready() {
 	listener.execution.TransitionNext(listener.context, stepReadyTransition)
 }
 
 func (listener *podCompletionListener) Done() {
 	transition := stepDoneTransition{
-		variables:        listener.variables,
-		generatedWorkfow: listener.generatedWorkflow,
+		variables:          listener.variables,
+		generatedContainer: listener.generatedContainer,
+		generatedWorkfow:   listener.generatedWorkflow,
 	}
 
 	listener.execution.TransitionNext(listener.context, transition.transition)
@@ -59,13 +65,19 @@ func runPodStepAndTransitionNext(e execution.Execution, c *execution.Context) er
 	environment := collectVariables(step.Environment)
 	environment.ResolveFrom(c.Workflow.Spec.State.Variables)
 
+	if len(step.Name) < 1 {
+		stepName = "Step " + stepName
+	}
+
 	err := e.RunStep(&execution.RunStepSpec{
 		Command:          command,
 		Environment:      environment,
 		Image:            step.State.GeneratedImage,
 		Name:             stepName,
 		PodListener:      completionListener,
+		Ports:            step.Ports,
 		Readiness:        step.Readiness,
+		ServiceName:      step.ServiceName,
 		VariableReceiver: completionListener.addVariable,
 		Volumes:          step.Volumes,
 		WorkflowReceiver: completionListener.addGeneratedWorkflow,

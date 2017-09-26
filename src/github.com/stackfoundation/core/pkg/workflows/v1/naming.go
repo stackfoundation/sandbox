@@ -25,6 +25,12 @@ func GenerateScriptName() string {
 	return "script-" + uuid.String()[:8] + ".sh"
 }
 
+// GeneratePodName Generates a name for a pod
+func GeneratePodName() string {
+	uuid := uuid.NewUUID()
+	return "pod-" + uuid.String()[:8]
+}
+
 // GenerateVolumeName Generates a name for a step volume
 func GenerateVolumeName() string {
 	uuid := uuid.NewUUID()
@@ -48,7 +54,7 @@ func (s *WorkflowStep) StepName(selector []int) string {
 	var stepName string
 
 	if len(s.Name) > 0 {
-		stepName = `"` + s.Name + `"`
+		stepName = s.Name
 	} else {
 		var nameBuilder bytes.Buffer
 

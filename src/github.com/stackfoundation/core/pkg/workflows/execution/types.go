@@ -10,6 +10,7 @@ import (
 // Execution The execution of a workflow
 type Execution interface {
 	ChildExecution(workflow *v1.Workflow) (Execution, error)
+	CommitContainer(containerID string, image string) error
 	Start()
 	Complete() error
 	BuildStepImage(image string, options *image.BuildOptions) error
@@ -24,7 +25,9 @@ type RunStepSpec struct {
 	Image            string
 	Name             string
 	PodListener      kube.PodListener
+	Ports            []string
 	Readiness        *v1.HealthCheck
+	ServiceName      string
 	VariableReceiver func(string, string)
 	Volumes          []v1.Volume
 	WorkflowReceiver func(string)

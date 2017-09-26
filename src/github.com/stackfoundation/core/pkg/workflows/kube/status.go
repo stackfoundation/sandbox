@@ -1,6 +1,26 @@
 package kube
 
-import "k8s.io/client-go/pkg/api/v1"
+import (
+	"strings"
+
+	"k8s.io/client-go/pkg/api/v1"
+)
+
+func getContainerID(status *v1.PodStatus) string {
+	if len(status.ContainerStatuses) > 0 {
+		id := status.ContainerStatuses[0].ContainerID
+		if len(id) > 0 {
+			schemeIndex := strings.Index(id, "docker://")
+			if schemeIndex > -1 {
+				return id[schemeIndex+9:]
+			}
+
+			return id
+		}
+	}
+
+	return ""
+}
 
 func isContainerRunning(status *v1.PodStatus) bool {
 	if len(status.ContainerStatuses) > 0 {

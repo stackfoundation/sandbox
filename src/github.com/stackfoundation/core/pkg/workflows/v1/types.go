@@ -66,12 +66,14 @@ const SourceStep ImageSource = "step"
 
 // StepState State of step
 type StepState struct {
-	GeneratedImage    string `json:"generatedImage" yaml:"generatedImage"`
-	GeneratedScript   string `json:"generatedScript" yaml:"generatedScript"`
-	GeneratedWorkflow string `json:"generatedWorkflow" yaml:"generatedWorkflow"`
-	Ready             bool   `json:"ready" yaml:"ready"`
-	Done              bool   `json:"done" yaml:"done"`
-	Prepared          bool   `json:"prepared" yaml:"prepared"`
+	GeneratedBaseImage string `json:"baseImage" yaml:"baseImage"`
+	GeneratedImage     string `json:"generatedImage" yaml:"generatedImage"`
+	GeneratedContainer string `json:"generatedContainer" yaml:"generatedContainer"`
+	GeneratedScript    string `json:"generatedScript" yaml:"generatedScript"`
+	GeneratedWorkflow  string `json:"generatedWorkflow" yaml:"generatedWorkflow"`
+	Ready              bool   `json:"ready" yaml:"ready"`
+	Done               bool   `json:"done" yaml:"done"`
+	Prepared           bool   `json:"prepared" yaml:"prepared"`
 }
 
 // WorkflowStep Step within a workflow
@@ -91,6 +93,7 @@ type WorkflowStep struct {
 	Ports            []string         `json:"ports" yaml:"ports"`
 	Readiness        *HealthCheck     `json:"readiness" yaml:"readiness"`
 	Script           string           `json:"script" yaml:"script"`
+	ServiceName      string           `json:"serviceName" yaml:"serviceName"`
 	SourceLocation   string           `json:"sourceLocation" yaml:"sourceLocation"`
 	State            StepState        `json:"state" yaml:"state"`
 	Steps            []WorkflowStep   `json:"steps" yaml:"steps"`

@@ -11,6 +11,14 @@ import (
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
+type buildError struct {
+	message string
+}
+
+func (err *buildError) Error() string {
+	return err.message
+}
+
 func createBuildOptionsForStepImage(workflowSpec *v1.WorkflowSpec, step *v1.WorkflowStep) *image.BuildOptions {
 	if step.HasScript() {
 		step.State.GeneratedScript = v1.GenerateScriptName()
@@ -45,6 +53,13 @@ func createBuildOptionsForStepImage(workflowSpec *v1.WorkflowSpec, step *v1.Work
 func buildStepImage(e execution.Execution, c *execution.Context) error {
 	step := c.NextStep
 	stepName := step.StepName(c.NextStepSelector)
+
+	if step.ImageSource == v1.SourceStep {
+		err := commitPreviousStepImage(step, e, c)
+		if err != nil {
+			return err
+		}
+	}
 
 	fmt.Println("Building image for step " + stepName + ":")
 

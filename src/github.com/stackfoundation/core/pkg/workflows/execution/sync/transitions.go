@@ -40,14 +40,16 @@ func initialTransition(c *execution.Context, w *v1.Workflow) {
 }
 
 type stepDoneTransition struct {
-	generatedWorkfow string
-	variables        []v1.VariableSource
+	generatedContainer string
+	generatedWorkfow   string
+	variables          []v1.VariableSource
 }
 
 func (t *stepDoneTransition) transition(c *execution.Context, w *v1.Workflow) {
 	w.Spec.State.Variables.Merge(collectVariables(t.variables))
 
 	step := w.Select(c.StepSelector)
+	step.State.GeneratedContainer = t.generatedContainer
 	step.State.Done = true
 
 	if step.IsGenerator() {

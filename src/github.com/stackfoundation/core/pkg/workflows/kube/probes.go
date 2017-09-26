@@ -13,8 +13,8 @@ func createTCPProbe(check *workflowsv1.HealthCheck) *v1.Probe {
 		Handler: v1.Handler{
 			TCPSocket: &v1.TCPSocketAction{
 				Port: intstr.IntOrString{
-					Type:   intstr.String,
-					StrVal: check.Port,
+					Type:   intstr.Int,
+					IntVal: parseInt(check.Port, 0),
 				},
 			},
 		},
@@ -50,8 +50,8 @@ func createHTTPGetProbe(check *workflowsv1.HealthCheck) *v1.Probe {
 		Handler: v1.Handler{
 			HTTPGet: &v1.HTTPGetAction{
 				Port: intstr.IntOrString{
-					Type:   intstr.String,
-					StrVal: check.Port,
+					Type:   intstr.Int,
+					IntVal: parseInt(check.Port, 0),
 				},
 				Path:        check.Path,
 				Scheme:      scheme,

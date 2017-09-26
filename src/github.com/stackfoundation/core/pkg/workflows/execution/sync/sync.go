@@ -57,18 +57,21 @@ func NewSyncExecution(workflow *v1.Workflow) (execution.Execution, error) {
 
 	context, cancel := context.WithCancel(context.Background())
 
+	change := make(chan bool)
+
 	interruptChannel := make(chan os.Signal, 1)
 	signal.Notify(interruptChannel, os.Interrupt)
 	go func() {
 		for _ = range interruptChannel {
-			log.Debugf("An interrupt was requested, stopping controller!")
+			log.Debugf("An interrupt was requested, performing clean-up!")
+			close(change)
 			cancel()
 		}
 	}()
 
 	return &syncExecution{
 		cancel:       cancel,
-		change:       make(chan bool),
+		change:       change,
 		context:      context,
 		dockerClient: dockerClient,
 		podsClient:   podsClient,

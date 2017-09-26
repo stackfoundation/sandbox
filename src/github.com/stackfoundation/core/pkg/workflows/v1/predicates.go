@@ -19,8 +19,8 @@ func (s *WorkflowStep) IsGenerator() bool {
 
 // IsServiceWithWait Is this a service step that waits for readiness?
 func (s *WorkflowStep) IsServiceWithWait() bool {
-	return (s.Type == StepService && s.Readiness != nil && s.Readiness.SkipWait == "false") ||
-		((len(s.Type) == 0) && s.Readiness != nil && s.Readiness.SkipWait == "false")
+	return (s.Type == StepService && s.Readiness != nil && s.Readiness.SkipWait != "true") ||
+		((len(s.Type) == 0) && s.Readiness != nil && s.Readiness.SkipWait != "true")
 }
 
 // ScriptlessImageBuild Does the step require an image to be built but doesn't have a script?

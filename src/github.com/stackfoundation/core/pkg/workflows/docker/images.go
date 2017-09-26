@@ -12,6 +12,16 @@ import (
 	"github.com/stackfoundation/core/pkg/workflows/image"
 )
 
+// CommitContainer Commit a container as an image
+func CommitContainer(ctx context.Context, dockerClient *client.Client, containerName string, reference string) error {
+	_, err := dockerClient.ContainerCommit(ctx, containerName, types.ContainerCommitOptions{Reference: reference})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // BuildImage Build an image with the specified name & options
 func BuildImage(ctx context.Context, dockerClient *client.Client, imageName string, options *image.BuildOptions) error {
 	var imageStream io.ReadCloser

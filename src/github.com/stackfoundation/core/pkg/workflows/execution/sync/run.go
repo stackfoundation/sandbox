@@ -23,9 +23,11 @@ func (e *syncExecution) RunStep(spec *execution.RunStepSpec) error {
 		e.podsClient,
 		&kube.PodCreationSpec{
 			LogPrefix:        spec.Name,
+			ServiceName:      spec.ServiceName,
 			Image:            spec.Image,
 			Command:          spec.Command,
 			Environment:      spec.Environment,
+			Ports:            spec.Ports,
 			Readiness:        spec.Readiness,
 			Volumes:          spec.Volumes,
 			Context:          e.context,
