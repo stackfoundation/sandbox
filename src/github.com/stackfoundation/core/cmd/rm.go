@@ -11,7 +11,7 @@ import (
 )
 
 var deleteHostCmd = &cobra.Command{
-	Use:   "delete-host",
+	Use:   "rm",
 	Short: "Delete VM host",
 	Long:  `Delete VM host.`,
 	Run: func(command *cobra.Command, args []string) {

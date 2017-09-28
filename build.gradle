@@ -4,7 +4,7 @@ apply from: '../../gradle/binaries.gradle'
 
 goBinData 'github.com/stackfoundation/core',
         'pkg/minikube/assets/assets.go',
-        ['./out/localkube', './out/docker-machine-driver-xhyve', 'deploy/addons/...'],
+        ['./out/localkube', './out/docker-machine-driver-xhyve', './out/wrapper-darwin', './out/sbox', 'deploy/addons/...'],
         'assets'
 
 goBinary 'Core',
