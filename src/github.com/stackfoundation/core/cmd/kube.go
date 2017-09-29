@@ -289,7 +289,7 @@ func configureKubeStartingCommandFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(createMount, false, "This will start the mount daemon and automatically mount files into Sandbox")
 	cmd.Flags().String(mountString, constants.DefaultMountDir+":"+constants.DefaultMountEndpoint, "The argument to pass the Sandbox mount command on start")
 	cmd.Flags().Bool(disableDriverMounts, false, "Disables the filesystem mounts provided by the hypervisors (vboxfs, xhyve-9p)")
-	cmd.Flags().String(vmDriver, constants.DefaultVMDriver, fmt.Sprintf("VM driver is one of: %v", constants.SupportedVMDrivers))
+	cmd.Flags().String(vmDriver, DefaultVMDriver(), fmt.Sprintf("VM driver is one of: %v", constants.SupportedVMDrivers))
 	cmd.Flags().Int(memory, constants.DefaultMemory, "Amount of RAM allocated to the Sandbox VM")
 	cmd.Flags().Int(cpus, constants.DefaultCPUS, "Number of CPUs allocated to the Sandbox VM")
 	cmd.Flags().String(humanReadableDiskSize, constants.DefaultDiskSize, "Disk size allocated to the Sandbox VM (format: <number>[<unit>], where unit = b, k, m or g)")
@@ -311,4 +311,8 @@ func configureKubeStartingCommandFlags(cmd *cobra.Command) {
                 The key should be '.' separated, and the first part before the dot is the component to apply the configuration to.
                 Valid components are: kubelet, apiserver, controller-manager, etcd, proxy, scheduler.`)
 	viper.BindPFlags(cmd.Flags())
+}
+
+func defaultVmDriver() {
+	return
 }

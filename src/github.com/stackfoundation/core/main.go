@@ -28,8 +28,6 @@ func main() {
 	//cmd.RootCmd.SetArgs([]string{"dashboard"})
 	//cmd.RootCmd.Execute()
 
-	// viper.Set("vm-driver", "xhyve")
-
 	newInstallation, core, err := install.EnsureCoreInstalled()
 
 	if err != nil {
