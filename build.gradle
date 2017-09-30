@@ -8,15 +8,13 @@ goBinData 'github.com/stackfoundation/core',
         'assets'
 
 goBinary 'Core',
-        ['windows', 'darwin'],
-        ['amd64'],
+        ['windows-amd64', 'darwin-amd64'],
         false,
         [],
         'github.com/stackfoundation/core'
 
 goBinary 'Bootstrap',
-        ['windows', 'darwin'],
-        ['amd64'],
+        ['windows-386', 'darwin-386', 'linux-386', 'linux-amd64'],
         true,
         [],
         'github.com/stackfoundation/bootstrap'

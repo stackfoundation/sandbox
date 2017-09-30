@@ -51,8 +51,9 @@ var viperWhiteList = []string{
 
 var RootCmd = &cobra.Command{
 	Use:   "sbox",
-	Short: "Sandbox is a tool for running reproducible development workflows.",
-	Long:  `Sandbox is a tool that uses Docker to create, manage and run development workflows.`,
+	Short: "Sandbox is a tool that runs Docker-based workflows.",
+	Long: `Sandbox is a tool that runs Docker-based workflows.
+For help, visit https://stack.foundation/docs`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		for _, path := range dirs {
 			if err := os.MkdirAll(path, 0777); err != nil {
