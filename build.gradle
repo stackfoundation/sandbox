@@ -8,7 +8,7 @@ goBinData 'github.com/stackfoundation/core',
         'assets'
 
 goBinary 'Core',
-        ['windows-amd64', 'darwin-amd64'],
+        ['windows-386', 'windows-amd64', 'darwin-amd64'],
         false,
         [],
         'github.com/stackfoundation/core'
@@ -16,5 +16,6 @@ goBinary 'Core',
 goBinary 'Bootstrap',
         ['windows-386', 'darwin-386', 'linux-386', 'linux-amd64'],
         true,
-        [],
+        ["github.com/stackfoundation/install/binariesBucket=${defaultEnvironment.binariesBucketUrl}",
+         "github.com/stackfoundation/install/cliVersion=${cliVersion}"],
         'github.com/stackfoundation/bootstrap'

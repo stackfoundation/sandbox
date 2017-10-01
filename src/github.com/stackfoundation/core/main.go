@@ -6,12 +6,6 @@ package main
 
 //import "time"
 import (
-	"fmt"
-	"os"
-	"os/exec"
-
-	"github.com/stackfoundation/bootstrap/install"
-
 	"github.com/stackfoundation/core/cmd"
 )
 
@@ -28,18 +22,5 @@ func main() {
 	//cmd.RootCmd.SetArgs([]string{"dashboard"})
 	//cmd.RootCmd.Execute()
 
-	newInstallation, core, err := install.EnsureCoreInstalled()
-
-	if err != nil {
-		fmt.Println("EnsureCoreInstalled failed - %v", err)
-		os.Exit(1)
-	} else if newInstallation {
-		fmt.Println("Executing %v", core)
-
-		cmd := exec.Command(core, os.Args[1:]...)
-		stdoutStderr, _ := cmd.CombinedOutput()
-		fmt.Printf("%s\n", stdoutStderr)
-	} else {
-		cmd.Execute()
-	}
+	cmd.Execute()
 }
