@@ -82,14 +82,6 @@ func createXhyveHost(config MachineConfig) *xhyveDriver {
 	}
 }
 
-func detectVBoxManageCmd() string {
-	cmd := "VBoxManage"
-	if path, err := exec.LookPath(cmd); err == nil {
-		return path
-	}
-	return cmd
-}
-
 func checkXhyvePlugin() {
 	ex, err := os.Executable()
 
