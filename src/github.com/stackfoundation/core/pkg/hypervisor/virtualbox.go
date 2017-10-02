@@ -1,5 +1,0 @@
-package hypervisor
-
-func installVirtualbox() {
-
-}

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,60 +14,11 @@ import (
 
 var shell32 = syscall.NewLazyDLL("shell32.dll")
 var user32 = syscall.NewLazyDLL("user32.dll")
-var shellExecute = shell32.NewProc("ShellExecuteW")
 var sendMessageTimeout = user32.NewProc("SendMessageTimeoutW")
 
-func ShellExecute(file, parameters string) error {
-	var verb, param, directory uintptr
-	verb = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("runas")))
-	if len(parameters) != 0 {
-		param = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(parameters)))
-	}
-
-	ret, _, _ := shellExecute.Call(
-		uintptr(0),
-		verb,
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(file))),
-		param,
-		directory,
-		uintptr(0))
-
-	errorMsg := ""
-	if ret != 0 && ret <= 32 {
-		switch int(ret) {
-		case ERROR_FILE_NOT_FOUND:
-			errorMsg = "The specified file was not found."
-		case ERROR_PATH_NOT_FOUND:
-			errorMsg = "The specified path was not found."
-		case ERROR_BAD_FORMAT:
-			errorMsg = "The .exe file is invalid (non-Win32 .exe or error in .exe image)."
-		case SE_ERR_ACCESSDENIED:
-			errorMsg = "The operating system denied access to the specified file."
-		case SE_ERR_ASSOCINCOMPLETE:
-			errorMsg = "The file name association is incomplete or invalid."
-		case SE_ERR_DDEBUSY:
-			errorMsg = "The DDE transaction could not be completed because other DDE transactions were being processed."
-		case SE_ERR_DDEFAIL:
-			errorMsg = "The DDE transaction failed."
-		case SE_ERR_DDETIMEOUT:
-			errorMsg = "The DDE transaction could not be completed because the request timed out."
-		case SE_ERR_DLLNOTFOUND:
-			errorMsg = "The specified DLL was not found."
-		case SE_ERR_NOASSOC:
-			errorMsg = "There is no application associated with the given file name extension. This error will also be returned if you attempt to print a file that is not printable."
-		case SE_ERR_OOM:
-			errorMsg = "There was not enough memory to complete the operation."
-		case SE_ERR_SHARE:
-			errorMsg = "A sharing violation occurred."
-		default:
-			errorMsg = fmt.Sprintf("Unknown error occurred with error code %v", ret)
-		}
-	} else {
-		return nil
-	}
-
-	return errors.New(errorMsg)
-}
+const HWND_BROADCAST = 0xffff
+const WM_SETTINGCHANGE = 0x001A
+const SMTO_ABORTIFHUNG = 0x0002
 
 func NotifySettingChange() uintptr {
 	ret, _, _ := sendMessageTimeout.Call(

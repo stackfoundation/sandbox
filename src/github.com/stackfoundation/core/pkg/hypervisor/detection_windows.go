@@ -1,12 +1,16 @@
 package hypervisor
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
+	"github.com/cloudflare/cfssl/log"
 	"github.com/golang/glog"
 	"golang.org/x/sys/windows/registry"
 )
@@ -61,4 +65,49 @@ func findVBoxInstallDirInRegistry() (string, error) {
 	}
 
 	return installDir, nil
+}
+
+var powershell string
+
+func init() {
+	powershell, _ = exec.LookPath("powershell.exe")
+}
+
+func cmdOut(args ...string) (string, error) {
+	args = append([]string{"-NoProfile", "-NonInteractive"}, args...)
+	cmd := exec.Command(powershell, args...)
+	log.Debugf("[executing ==>] : %v %v", powershell, strings.Join(args, " "))
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	log.Debugf("[stdout =====>] : %s", stdout.String())
+	log.Debugf("[stderr =====>] : %s", stderr.String())
+	return stdout.String(), err
+}
+
+func parseLines(stdout string) []string {
+	resp := []string{}
+
+	s := bufio.NewScanner(strings.NewReader(stdout))
+	for s.Scan() {
+		resp = append(resp, s.Text())
+	}
+
+	return resp
+}
+
+func hypervAvailable() error {
+	stdout, err := cmdOut("@(Get-Command Get-VM).ModuleName")
+	if err != nil {
+		return err
+	}
+
+	resp := parseLines(stdout)
+	if resp[0] != "Hyper-V" {
+		// return ErrNotInstalled
+	}
+
+	return nil
 }

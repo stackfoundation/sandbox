@@ -18,7 +18,6 @@ import (
 	//goflag "flag"
 	//"io/ioutil"
 
-	"fmt"
 	"os"
 	"strings"
 
@@ -58,7 +57,6 @@ var RootCmd = &cobra.Command{
 	Long: `Sandbox is a tool that runs Docker-based workflows.
 For help, visit https://stack.foundation/docs`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Original arg: " + originalCommand)
 		if len(originalCommand) > 0 {
 			cmd.Use = originalCommand
 		}
