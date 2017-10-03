@@ -25,9 +25,9 @@ import (
 	"github.com/spf13/cobra"
 	//"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/minikube/config"
 	"github.com/stackfoundation/core/pkg/minikube/constants"
+	"github.com/stackfoundation/log"
 	//"github.com/golang/glog"
 )
 
@@ -57,6 +57,10 @@ var RootCmd = &cobra.Command{
 	Long: `Sandbox is a tool that runs Docker-based workflows.
 For help, visit https://stack.foundation/docs`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if debug {
+			log.SetDebug(true)
+		}
+
 		if len(originalCommand) > 0 {
 			cmd.Use = originalCommand
 		}
@@ -82,9 +86,6 @@ For help, visit https://stack.foundation/docs`,
 		//        logDir.Value.Set(constants.MakeMiniPath("logs"))
 		//}
 
-		if debug {
-			log.SetDebug(true)
-		}
 	},
 }
 

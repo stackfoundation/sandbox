@@ -2,9 +2,35 @@ package hypervisor
 
 import (
 	"fmt"
+	"path"
+	"path/filepath"
 
+	"github.com/stackfoundation/net/download"
+
+	"github.com/stackfoundation/core/pkg/io"
+	"github.com/stackfoundation/install"
 	"github.com/stackfoundation/metadata"
 )
+
+func downloadVirtualBoxIfNecessary() (string, error) {
+	installPath, err := install.GetInstallPath()
+	if err != nil {
+		return "", err
+	}
+
+	pkg, md5 := platformVirtualBoxPackage()
+	extension := path.Ext(pkg)
+	virtualBoxInstaller := filepath.Join(installPath, "VirtualBoxInstall"+extension)
+
+	if !io.MD5SumEquals(virtualBoxInstaller, md5) {
+		err = download.WithProgress("Downloading VirtualBox", pkg, virtualBoxInstaller, "VirtualBoxDownload")
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return virtualBoxInstaller, nil
+}
 
 func SelectAndPrepareHypervisor(preferred string) string {
 	var m *metadata.Metadata
@@ -23,12 +49,18 @@ func SelectAndPrepareHypervisor(preferred string) string {
 	}
 
 	if preferred == "virtualbox" {
-		vbox = DetectVBoxManageCmd()
-		if len(vbox) > 0 {
-			fmt.Println("Using VBOX at " + vbox)
-		}
+		vboxManageCmd, found := DetectVBoxManageCmd()
+		if !found {
+			installer, err := downloadVirtualBoxIfNecessary()
+			if err != nil {
+				fmt.Println("Error downloading: " + err.Error())
+			}
 
-		fmt.Println("VBOX DL from " + platformVirtualBoxPackageURL())
+			fmt.Println("Installing Virtualbox")
+			installVirtualBox(installer)
+		} else {
+			vbox = vboxManageCmd
+		}
 	}
 
 	if m != nil &&

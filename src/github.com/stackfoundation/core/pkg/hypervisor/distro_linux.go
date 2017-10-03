@@ -51,14 +51,14 @@ echo "${OS} ${VER} ${CODE}"`
 func distroCode() string {
 	installPath, err := install.GetInstallPath()
 	if err != nil {
-		return "generic"
+		return "linux"
 	}
 
 	os.MkdirAll(installPath, 0777)
 	distroScriptPath := filepath.Join(installPath, "distro.sh")
 	err = ioutil.WriteFile(distroScriptPath, []byte(distroScript), 4555)
 	if err != nil {
-		return "generic"
+		return "linux"
 	}
 
 	out, err := process.CommandOut(distroScriptPath)
@@ -105,5 +105,5 @@ func distroCode() string {
 		}
 	}
 
-	return "generic"
+	return "linux"
 }

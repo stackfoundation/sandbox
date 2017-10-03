@@ -13,9 +13,9 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/workflows/kube"
 	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/log"
 )
 
 type workflowController struct {

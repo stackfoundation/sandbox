@@ -35,6 +35,10 @@ func Debug(code string, message string, arguments ...interface{}) {
 	}
 }
 
+func Debugf(message string, arguments ...interface{}) {
+	Debug("", message, arguments...)
+}
+
 // SetDebug Set debug mode on or off
 func SetDebug(isDebug bool) {
 	debug = isDebug

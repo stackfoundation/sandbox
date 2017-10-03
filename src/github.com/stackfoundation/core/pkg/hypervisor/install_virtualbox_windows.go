@@ -8,7 +8,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/stackfoundation/core/pkg/io"
 	"github.com/stackfoundation/install"
 )
 
@@ -44,36 +43,28 @@ func selectTargetArchInstaller(installersFolder string) (string, error) {
 	return filepath.Join(installersFolder, installer), nil
 }
 
-func InstallVirtualBox() error {
+func installVirtualBox(installer string) error {
 	installPath, err := install.GetInstallPath()
 	if err != nil {
 		return err
 	}
 
-	virtualBoxInstaller := filepath.Join(installPath, "VirtualBoxInstall.exe")
-	if !io.MD5SumEquals(virtualBoxInstaller, md5Windows) {
-		// err = download.DownloadFromURL(packageWindows, virtualBoxInstaller, "VirtualBoxDownload")
-		// if err != nil {
-		// 	return err
-		// }
-	}
-
 	installersFolder := filepath.Join(installPath, "VirtualBoxInstallers")
 
-	cmd := exec.Command(virtualBoxInstaller, "-silent", "-extract", "-path", installersFolder)
+	cmd := exec.Command(installer, "-silent", "-extract", "-path", installersFolder)
 	err = cmd.Run()
 	if err != nil {
 		return err
 	}
 
-	installer, err := selectTargetArchInstaller(installersFolder)
+	targetArchInstaller, err := selectTargetArchInstaller(installersFolder)
 	if err != nil {
 		return err
 	}
 
 	installLog := filepath.Join(installPath, "VirtualBoxInstall.log")
 
-	cmd = exec.Command("msiexec", "/i", installer, "/qn", "/Lime!", installLog)
+	cmd = exec.Command("msiexec", "/i", targetArchInstaller, "/qn", "/Lime!", installLog)
 	err = cmd.Start()
 	if err != nil {
 		return err
@@ -83,6 +74,3 @@ func InstallVirtualBox() error {
 
 	return err
 }
-
-const md5OSX = "620b3bdf96b7afb9de56e2742d373568"
-const md5Windows = "935f8590faac3f60c8b61abd4f27d0c7"

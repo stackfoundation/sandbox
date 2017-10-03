@@ -11,36 +11,36 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-func DetectVBoxManageCmd() string {
+func DetectVBoxManageCmd() (string, bool) {
 	cmd := "VBoxManage"
 	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" {
 		if path, err := exec.LookPath(filepath.Join(p, cmd)); err == nil {
-			return path
+			return path, true
 		}
 	}
 
 	if p := os.Getenv("VBOX_MSI_INSTALL_PATH"); p != "" {
 		if path, err := exec.LookPath(filepath.Join(p, cmd)); err == nil {
-			return path
+			return path, true
 		}
 	}
 
 	// Look in default installation path for VirtualBox version > 5
 	if path, err := exec.LookPath(filepath.Join("C:\\Program Files\\Oracle\\VirtualBox", cmd)); err == nil {
-		return path
+		return path, true
 	}
 
 	// Look in windows registry
 	if p, err := findVBoxInstallDirInRegistry(); err == nil {
 		if path, err := exec.LookPath(filepath.Join(p, cmd)); err == nil {
-			return path
+			return path, true
 		}
 	}
 
 	if path, err := exec.LookPath(cmd); err == nil {
-		return path
+		return path, true
 	}
-	return cmd
+	return cmd, false
 }
 
 func findVBoxInstallDirInRegistry() (string, error) {

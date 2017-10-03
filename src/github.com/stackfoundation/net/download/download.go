@@ -10,8 +10,8 @@ import (
 	"github.com/stackfoundation/progress"
 )
 
-// DownloadFromURL Download from an external URL to a local location
-func DownloadFromURL(url string, dest string, logCode string) error {
+// WithProgress Download from an external URL to a local location, with progress
+func WithProgress(title string, url string, dest string, logCode string) error {
 	log.Debug(logCode, "Downloading %v to %v", url, dest)
 
 	err := os.MkdirAll(filepath.Dir(dest), os.ModePerm)
@@ -32,7 +32,7 @@ func DownloadFromURL(url string, dest string, logCode string) error {
 	defer response.Body.Close()
 
 	_, err = io.Copy(output,
-		progress.NewProgressAwareReader(response.Body, "Downloading", logCode, response.ContentLength))
+		progress.NewProgressAwareReader(response.Body, title, logCode, response.ContentLength))
 	if err != nil {
 		return err
 	}

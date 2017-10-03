@@ -514,7 +514,8 @@ func GetVMHostIP(host *host.Host) (net.IP, error) {
 		}
 		return ip, nil
 	case "virtualbox":
-		out, err := exec.Command(hypervisor.DetectVBoxManageCmd(), "showvminfo", "minikube", "--machinereadable").Output()
+		vboxManage, _ := hypervisor.DetectVBoxManageCmd()
+		out, err := exec.Command(vboxManage, "showvminfo", "minikube", "--machinereadable").Output()
 		if err != nil {
 			return []byte{}, errors.Wrap(err, "Error running vboxmanage command")
 		}

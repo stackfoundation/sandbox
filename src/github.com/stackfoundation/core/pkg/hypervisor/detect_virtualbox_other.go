@@ -1,11 +1,13 @@
+// +build !windows
+
 package hypervisor
 
 import "os/exec"
 
-func DetectVBoxManageCmd() string {
+func DetectVBoxManageCmd() (string, bool) {
 	cmd := "VBoxManage"
 	if path, err := exec.LookPath(cmd); err == nil {
-		return path
+		return path, true
 	}
-	return cmd
+	return cmd, false
 }
