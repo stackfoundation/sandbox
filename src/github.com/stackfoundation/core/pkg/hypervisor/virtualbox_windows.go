@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/stackfoundation/core/pkg/io"
 	"github.com/stackfoundation/install"
-	"github.com/stackfoundation/net/download"
 )
 
 func selectInstaller(installers []os.FileInfo, use64Bit bool) string {
@@ -51,11 +51,11 @@ func InstallVirtualBox() error {
 	}
 
 	virtualBoxInstaller := filepath.Join(installPath, "VirtualBoxInstall.exe")
-	if !md5sumEquals(virtualBoxInstaller, md5Windows) {
-		err = download.DownloadFromURL(packageWindows, virtualBoxInstaller, "VirtualBoxDownload")
-		if err != nil {
-			return err
-		}
+	if !io.MD5SumEquals(virtualBoxInstaller, md5Windows) {
+		// err = download.DownloadFromURL(packageWindows, virtualBoxInstaller, "VirtualBoxDownload")
+		// if err != nil {
+		// 	return err
+		// }
 	}
 
 	installersFolder := filepath.Join(installPath, "VirtualBoxInstallers")
@@ -83,9 +83,6 @@ func InstallVirtualBox() error {
 
 	return err
 }
-
-const packageOSX = "http://download.virtualbox.org/virtualbox/5.1.28/VirtualBox-5.1.28-117968-OSX.dmg"
-const packageWindows = "http://download.virtualbox.org/virtualbox/5.1.28/VirtualBox-5.1.28-117968-Win.exe"
 
 const md5OSX = "620b3bdf96b7afb9de56e2742d373568"
 const md5Windows = "935f8590faac3f60c8b61abd4f27d0c7"

@@ -32,61 +32,54 @@ func NotifySettingChange() uintptr {
 	return ret
 }
 
-var installCmd = &cobra.Command{
-	Use:   "install",
-	Short: "Install the Sandbox command-line globally",
-	Long: `Install the Sandbox command-line, and make it available globally.
+func performInstall(command *cobra.Command, args []string) {
+	//environmentVariables, err := registry.OpenKey(
+	//        registry.LOCAL_MACHINE,
+	//        "System\\CurrentControlSet\\Control\\Session Manager\\Environment",
+	//        registry.ALL_ACCESS)
+	environmentVariables, err := registry.OpenKey(
+		registry.CURRENT_USER,
+		"Environment",
+		registry.ALL_ACCESS)
+	defer environmentVariables.Close()
+	if err != nil {
+		//ShellExecute(os.Args[0], "install")
+		panic(err)
+	}
 
-This adds to the system PATH variable so that the Sandbox command-line is available globally.`,
-	Run: func(command *cobra.Command, args []string) {
-		//environmentVariables, err := registry.OpenKey(
-		//        registry.LOCAL_MACHINE,
-		//        "System\\CurrentControlSet\\Control\\Session Manager\\Environment",
-		//        registry.ALL_ACCESS)
-		environmentVariables, err := registry.OpenKey(
-			registry.CURRENT_USER,
-			"Environment",
-			registry.ALL_ACCESS)
-		defer environmentVariables.Close()
-		if err != nil {
-			//ShellExecute(os.Args[0], "install")
-			panic(err)
+	info, err := environmentVariables.Stat()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(info.ValueCount)
+
+	pathVariable, _, err := environmentVariables.GetStringValue("Path")
+	if err != nil {
+		panic(err)
+	}
+
+	coreDirectory := filepath.Dir(os.Args[0])
+	coreDirectoryAlreadyOnPath := false
+
+	paths := strings.Split(pathVariable, ";")
+	for _, path := range paths {
+		path = strings.TrimSpace(path)
+		if coreDirectory == path {
+			coreDirectoryAlreadyOnPath = true
+			break
+		}
+	}
+
+	if !coreDirectoryAlreadyOnPath {
+		pathVariable = strings.TrimSpace(pathVariable)
+		if strings.HasSuffix(pathVariable, ";") {
+			pathVariable = pathVariable + coreDirectory
+		} else {
+			pathVariable = pathVariable + ";" + coreDirectory
 		}
 
-		info, err := environmentVariables.Stat()
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Println(info.ValueCount)
-
-		pathVariable, _, err := environmentVariables.GetStringValue("Path")
-		if err != nil {
-			panic(err)
-		}
-
-		coreDirectory := filepath.Dir(os.Args[0])
-		coreDirectoryAlreadyOnPath := false
-
-		paths := strings.Split(pathVariable, ";")
-		for _, path := range paths {
-			path = strings.TrimSpace(path)
-			if coreDirectory == path {
-				coreDirectoryAlreadyOnPath = true
-				break
-			}
-		}
-
-		if !coreDirectoryAlreadyOnPath {
-			pathVariable = strings.TrimSpace(pathVariable)
-			if strings.HasSuffix(pathVariable, ";") {
-				pathVariable = pathVariable + coreDirectory
-			} else {
-				pathVariable = pathVariable + ";" + coreDirectory
-			}
-
-			environmentVariables.SetStringValue("Path", pathVariable)
-			NotifySettingChange()
-		}
-	},
+		environmentVariables.SetStringValue("Path", pathVariable)
+		NotifySettingChange()
+	}
 }

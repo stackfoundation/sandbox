@@ -1,4 +1,4 @@
-package hypervisor
+package io
 
 import (
 	"crypto/md5"
@@ -23,7 +23,8 @@ func md5sum(path string) (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-func md5sumEquals(file string, md5 string) bool {
+// MD5SumEquals Check if the MD5 checksum of a file equals the specified value
+func MD5SumEquals(file string, md5 string) bool {
 	_, err := os.Stat(file)
 	if err != nil && os.IsNotExist(err) {
 		return false

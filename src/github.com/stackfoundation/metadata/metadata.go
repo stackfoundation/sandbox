@@ -20,6 +20,7 @@ type Metadata struct {
 	Core        Version   `json:"core"`
 	Checked     time.Time `json:"checked"`
 	Driver      string    `json:"driver"`
+	VirtualBox  string    `json:"virtualBox"`
 }
 
 // Version Version of CLI component
@@ -91,6 +92,8 @@ func SaveMetadata(metadata *Metadata) error {
 	if err != nil {
 		return err
 	}
+
+	os.MkdirAll(path, 0777)
 
 	metadataPath := filepath.Join(path, cliMetadataFile)
 	metadataWriter, err := os.Create(metadataPath)

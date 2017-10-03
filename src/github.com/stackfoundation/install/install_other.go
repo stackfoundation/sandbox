@@ -19,7 +19,7 @@ func getStackFoundationRoot() (string, error) {
 
 func ElevatedExecute(binary, parameters string) error {
 	cmd := exec.Command("/bin/sh", "-c", "sudo "+binary+" "+parameters)
-	_, err = cmd.CombinedOutput()
+	_, err := cmd.CombinedOutput()
 
 	return err
 }

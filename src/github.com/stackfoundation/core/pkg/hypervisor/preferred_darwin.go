@@ -1,20 +1,11 @@
 package hypervisor
 
 import (
-	"os/exec"
 	"strconv"
 	"strings"
 
 	"github.com/stackfoundation/process"
 )
-
-func DetectVBoxManageCmd() string {
-	cmd := "VBoxManage"
-	if path, err := exec.LookPath(cmd); err == nil {
-		return path
-	}
-	return cmd
-}
 
 func compare(number string, value int) int {
 	major, _ := strconv.Atoi(segments[0])
@@ -62,4 +53,12 @@ func isOSXYosemiteOrLater() bool {
 	}
 
 	return false
+}
+
+func platformPreferred() string {
+	if isOSXYosemiteOrLater() {
+		return "xhyve"
+	}
+
+	return "virtualbox"
 }

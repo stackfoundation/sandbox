@@ -8,7 +8,7 @@ goBinData 'github.com/stackfoundation/core',
         'assets'
 
 goBinary 'Core',
-        ['windows-386', 'windows-amd64', 'darwin-amd64'],
+        ['windows-386', 'windows-amd64', 'darwin-amd64', 'linux-amd64'],
         false,
         [],
         'github.com/stackfoundation/core'

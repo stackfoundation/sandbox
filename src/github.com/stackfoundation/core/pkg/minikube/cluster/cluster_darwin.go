@@ -17,15 +17,8 @@ limitations under the License.
 package cluster
 
 import (
-	"fmt"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"path/filepath"
-
 	"github.com/docker/machine/drivers/vmwarefusion"
 	"github.com/docker/machine/libmachine/drivers"
-	"github.com/stackfoundation/core/pkg/minikube/assets"
 	cfg "github.com/stackfoundation/core/pkg/minikube/config"
 	"github.com/stackfoundation/core/pkg/minikube/constants"
 )
@@ -63,7 +56,6 @@ type xhyveDriver struct {
 }
 
 func createXhyveHost(config MachineConfig) *xhyveDriver {
-	checkXhyvePlugin()
 	useVirtio9p := !config.DisableDriverMounts
 	return &xhyveDriver{
 		BaseDriver: &drivers.BaseDriver{
@@ -79,34 +71,5 @@ func createXhyveHost(config MachineConfig) *xhyveDriver {
 		Virtio9pFolder: "/Users",
 		QCow2:          false,
 		RawDisk:        config.XhyveDiskDriver == "virtio-blk",
-	}
-}
-
-func checkXhyvePlugin() {
-	ex, err := os.Executable()
-
-	if err == nil {
-		ex, err = filepath.EvalSymlinks(ex)
-	}
-
-	currDir, _ := filepath.Abs(filepath.Dir(ex))
-	binaryPath := filepath.Join(currDir, "docker-machine-driver-xhyve")
-
-	if _, err := os.Stat(binaryPath); os.IsNotExist(err) {
-		data, err := assets.Asset("out/docker-machine-driver-xhyve")
-
-		if err != nil {
-			fmt.Println("docker-machine-driver-xhyve asset was not found")
-			return
-		}
-
-		ioutil.WriteFile(binaryPath, data, 4555)
-
-		fmt.Println("For using xhyve as a driver for the sandbox cluster, the xhyve plugin needs to be given root:wheel ownership. You may need to authorize this superuser operation.")
-		cmd := exec.Command("/bin/sh", "-c", "sudo chown root:wheel "+binaryPath+" && sudo chmod u+s "+binaryPath)
-		_, err = cmd.CombinedOutput()
-		if err != nil {
-			fmt.Println(err)
-		}
 	}
 }
