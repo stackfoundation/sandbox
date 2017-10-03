@@ -28,17 +28,18 @@ var runCmd = &cobra.Command{
 			return
 		}
 
+		workflowName := combineArgs(args)
+
 		startKube()
 
-		workflowName := combineArgs(args)
 		err := cmd.Run(workflowName)
 		if err != nil {
 			if os.IsNotExist(err) {
 				fmt.Printf("No workflow named %v", workflowName)
 				fmt.Println()
 			} else if context.Canceled != err {
-				panic(err)
-				//MaybeReportErrorAndExit(err)
+				fmt.Printf(err.Error())
+				fmt.Println()
 			}
 		}
 	},

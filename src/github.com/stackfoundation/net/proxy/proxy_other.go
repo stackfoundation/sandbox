@@ -8,6 +8,8 @@ import (
 	"net/url"
 )
 
-func systemProxy(request *http.Request) (*url.URL, error) {
+const ProxyOverrideSeparator = ","
+
+func platformProxy(request *http.Request) (*url.URL, error) {
 	return http.ProxyFromEnvironment(request)
 }

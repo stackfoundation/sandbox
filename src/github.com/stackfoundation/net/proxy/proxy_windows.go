@@ -8,6 +8,8 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
+const ProxyOverrideSeparator = ";"
+
 func findHTTPProxy(proxies string) string {
 	httpProxy := ""
 
@@ -28,60 +30,35 @@ func findHTTPProxy(proxies string) string {
 	return httpProxy
 }
 
-func areUpdatesOverridden(overrides string) bool {
-	overridesList := strings.Split(overrides, ";")
-	for _, override := range overridesList {
-		pattern := strings.TrimSpace(override)
-		if pattern == "stack.foundation" ||
-			pattern == "updates.stack.foundation" ||
-			pattern == "*.stack.foundation" {
-			return true
-		}
-	}
-	return false
-}
-
-func proxyFromRegistry() (string, error) {
+func proxyFromSystem() (string, string, error) {
 	k, err := registry.OpenKey(
 		registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Internet Settings`,
 		registry.QUERY_VALUE)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	defer k.Close()
 
 	i, _, err := k.GetIntegerValue("ProxyEnable")
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	if i == 0 {
-		return "", nil
+		return "", "", nil
 	}
 
-	s, _, err := k.GetStringValue("ProxyServer")
+	proxy, _, err := k.GetStringValue("ProxyServer")
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	httpProxy := findHTTPProxy(s)
-	if len(httpProxy) > 0 {
-		s, _, err = k.GetStringValue("ProxyOverride")
-		if err == nil {
-			if areUpdatesOverridden(s) {
-				return "", nil
-			}
-		}
-	}
+	httpProxy := findHTTPProxy(proxy)
+	overrides, _, err := k.GetStringValue("ProxyOverride")
 
-	return httpProxy, nil
+	return httpProxy, overrides, nil
 }
 
-func systemProxy(request *http.Request) (*url.URL, error) {
-	httpProxy, err := proxyFromRegistry()
-	if err != nil {
-		return nil, err
-	}
-
-	return parseProxyURL(httpProxy)
+func platformProxy(request *http.Request) (*url.URL, error) {
+	return cachingProxy(request)
 }

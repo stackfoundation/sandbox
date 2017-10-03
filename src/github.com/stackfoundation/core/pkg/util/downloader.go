@@ -23,6 +23,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/stackfoundation/net/proxy"
+
 	"github.com/golang/glog"
 	download "github.com/jimmidyson/go-download"
 	"github.com/pkg/errors"
@@ -60,6 +62,7 @@ func (f DefaultDownloader) CacheMinikubeISOFromURL(isoURL string) error {
 	options := download.FileOptions{
 		Mkdirs: download.MkdirAll,
 		Options: download.Options{
+			HTTPClient: proxy.ProxyCapableClient,
 			ProgressBars: &download.ProgressBarOptions{
 				MaxWidth: 80,
 			},
@@ -72,9 +75,9 @@ func (f DefaultDownloader) CacheMinikubeISOFromURL(isoURL string) error {
 		options.ChecksumHash = crypto.SHA256
 	}
 
-	fmt.Println("Downloading virtual machine image")
+	fmt.Println("Downloading VM image")
 	if err := download.ToFile(isoURL, f.GetISOCacheFilepath(isoURL), options); err != nil {
-		return errors.Wrap(err, "Error downloading virtual machine image")
+		return errors.Wrap(err, "Error downloading VM image")
 	}
 
 	return nil

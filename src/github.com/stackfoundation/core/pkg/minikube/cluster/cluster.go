@@ -376,7 +376,7 @@ func createHost(api libmachine.API, config MachineConfig) (*host.Host, error) {
 
 	if config.VMDriver != "none" {
 		if err := config.Downloader.CacheMinikubeISOFromURL(config.MinikubeISO); err != nil {
-			return nil, errors.Wrap(err, "Error attempting to cache minikube ISO from URL")
+			return nil, errors.Wrap(err, "Error attempting to cache ISO from URL")
 		}
 	}
 
@@ -401,7 +401,7 @@ func createHost(api libmachine.API, config MachineConfig) (*host.Host, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Error marshalling json")
 	}
-	fmt.Println("creating new host")
+	fmt.Println("Creating new host")
 	h, err := api.NewHost(config.VMDriver, data)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error creating new host")
