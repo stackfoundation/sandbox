@@ -2,56 +2,56 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/stackfoundation/core/pkg/minikube/assets"
+	"github.com/stackfoundation/core/pkg/wrapper"
+	coreio "github.com/stackfoundation/io"
+	"github.com/stackfoundation/log"
 
 	"github.com/spf13/cobra"
 )
 
-var wrapperCmd = &cobra.Command{
+const wrappersFolder = "sbox-cli"
+const nixScript = "sbox"
+
+var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize the project in the current working directory to use the Sandbox CLI",
 	Long: `Sets up the project in the current working directory to use Sandbox CLI.
 
 The Sandbox Command Line Interface (CLI) is a set of small scripts and binaries for all major
-platforms (all together, under 100KB) that can be added to your project, and committed to your Git
+platforms (all together, under 150KB) that can be added to your project, and committed to your Git
 repository (or other VCS). This allows anyone on who checks out your repository to immediately run
 workflows and other Sandbox commands directly from the project root!`,
 	Run: func(command *cobra.Command, args []string) {
+		projectPath, _ := os.Getwd()
 
-		path, _ := os.Getwd()
-		sboxFolder := filepath.Join(path, ".sbox")
-		_, sboxFolderErr := os.Stat(sboxFolder)
-		_, sboxDarwinExecErr := os.Stat(filepath.Join(path, "sbox"))
+		wrappersWithinProject := filepath.Join(projectPath, wrappersFolder)
 
-		if !os.IsNotExist(sboxFolderErr) || !os.IsNotExist(sboxDarwinExecErr) {
-			fmt.Println("Project already contains an sbox folder in the root directory - has sandbox been initialized already for this project?")
+		exists, _ := coreio.Exists(wrappersWithinProject)
+		if exists {
+			fmt.Println("Project already contains an sbox-cli folder - has this project already been initialized?")
 			return
 		}
 
-		os.Mkdir(sboxFolder, 0711)
-		wrapperDarwin, err := assets.Asset("out/wrapper-darwin")
+		nixScriptWithinProject := filepath.Join(projectPath, nixScript)
+		exists, _ = coreio.Exists(nixScriptWithinProject)
+		if exists {
+			fmt.Println("Project already contains an sbox file - has this project already been initialized?")
+			return
+		}
 
+		err := wrapper.ExtractWrappers(projectPath)
 		if err != nil {
-			fmt.Println("wrapper-darwin asset was not found")
+			log.Errorf("Error initializing project: %v", err)
 			return
 		}
 
-		darwinSboxExec, err := assets.Asset("out/sbox")
-
-		if err != nil {
-			fmt.Println("wrapper-darwin asset was not found")
-			return
-		}
-
-		ioutil.WriteFile(filepath.Join(sboxFolder, "wrapper-darwin"), wrapperDarwin, 4555)
-		ioutil.WriteFile(filepath.Join(path, "sbox"), darwinSboxExec, 4555)
+		fmt.Println("Project was initialized with the Sandbox CLI")
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(wrapperCmd)
+	RootCmd.AddCommand(initCmd)
 }

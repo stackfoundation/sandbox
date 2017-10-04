@@ -5,7 +5,7 @@ import (
 	"github.com/stackfoundation/core/pkg/hypervisor"
 )
 
-var fail bool
+var failVirtualBox bool
 
 var virtualBoxCmd = &cobra.Command{
 	Use:    "virtualbox",
@@ -13,19 +13,11 @@ var virtualBoxCmd = &cobra.Command{
 	Short:  "Install VirtualBox",
 	Long:   `An internal command used to install VirtualBox on the current system`,
 	Run: func(command *cobra.Command, args []string) {
-		// err := hypervisor.InstallVirtualBox()
-		// if err != nil {
-		// 	if fail {
-		// 		fmt.Println(err.Error())
-		// 	} else {
-		// 		install.ElevatedExecute(os.Args[0], "virtualbox --fail")
-		// 	}
-		// }
-		hypervisor.SelectAndPrepareHypervisor("auto")
+		hypervisor.InstallVirtualBox(failVirtualBox)
 	},
 }
 
 func init() {
-	virtualBoxCmd.Flags().BoolVar(&fail, "fail", false, "Fail on error, instead of retrying with elevation")
+	virtualBoxCmd.Flags().BoolVar(&failVirtualBox, "fail", false, "Fail on error, instead of retrying with elevation")
 	RootCmd.AddCommand(virtualBoxCmd)
 }

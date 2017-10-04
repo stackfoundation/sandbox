@@ -2,20 +2,22 @@ package hypervisor
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/stackfoundation/net/download"
+	"github.com/stackfoundation/process"
 
 	"github.com/stackfoundation/core/pkg/io"
 	"github.com/stackfoundation/install"
 	"github.com/stackfoundation/metadata"
 )
 
-func downloadVirtualBoxIfNecessary() (string, error) {
+func downloadVirtualBoxIfNecessary() error {
 	installPath, err := install.GetInstallPath()
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	pkg, md5 := platformVirtualBoxPackage()
@@ -25,13 +27,18 @@ func downloadVirtualBoxIfNecessary() (string, error) {
 	if !io.MD5SumEquals(virtualBoxInstaller, md5) {
 		err = download.WithProgress("Downloading VirtualBox", pkg, virtualBoxInstaller, "VirtualBoxDownload")
 		if err != nil {
-			return "", err
+			return err
 		}
 	}
 
-	return virtualBoxInstaller, nil
+	return nil
 }
 
+func relaunchForInstall(command string) error {
+	return process.CombineStdStreams(os.Args[0], command)
+}
+
+// SelectAndPrepareHypervisor Select the preferred hypervisor for the platform, and prepare it if necessary
 func SelectAndPrepareHypervisor(preferred string) string {
 	var m *metadata.Metadata
 	var err error
@@ -51,15 +58,27 @@ func SelectAndPrepareHypervisor(preferred string) string {
 	if preferred == "virtualbox" {
 		vboxManageCmd, found := DetectVBoxManageCmd()
 		if !found {
-			installer, err := downloadVirtualBoxIfNecessary()
+			err := downloadVirtualBoxIfNecessary()
 			if err != nil {
-				fmt.Println("Error downloading: " + err.Error())
-			}
+				fmt.Println("Error downloading VirtualBox: " + err.Error())
+				fmt.Println("Continuing but further failures might occur")
+			} else {
+				fmt.Println("Installing Virtualbox")
+				relaunchForInstall("virtualbox")
 
-			fmt.Println("Installing Virtualbox")
-			installVirtualBox(installer)
+				vboxManageCmd, found := DetectVBoxManageCmd()
+				if found {
+					vbox = vboxManageCmd
+				}
+			}
 		} else {
 			vbox = vboxManageCmd
+		}
+	} else if preferred == "xhyve" {
+		_, err := xhyveDriverLocation()
+		if os.IsNotExist(err) {
+			fmt.Println("Installing xyhve driver")
+			relaunchForInstall("xhyve")
 		}
 	}
 

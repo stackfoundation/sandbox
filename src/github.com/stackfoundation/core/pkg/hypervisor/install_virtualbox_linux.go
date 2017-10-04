@@ -3,7 +3,7 @@ package hypervisor
 import "strings"
 import "github.com/stackfoundation/process"
 
-func installVirtualBox(installer string) error {
+func installVirtualBoxWithInstaller(installer string) error {
 	var script string
 	distro := distroCode()
 	if strings.Contains(distro, "fedora") {

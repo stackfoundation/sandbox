@@ -27,6 +27,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/stackfoundation/core/pkg/hypervisor"
+
 	"github.com/stackfoundation/net/proxy"
 
 	units "github.com/docker/go-units"
@@ -105,6 +107,8 @@ func appendProxy() {
 }
 
 func startKube() {
+	driver := hypervisor.SelectAndPrepareHypervisor(viper.GetString(vmDriver))
+
 	api, err := machine.NewAPIClient()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting client: %s\n", err)
@@ -142,7 +146,7 @@ func startKube() {
 		Memory:              viper.GetInt(memory),
 		CPUs:                viper.GetInt(cpus),
 		DiskSize:            diskSizeMB,
-		VMDriver:            viper.GetString(vmDriver),
+		VMDriver:            driver,
 		XhyveDiskDriver:     viper.GetString(xhyveDiskDriver),
 		DockerEnv:           dockerEnv,
 		DockerOpt:           dockerOpt,
@@ -324,7 +328,7 @@ func configureKubeStartingCommandFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(createMount, false, "This will start the mount daemon and automatically mount files into Sandbox")
 	cmd.Flags().String(mountString, constants.DefaultMountDir+":"+constants.DefaultMountEndpoint, "The argument to pass the Sandbox mount command on start")
 	cmd.Flags().Bool(disableDriverMounts, false, "Disables the filesystem mounts provided by the hypervisors (vboxfs, xhyve-9p)")
-	cmd.Flags().String(vmDriver, DefaultVMDriver(), fmt.Sprintf("VM driver is one of: %v", constants.SupportedVMDrivers))
+	cmd.Flags().String(vmDriver, "auto", fmt.Sprintf("VM driver is one of: %v", constants.SupportedVMDrivers))
 	cmd.Flags().Int(memory, constants.DefaultMemory, "Amount of RAM allocated to the Sandbox VM")
 	cmd.Flags().Int(cpus, constants.DefaultCPUS, "Number of CPUs allocated to the Sandbox VM")
 	cmd.Flags().String(humanReadableDiskSize, constants.DefaultDiskSize, "Disk size allocated to the Sandbox VM (format: <number>[<unit>], where unit = b, k, m or g)")

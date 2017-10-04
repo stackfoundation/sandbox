@@ -43,7 +43,7 @@ func selectTargetArchInstaller(installersFolder string) (string, error) {
 	return filepath.Join(installersFolder, installer), nil
 }
 
-func installVirtualBox(installer string) error {
+func installVirtualBoxWithInstaller(installer string) error {
 	installPath, err := install.GetInstallPath()
 	if err != nil {
 		return err

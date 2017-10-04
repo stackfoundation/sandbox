@@ -20,6 +20,10 @@ func Error(code string, message string, arguments ...interface{}) {
 	}
 }
 
+func Errorf(message string, arguments ...interface{}) {
+	Error("", message, arguments...)
+}
+
 // Debug Log debug output
 func Debug(code string, message string, arguments ...interface{}) {
 	if debug || JSONOutput {
