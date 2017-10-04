@@ -8,10 +8,10 @@ import (
 )
 
 func compare(number string, value int) int {
-	major, _ := strconv.Atoi(segments[0])
-	if major > 10 {
+	major, _ := strconv.Atoi(number)
+	if major > value {
 		return 1
-	} else if major < 10 {
+	} else if major < value {
 		return -1
 	}
 

@@ -4,17 +4,10 @@ package install
 
 import (
 	"os/exec"
-	"os/user"
-	"path/filepath"
 )
 
 func getStackFoundationRoot() (string, error) {
-	currentUser, err := user.Current()
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(currentUser.HomeDir, ".sf"), nil
+	return "/usr/local/sf", nil
 }
 
 func ElevatedExecute(binary, parameters string) error {

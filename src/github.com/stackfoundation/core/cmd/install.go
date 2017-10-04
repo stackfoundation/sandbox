@@ -18,20 +18,20 @@ var installCmd = &cobra.Command{
 This adds to the system PATH variable so that the Sandbox command-line is available globally.`,
 	Run: func(command *cobra.Command, args []string) {
 		cliDirectory, err := install.GetInstallPath()
+
+		if err == nil {
+			err = wrapper.ExtractWrappers(cliDirectory)
+		}
+		if err == nil {
+			err = path.AddSboxToSystemPath(cliDirectory)
+		}
+
 		if err != nil {
 			fmt.Println("Error installing CLI: " + err.Error())
 			os.Exit(1)
 		}
 
-		wrapper.ExtractWrappers(cliDirectory)
-
-		err = path.AddToSystemPath(cliDirectory)
-		if err != nil {
-			fmt.Println("Error installing CLI: " + err.Error())
-			os.Exit(1)
-		}
-
-		fmt.Println("Sandbox CLI globally, as the 'sbox' command")
+		fmt.Println("Sandbox CLI installed globally, as the 'sbox' command")
 	},
 }
 

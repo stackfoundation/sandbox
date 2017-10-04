@@ -37,8 +37,12 @@ func normalizePath(path string) string {
 	return path
 }
 
-// AddToSystemPath Add the specified directory to the system PATH variable
-func AddToSystemPath(directory string) error {
+func AddSboxToSystemPath(installDirectory string) error {
+	return AddToSystemPath(installDirectory)
+}
+
+// AddToSystemPath Add the specified node to the system PATH variable
+func AddToSystemPath(node string) error {
 	environmentVariables, err := registry.OpenKey(
 		registry.CURRENT_USER,
 		"Environment",
@@ -54,11 +58,11 @@ func AddToSystemPath(directory string) error {
 	}
 
 	directoryAlreadyOnPath := false
-	directory = normalizePath(directory)
+	node = normalizePath(node)
 
 	paths := strings.Split(pathVariable, ";")
 	for _, path := range paths {
-		if directory == normalizePath(path) {
+		if node == normalizePath(path) {
 			directoryAlreadyOnPath = true
 			break
 		}
@@ -67,9 +71,9 @@ func AddToSystemPath(directory string) error {
 	if !directoryAlreadyOnPath {
 		pathVariable = strings.TrimSpace(pathVariable)
 		if strings.HasSuffix(pathVariable, ";") {
-			pathVariable = pathVariable + directory
+			pathVariable = pathVariable + node
 		} else {
-			pathVariable = pathVariable + ";" + directory
+			pathVariable = pathVariable + ";" + node
 		}
 
 		environmentVariables.SetStringValue("Path", pathVariable)

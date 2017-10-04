@@ -3,39 +3,28 @@
 package path
 
 import (
-	"io/ioutil"
+	"errors"
 	"os"
-	"os/user"
 	"path/filepath"
 
 	"github.com/stackfoundation/io"
 )
 
-// AddToSystemPath Add the specified directory to the system PATH variable
-func AddToSystemPath(directory string) error {
-	usr, err := user.Current()
+func AddSboxToSystemPath(installDirectory string) error {
+	return AddToSystemPath(filepath.Join(installDirectory, "sbox"))
+}
+
+// AddToSystemPath Add the specified node to the system PATH variable
+func AddToSystemPath(node string) error {
+	link := filepath.Join("/usr/local/bin", filepath.Base(node))
+	exists, err := io.Exists(link)
 	if err != nil {
 		return err
 	}
 
-	profile := filepath.Join(usr.HomeDir, ".profile")
-	exists, err := io.Exists(profile)
-	if err != nil {
-		return err
+	if !exists {
+		return os.Symlink(node, link)
 	}
 
-	if exists {
-		ioutil.WriteFile(profile, []byte("\nPATH=$PATH:"+directory+"\n"), 0644)
-	} else {
-		file, err := os.OpenFile(profile, os.O_APPEND|os.O_WRONLY, 0600)
-		if err != nil {
-			return err
-		}
-
-		defer file.Close()
-
-		if _, err = file.WriteString("\nPATH=$PATH:" + directory + "\n"); err != nil {
-			panic(err)
-		}
-	}
+	return errors.New("Symlink already exists")
 }
