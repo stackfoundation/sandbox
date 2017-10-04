@@ -17,6 +17,7 @@ package cmd
 import (
 	//goflag "flag"
 	//"io/ioutil"
+
 	"os"
 	"strings"
 
@@ -24,9 +25,9 @@ import (
 	"github.com/spf13/cobra"
 	//"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/minikube/config"
 	"github.com/stackfoundation/core/pkg/minikube/constants"
+	"github.com/stackfoundation/log"
 	//"github.com/golang/glog"
 )
 
@@ -42,6 +43,7 @@ var dirs = [...]string{
 	constants.MakeMiniPath("addons"),
 	constants.MakeMiniPath("logs"),
 }
+var originalCommand string
 
 var viperWhiteList = []string{
 	"v",
@@ -51,9 +53,17 @@ var viperWhiteList = []string{
 
 var RootCmd = &cobra.Command{
 	Use:   "sbox",
-	Short: "Sandbox is a tool for running reproducible development workflows.",
-	Long:  `Sandbox is a tool that uses Docker to create, manage and run development workflows.`,
+	Short: "Sandbox is a tool that runs Docker-based workflows.",
+	Long: `Sandbox is a tool that runs Docker-based workflows.
+For help, visit https://stack.foundation/docs`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if debug {
+			log.SetDebug(true)
+		}
+
+		if len(originalCommand) > 0 {
+			cmd.Use = originalCommand
+		}
 		for _, path := range dirs {
 			if err := os.MkdirAll(path, 0777); err != nil {
 				//glog.Exitf("Error creating sbox directory: %s", err)
@@ -76,16 +86,10 @@ var RootCmd = &cobra.Command{
 		//        logDir.Value.Set(constants.MakeMiniPath("logs"))
 		//}
 
-		if debug {
-			log.SetDebug(true)
-		}
 	},
 }
 
 func Execute() {
-	if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "--original-path-callee") {
-		RootCmd.Use = os.Args[1][23:]
-	}
 	_ = RootCmd.Execute()
 }
 
@@ -130,13 +134,14 @@ func init() {
 	This can be modified to allow for multiple VMs to be run independently`)
 
 	//pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
-	//viper.BindPFlags(RootCmd.PersistentFlags())
 
 	RootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Turn on debug logging")
-	cobra.OnInitialize(initConfig)
 
-	RootCmd.PersistentFlags().String("original-path-callee", "", "")
-	RootCmd.PersistentFlags().MarkHidden("original-path-callee")
+	RootCmd.PersistentFlags().StringVar(&originalCommand, "original-command", "", "Original path of sbox command")
+	RootCmd.PersistentFlags().MarkHidden("original-command")
+
+	cobra.OnInitialize(initConfig)
+	viper.BindPFlags(RootCmd.PersistentFlags())
 }
 
 // initConfig reads in config file and ENV variables if set.

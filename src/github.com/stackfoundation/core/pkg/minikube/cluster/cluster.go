@@ -45,6 +45,7 @@ import (
 
 	"path"
 
+	"github.com/stackfoundation/core/pkg/hypervisor"
 	"github.com/stackfoundation/core/pkg/minikube/assets"
 	cfg "github.com/stackfoundation/core/pkg/minikube/config"
 	"github.com/stackfoundation/core/pkg/minikube/constants"
@@ -375,7 +376,7 @@ func createHost(api libmachine.API, config MachineConfig) (*host.Host, error) {
 
 	if config.VMDriver != "none" {
 		if err := config.Downloader.CacheMinikubeISOFromURL(config.MinikubeISO); err != nil {
-			return nil, errors.Wrap(err, "Error attempting to cache minikube ISO from URL")
+			return nil, errors.Wrap(err, "Error attempting to cache ISO from URL")
 		}
 	}
 
@@ -400,7 +401,7 @@ func createHost(api libmachine.API, config MachineConfig) (*host.Host, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Error marshalling json")
 	}
-	fmt.Println("creating new host")
+	fmt.Println("Creating new host")
 	h, err := api.NewHost(config.VMDriver, data)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error creating new host")
@@ -513,7 +514,8 @@ func GetVMHostIP(host *host.Host) (net.IP, error) {
 		}
 		return ip, nil
 	case "virtualbox":
-		out, err := exec.Command(detectVBoxManageCmd(), "showvminfo", "minikube", "--machinereadable").Output()
+		vboxManage, _ := hypervisor.DetectVBoxManageCmd()
+		out, err := exec.Command(vboxManage, "showvminfo", "minikube", "--machinereadable").Output()
 		if err != nil {
 			return []byte{}, errors.Wrap(err, "Error running vboxmanage command")
 		}

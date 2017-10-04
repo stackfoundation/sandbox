@@ -1,9 +1,9 @@
 package sync
 
 import (
-	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/workflows/properties"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/log"
 )
 
 func collectVariables(variables []v1.VariableSource) *properties.Properties {

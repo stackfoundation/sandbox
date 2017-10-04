@@ -6,8 +6,8 @@ import (
 	"strings"
 	"unicode"
 
+	coreio "github.com/stackfoundation/core/pkg/io"
 	"github.com/stackfoundation/core/pkg/workflows/buffer"
-	workflowsio "github.com/stackfoundation/core/pkg/workflows/io"
 )
 
 const workflowKeyword = "workflow"
@@ -90,5 +90,5 @@ func NewWorkflowDetector(reader io.ReadCloser, receiver func(string)) io.ReadClo
 
 	lineBuffer := buffer.NewLineBuffer(lineReceiver, lineLimit)
 
-	return workflowsio.TeeReadCloser(reader, lineBuffer)
+	return coreio.TeeReadCloser(reader, lineBuffer)
 }

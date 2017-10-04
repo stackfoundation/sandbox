@@ -10,8 +10,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 
-	log "github.com/stackfoundation/core/pkg/log"
 	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
+	log "github.com/stackfoundation/log"
 )
 
 func cleanupPodIfNecessary(context *podContext) {

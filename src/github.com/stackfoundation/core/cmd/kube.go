@@ -27,6 +27,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/stackfoundation/core/pkg/hypervisor"
+
+	"github.com/stackfoundation/net/proxy"
+
 	units "github.com/docker/go-units"
 	"github.com/docker/machine/libmachine/host"
 	"github.com/docker/machine/libmachine/state"
@@ -71,7 +75,40 @@ var (
 	kubernetesVersion = constants.DefaultKubernetesVersion
 )
 
+func dockerEnvSet(variable string) bool {
+	for _, env := range dockerEnv {
+		lower := strings.ToLower(env)
+		if strings.HasPrefix(lower, variable) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func appendProxy() {
+	httpProxy, overrides := proxy.SystemSettings()
+
+	if len(httpProxy) > 0 {
+		if !dockerEnvSet("http_proxy=") {
+			dockerEnv = append(dockerEnv, "http_proxy="+httpProxy)
+		}
+	}
+
+	if len(overrides) > 0 {
+		if !dockerEnvSet("no_proxy=") {
+			if proxy.ProxyOverrideSeparator == ";" {
+				overrides = strings.Replace(overrides, ";", ",", -1)
+			}
+
+			dockerEnv = append(dockerEnv, "no_proxy="+overrides)
+		}
+	}
+}
+
 func startKube() {
+	driver := hypervisor.SelectAndPrepareHypervisor(viper.GetString(vmDriver))
+
 	api, err := machine.NewAPIClient()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting client: %s\n", err)
@@ -88,6 +125,8 @@ func startKube() {
 	if ms == state.Running.String() || ms == state.Starting.String() || ms == state.Stopping.String() {
 		return
 	}
+
+	appendProxy()
 
 	diskSize := viper.GetString(humanReadableDiskSize)
 	diskSizeMB := calculateDiskSizeInMB(diskSize)
@@ -107,7 +146,7 @@ func startKube() {
 		Memory:              viper.GetInt(memory),
 		CPUs:                viper.GetInt(cpus),
 		DiskSize:            diskSizeMB,
-		VMDriver:            viper.GetString(vmDriver),
+		VMDriver:            driver,
 		XhyveDiskDriver:     viper.GetString(xhyveDiskDriver),
 		DockerEnv:           dockerEnv,
 		DockerOpt:           dockerOpt,
@@ -121,7 +160,7 @@ func startKube() {
 	}
 
 	fmt.Printf("Setting up and starting a local Kubernetes %s cluster...\n", kubernetesVersion)
-	fmt.Println("Starting VM...")
+	fmt.Println("Starting Sandbox VM...")
 	var host *host.Host
 	start := func() (err error) {
 		host, err = cluster.StartHost(api, config)
@@ -136,10 +175,10 @@ func startKube() {
 		MaybeReportErrorAndExit(err)
 	}
 
-	fmt.Println("Getting VM IP address...")
+	fmt.Println("Getting Sandbox VM IP address...")
 	ip, err := host.Driver.GetIP()
 	if err != nil {
-		glog.Errorln("Error getting VM IP address: ", err)
+		glog.Errorln("Error getting Sandbox VM IP address: ", err)
 		MaybeReportErrorAndExit(err)
 	}
 	kubernetesConfig := cluster.KubernetesConfig{
@@ -153,26 +192,26 @@ func startKube() {
 		ExtraOptions:      extraOptions,
 	}
 
-	fmt.Println("Moving files into cluster...")
+	fmt.Println("Moving files into single-node Kubernetes cluster...")
 	if err := cluster.UpdateCluster(host.Driver, kubernetesConfig); err != nil {
 		glog.Errorln("Error updating cluster: ", err)
 		MaybeReportErrorAndExit(err)
 	}
 
-	fmt.Println("Setting up certs...")
+	fmt.Println("Setting up certificates...")
 	if err := cluster.SetupCerts(host.Driver, kubernetesConfig.APIServerName, kubernetesConfig.DNSDomain); err != nil {
 		glog.Errorln("Error configuring authentication: ", err)
 		MaybeReportErrorAndExit(err)
 	}
 
-	fmt.Println("Starting cluster components...")
+	fmt.Println("Starting single-node Kubernetes cluster components...")
 
 	if err := cluster.StartCluster(api, kubernetesConfig); err != nil {
 		glog.Errorln("Error starting cluster: ", err)
 		MaybeReportErrorAndExit(err)
 	}
 
-	fmt.Println("Connecting to cluster...")
+	fmt.Println("Connecting to single-node Kubernetes cluster...")
 	kubeHost, err := host.Driver.GetURL()
 	if err != nil {
 		glog.Errorln("Error connecting to cluster: ", err)
@@ -289,7 +328,7 @@ func configureKubeStartingCommandFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(createMount, false, "This will start the mount daemon and automatically mount files into Sandbox")
 	cmd.Flags().String(mountString, constants.DefaultMountDir+":"+constants.DefaultMountEndpoint, "The argument to pass the Sandbox mount command on start")
 	cmd.Flags().Bool(disableDriverMounts, false, "Disables the filesystem mounts provided by the hypervisors (vboxfs, xhyve-9p)")
-	cmd.Flags().String(vmDriver, DefaultVMDriver(), fmt.Sprintf("VM driver is one of: %v", constants.SupportedVMDrivers))
+	cmd.Flags().String(vmDriver, "auto", fmt.Sprintf("VM driver is one of: %v", constants.SupportedVMDrivers))
 	cmd.Flags().Int(memory, constants.DefaultMemory, "Amount of RAM allocated to the Sandbox VM")
 	cmd.Flags().Int(cpus, constants.DefaultCPUS, "Number of CPUs allocated to the Sandbox VM")
 	cmd.Flags().String(humanReadableDiskSize, constants.DefaultDiskSize, "Disk size allocated to the Sandbox VM (format: <number>[<unit>], where unit = b, k, m or g)")
@@ -311,8 +350,4 @@ func configureKubeStartingCommandFlags(cmd *cobra.Command) {
                 The key should be '.' separated, and the first part before the dot is the component to apply the configuration to.
                 Valid components are: kubelet, apiserver, controller-manager, etcd, proxy, scheduler.`)
 	viper.BindPFlags(cmd.Flags())
-}
-
-func defaultVmDriver() {
-	return
 }

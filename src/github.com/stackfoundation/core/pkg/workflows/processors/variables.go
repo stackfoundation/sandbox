@@ -5,8 +5,8 @@ import (
 	"io"
 	"strings"
 
+	coreio "github.com/stackfoundation/core/pkg/io"
 	"github.com/stackfoundation/core/pkg/workflows/buffer"
-	workflowsio "github.com/stackfoundation/core/pkg/workflows/io"
 )
 
 const maxVariableNameLength = 256
@@ -73,5 +73,5 @@ func NewVariableDetector(reader io.ReadCloser, receiver func(string, string)) io
 
 	lineBuffer := buffer.NewLineBuffer(lineReceiver, variableDeclarationLineLimitProducer)
 
-	return workflowsio.TeeReadCloser(reader, lineBuffer)
+	return coreio.TeeReadCloser(reader, lineBuffer)
 }

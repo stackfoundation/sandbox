@@ -10,11 +10,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/docker/engine-api/client"
-	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/workflows/docker"
 	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/kube"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/log"
 )
 
 type syncExecution struct {

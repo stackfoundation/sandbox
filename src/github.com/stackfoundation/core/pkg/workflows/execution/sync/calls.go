@@ -3,10 +3,10 @@ package sync
 import (
 	"fmt"
 
-	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/files"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/log"
 )
 
 func runChildWorkflow(e execution.Execution, c *execution.Context, workflow *v1.Workflow) error {

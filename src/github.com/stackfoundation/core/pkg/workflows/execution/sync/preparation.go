@@ -1,9 +1,9 @@
 package sync
 
 import (
-	"github.com/stackfoundation/core/pkg/log"
 	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/log"
 )
 
 type stepExpansionError struct {
