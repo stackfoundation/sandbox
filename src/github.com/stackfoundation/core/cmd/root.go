@@ -112,10 +112,15 @@ func setFlagsUsingViper() {
 
 func filterArgs(args []string) []string {
 	var filtered []string
+	var ignoreNext bool
 
 	for _, arg := range args {
 		if arg == "-d" || arg == "--debug" {
 			log.SetDebug(true)
+		} else if arg == "--original-command" {
+			ignoreNext = true
+		} else if ignoreNext {
+			ignoreNext = false
 		} else {
 			filtered = append(filtered, arg)
 		}

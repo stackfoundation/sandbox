@@ -75,8 +75,7 @@ func SelectAndPrepareHypervisor(preferred string) string {
 			vbox = vboxManageCmd
 		}
 	} else if preferred == "xhyve" {
-		_, err := xhyveDriverLocation()
-		if os.IsNotExist(err) {
+		if !isxhyveInstalled() {
 			fmt.Println("Installing xyhve driver")
 			relaunchForInstall("xhyve")
 		}

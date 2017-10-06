@@ -3,7 +3,6 @@
 package path
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 
@@ -22,9 +21,13 @@ func AddToSystemPath(node string) error {
 		return err
 	}
 
-	if !exists {
-		return os.Symlink(node, link)
+	if exists {
+		err = os.Remove(link)
 	}
 
-	return errors.New("Symlink already exists")
+	if err == nil {
+		err = os.Symlink(node, link)
+	}
+
+	return err
 }

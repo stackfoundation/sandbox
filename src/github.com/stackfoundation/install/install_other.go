@@ -3,7 +3,7 @@
 package install
 
 import (
-	"os/exec"
+	"github.com/stackfoundation/process"
 )
 
 func getStackFoundationRoot() (string, error) {
@@ -11,8 +11,7 @@ func getStackFoundationRoot() (string, error) {
 }
 
 func ElevatedExecute(binary, parameters string) error {
-	cmd := exec.Command("/bin/sh", "-c", "sudo "+binary+" "+parameters)
-	_, err := cmd.CombinedOutput()
+	err := process.CombineStdStreams("/bin/sh", "-c", "sudo "+binary+" "+parameters)
 
 	return err
 }
