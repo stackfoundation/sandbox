@@ -32,7 +32,6 @@ func BuildImage(ctx context.Context, dockerClient *client.Client, imageName stri
 	if err != nil {
 		return err
 	}
-
 	defer imageStream.Close()
 
 	buildOptions := types.ImageBuildOptions{

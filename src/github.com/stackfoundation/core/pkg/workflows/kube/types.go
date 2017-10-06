@@ -16,7 +16,7 @@ const serviceNameKey = "svc"
 type PodListener interface {
 	Container(containerID string)
 	Ready()
-	Done()
+	Done(failed bool)
 }
 
 // PodCreationSpec Specification for creating a pod

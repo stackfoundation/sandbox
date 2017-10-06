@@ -85,7 +85,10 @@ func buildStepImageAndTransitionNext(e execution.Execution, c *execution.Context
 	if c.NextStep.RequiresBuild() {
 		err := buildStepImage(e, c)
 		if err != nil {
-			return err
+			err = shouldIgnoreFailure(c.NextStep, c.NextStepSelector, c.Workflow, err)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

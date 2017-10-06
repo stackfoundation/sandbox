@@ -12,7 +12,12 @@ import (
 func runChildWorkflow(e execution.Execution, c *execution.Context, workflow *v1.Workflow) error {
 	child, err := e.ChildExecution(workflow)
 	if err != nil {
-		return err
+		err = shouldIgnoreFailure(c.Step, c.StepSelector, c.Workflow, err)
+		if err != nil {
+			return err
+		}
+
+		return e.TransitionNext(c, workflowWaitDoneTransition)
 	}
 
 	go func() {
@@ -33,7 +38,10 @@ func runGeneratedWorfklowAndTransitionNext(e execution.Execution, c *execution.C
 	content := []byte(step.State.GeneratedWorkflow)
 	workflow, err := v1.ParseWorkflow(c.Workflow.Spec.State.ProjectRoot, stepName, content)
 	if err != nil {
-		return err
+		err = shouldIgnoreFailure(c.Step, c.StepSelector, c.Workflow, err)
+		if err != nil {
+			return err
+		}
 	}
 
 	return runChildWorkflow(e, c, workflow)
@@ -47,7 +55,10 @@ func runExternalWorkflowAndTransitionNext(e execution.Execution, c *execution.Co
 
 	workflow, err := files.ReadWorkflow(c.Step.Target)
 	if err != nil {
-		return err
+		err = shouldIgnoreFailure(c.Step, c.StepSelector, c.Workflow, err)
+		if err != nil {
+			return err
+		}
 	}
 
 	return runChildWorkflow(e, c, workflow)

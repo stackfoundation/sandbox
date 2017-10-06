@@ -81,13 +81,15 @@ type WorkflowStep struct {
 	Dockerfile       string           `json:"dockerfile" yaml:"dockerfile"`
 	Dockerignore     string           `json:"dockerignore" yaml:"dockerignore"`
 	Environment      []VariableSource `json:"environment" yaml:"environment"`
+	ExcludeVariables []string         `json:"excludeVariables" yaml:"excludeVariables"`
 	Generator        string           `json:"generator" yaml:"generator"`
 	Health           *HealthCheck     `json:"health" yaml:"health"`
 	Image            string           `json:"image" yaml:"image"`
-	ImageSource      ImageSource      `json:"imageSource" yaml:"imageSource"`
 	IgnoreFailure    *bool            `json:"ignoreFailure" yaml:"ignoreFailure"`
 	IgnoreMissing    *bool            `json:"ignoreMissing" yaml:"ignoreMissing"`
 	IgnoreValidation *bool            `json:"ignoreValidation" yaml:"ignoreValidation"`
+	ImageSource      ImageSource      `json:"imageSource" yaml:"imageSource"`
+	IncludeVariables []string         `json:"includeVariables" yaml:"includeVariables"`
 	Name             string           `json:"name" yaml:"name"`
 	OmitSource       string           `json:"omitSource" yaml:"omitSource"`
 	Ports            []string         `json:"ports" yaml:"ports"`
@@ -156,6 +158,7 @@ type WorkflowSpec struct {
 	Variables        []VariableSource `json:"variables" yaml:"variables"`
 	IgnoreMissing    bool             `json:"ignoreMissing" yaml:"ignoreMissing"`
 	IgnoreValidation bool             `json:"ignoreValidation" yaml:"ignoreValidation"`
+	IgnoreFailure    bool             `json:"ignoreFailure" yaml:"ignoreFailure"`
 }
 
 // Workflow Custom workflow resource

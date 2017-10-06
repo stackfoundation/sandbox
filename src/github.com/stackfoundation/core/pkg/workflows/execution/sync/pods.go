@@ -34,11 +34,21 @@ func (listener *podCompletionListener) Ready() {
 	listener.execution.TransitionNext(listener.context, stepReadyTransition)
 }
 
-func (listener *podCompletionListener) Done() {
+func (listener *podCompletionListener) Done(failed bool) {
 	transition := stepDoneTransition{
 		variables:          listener.variables,
 		generatedContainer: listener.generatedContainer,
 		generatedWorkfow:   listener.generatedWorkflow,
+	}
+
+	if failed {
+		if !areFailuresIgnored(listener.context.Step, listener.context.StepSelector, listener.context.Workflow) {
+			fmt.Printf("Step %v failed, aborting!\n", listener.context.Step.StepName(listener.context.StepSelector))
+			listener.execution.Complete()
+			return
+		}
+
+		fmt.Printf("Step %v failed, but ignoring and continuing\n", listener.context.Step.StepName(listener.context.StepSelector))
 	}
 
 	listener.execution.TransitionNext(listener.context, transition.transition)
@@ -83,7 +93,12 @@ func runPodStepAndTransitionNext(e execution.Execution, c *execution.Context) er
 		WorkflowReceiver: completionListener.addGeneratedWorkflow,
 	})
 	if err != nil {
-		return err
+		err = shouldIgnoreFailure(c.Step, c.StepSelector, c.Workflow, err)
+		if err != nil {
+			return err
+		}
+
+		return e.TransitionNext(c, (&stepDoneTransition{}).transition)
 	}
 
 	return e.TransitionNext(c, stepStartedTransition)

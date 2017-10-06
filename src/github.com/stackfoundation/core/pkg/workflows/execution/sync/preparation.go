@@ -44,7 +44,10 @@ func prepareStepIfNecessary(c *execution.Context, step *v1.WorkflowStep, stepSel
 
 		err = v1.ValidateStep(step, stepSelector)
 		if err != nil {
-			return err
+			err = shouldIgnoreValidation(step, stepSelector, c.Workflow, err)
+			if err != nil {
+				return err
+			}
 		}
 
 		step.State.Prepared = true

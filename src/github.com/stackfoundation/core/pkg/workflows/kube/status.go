@@ -61,3 +61,17 @@ func isPodReady(pod *v1.Pod) bool {
 
 	return false
 }
+
+func isPullFail(pod *v1.Pod) bool {
+	if len(pod.Status.ContainerStatuses) > 0 {
+		for i := 0; i < len(pod.Status.ContainerStatuses); i++ {
+			if pod.Status.ContainerStatuses[i].State.Waiting != nil {
+				if pod.Status.ContainerStatuses[i].State.Waiting.Reason == "ErrImagePull" {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
