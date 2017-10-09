@@ -87,7 +87,7 @@ func getMD5Sums() io.ReadCloser {
 	return response.Body
 }
 
-func findMD5Line(code string) (string, error) {
+func findMD5Line(code string, skip64bitCheck bool) (string, error) {
 	md5Sums := getMD5Sums()
 	defer md5Sums.Close()
 
@@ -97,7 +97,7 @@ func findMD5Line(code string) (string, error) {
 		lower := strings.ToLower(line)
 
 		if strings.Contains(lower, code) {
-			if pkgMatchesPlatformArch(lower) {
+			if skip64bitCheck || pkgMatchesPlatformArch(lower) {
 				return line, nil
 			}
 		}
@@ -108,17 +108,19 @@ func findMD5Line(code string) (string, error) {
 
 func platformVirtualBoxPackage() (string, string) {
 	var code string
+	var skip64bitCheck bool
 	switch runtime.GOOS {
 	case "windows":
 		code = "win"
 	case "darwin":
 		code = "osx"
+		skip64bitCheck = true
 	case "linux":
 		code = distroCode()
 	default:
 	}
 
-	md5Line, err := findMD5Line(code)
+	md5Line, err := findMD5Line(code, skip64bitCheck)
 	if err != nil {
 		return "", ""
 	}
