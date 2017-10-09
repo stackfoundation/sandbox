@@ -38,7 +38,6 @@ func xhyveDriverLocation() (string, os.FileInfo, error) {
 func installXhyveDriver() error {
 	driverPath, info, err := xhyveDriverLocation()
 	if os.IsNotExist(err) {
-		fmt.Println("Xhyve does not exist in " + driverPath + ", installing...")
 		data, err := assets.Asset("out/docker-machine-driver-xhyve")
 
 		if err != nil {
@@ -65,7 +64,7 @@ func installXhyveDriver() error {
 		}
 	}
 
-	fmt.Println("Xhyve installed in " + driverPath)
+	fmt.Println("xhyve driver installed.")
 
 	return nil
 }
@@ -77,8 +76,6 @@ func InstallXhyve(fail bool) error {
 		if fail {
 			return err
 		}
-
-		fmt.Println("Elevating")
 
 		err = install.ElevatedExecute(os.Args[0], "xhyve --fail")
 

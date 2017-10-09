@@ -112,6 +112,7 @@ func platformVirtualBoxPackage() (string, string) {
 	switch runtime.GOOS {
 	case "windows":
 		code = "win"
+		skip64bitCheck = true
 	case "darwin":
 		code = "osx"
 		skip64bitCheck = true
