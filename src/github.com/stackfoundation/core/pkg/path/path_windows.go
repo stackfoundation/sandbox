@@ -17,13 +17,15 @@ const wmSettingChange = 0x001A
 const smtoAbortIfHung = 0x0002
 
 func notifySettingChange() uintptr {
+	var result uint32
 	ret, _, _ := sendMessageTimeout.Call(
 		uintptr(hwndBroadcast),
 		uintptr(wmSettingChange),
 		0,
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("Environment"))),
 		uintptr(smtoAbortIfHung),
-		uintptr(5000))
+		uintptr(5000),
+		uintptr(unsafe.Pointer(&result)))
 
 	return ret
 }

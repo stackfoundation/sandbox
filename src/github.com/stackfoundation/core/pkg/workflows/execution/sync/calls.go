@@ -20,6 +20,11 @@ func runChildWorkflow(e execution.Execution, c *execution.Context, workflow *v1.
 		return e.TransitionNext(c, workflowWaitDoneTransition)
 	}
 
+	workflow.Spec.State.Variables = filterVariables(
+		c.Step.IncludeVariables,
+		c.Step.ExcludeVariables,
+		c.Workflow.Spec.State.Variables)
+
 	go func() {
 		child.Start()
 		log.Debugf("Finished running workflow")

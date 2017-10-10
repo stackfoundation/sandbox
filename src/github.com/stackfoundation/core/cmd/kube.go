@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/stackfoundation/core/pkg/hypervisor"
+	"github.com/stackfoundation/log"
 
 	"github.com/stackfoundation/net/proxy"
 
@@ -118,7 +119,7 @@ func startKube() {
 
 	ms, err := cluster.GetHostStatus(api)
 	if err != nil {
-		glog.Errorln("Error getting machine status:", err)
+		log.Debugf("Error getting machine status:", err)
 		MaybeReportErrorAndExit(err)
 	}
 

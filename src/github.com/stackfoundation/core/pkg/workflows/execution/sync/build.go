@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -84,7 +85,7 @@ func buildStepImageAndTransitionNext(e execution.Execution, c *execution.Context
 
 	if c.NextStep.RequiresBuild() {
 		err := buildStepImage(e, c)
-		if err != nil {
+		if err != nil && err != context.Canceled {
 			err = shouldIgnoreFailure(c.NextStep, c.NextStepSelector, c.Workflow, err)
 			if err != nil {
 				return err
