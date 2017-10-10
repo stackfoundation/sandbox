@@ -37,9 +37,9 @@ func (e *syncExecution) ChildExecution(workflow *v1.Workflow) (execution.Executi
 }
 
 func (e *syncExecution) Complete() error {
+	log.Debugf("Stopping workflow execution")
 	close(e.change)
 	e.cancel()
-	e.cleanupWaitGroup.Wait()
 	return nil
 }
 
@@ -91,6 +91,10 @@ func (e *syncExecution) Start() {
 			e.abort(err)
 		}
 	}
+
+	log.Debugf("Performing cleanup...")
+	e.cleanupWaitGroup.Wait()
+	log.Debugf("Finished cleanup")
 }
 
 func (e *syncExecution) TransitionNext(context *execution.Context, update func(*execution.Context, *v1.Workflow)) error {
