@@ -9,25 +9,25 @@ import (
 )
 
 const (
-	csidlAppData         = 26
-	errorFileNotFound    = 2
-	errorPathNotFound    = 3
-	errorBadFormat       = 11
-	seErrAccessDenied    = 5
-	seErrOOM             = 8
-	seErrDLLNotFound     = 32
-	seErrShare           = 26
-	seErrAssocIncomplete = 27
-	seErrDDETimeout      = 28
-	seErrDDEFail         = 29
-	seErrDDEBusy         = 30
-	seErrNoAssoc         = 31
-	seeMaskNoAsync       = 0x00000100
+	csidlAppData          = 26
+	errorFileNotFound     = 2
+	errorPathNotFound     = 3
+	errorBadFormat        = 11
+	seErrAccessDenied     = 5
+	seErrOOM              = 8
+	seErrDLLNotFound      = 32
+	seErrShare            = 26
+	seErrAssocIncomplete  = 27
+	seErrDDETimeout       = 28
+	seErrDDEFail          = 29
+	seErrDDEBusy          = 30
+	seErrNoAssoc          = 31
+	seeMaskNoAsync        = 0x00000100
+	seeMaskNoCloseProcess = 0x00000040
 )
 
 var shell32 = syscall.NewLazyDLL("shell32.dll")
-var shellExecute = shell32.NewProc("ShellExecuteW")
-var shellExecuteEx = shell32.NewProc("ShellExecuteEx")
+var shellExecuteEx = shell32.NewProc("ShellExecuteExW")
 var getFolderPath = shell32.NewProc("SHGetFolderPathW")
 
 type shellExecuteInfo struct {
@@ -68,49 +68,26 @@ func getStackFoundationRoot() (string, error) {
 	return filepath.Join(path, "sf"), nil
 }
 
+// ElevatedExecute Executes a shell command, requesting elevated privileges
 func ElevatedExecute(binary, parameters string) error {
 	var info shellExecuteInfo
 	var errorCode int
 
 	info.cbSize = unsafe.Sizeof(info)
-	info.fMask = seeMaskNoAsync
-	info.hwnd = uintptr(0)
+	info.fMask = seeMaskNoCloseProcess
 	info.lpVerb = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("runas")))
 	info.lpFile = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(binary)))
 	if len(parameters) != 0 {
 		info.lpParameters = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(parameters)))
-	} else {
-		info.lpParameters = uintptr(0)
 	}
-	info.lpDirectory = uintptr(0)
-	info.nShow = uintptr(0)
 	info.hInstApp = uintptr(unsafe.Pointer(&errorCode))
-	info.lpClass = uintptr(0)
-	info.hkeyClass = uintptr(0)
-	info.dwHotKey = 0
-	info.hIcon = uintptr(0)
-	info.hProcess = uintptr(0)
 
-	// var verb, param, directory uintptr
-	// verb = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("runas")))
-	// if len(parameters) != 0 {
-	// 	param = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(parameters)))
-	// }
-
-	// ret, _, _ := shellExecute.Call(
-	// 	uintptr(0),
-	// 	verb,
-	// 	uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(binary))),
-	// 	param,
-	// 	directory,
-	// 	uintptr(0))
 	_, _, _ = shellExecuteEx.Call(uintptr(unsafe.Pointer(&info)))
-
-	ret := errorCode
+	s, e := syscall.WaitForSingleObject(syscall.Handle(info.hProcess), syscall.INFINITE)
 
 	errorMsg := ""
-	if ret != 0 && ret <= 32 {
-		switch int(ret) {
+	if errorCode != 0 && errorCode <= 32 {
+		switch int(errorCode) {
 		case errorFileNotFound:
 			errorMsg = "The specified file was not found."
 		case errorPathNotFound:
@@ -136,10 +113,16 @@ func ElevatedExecute(binary, parameters string) error {
 		case seErrShare:
 			errorMsg = "A sharing violation occurred."
 		default:
-			errorMsg = fmt.Sprintf("Unknown error occurred with error code %v", ret)
+			errorMsg = fmt.Sprintf("Unknown error occurred with error code %v", errorCode)
 		}
 
 		return errors.New(errorMsg)
+	}
+
+	if s == syscall.WAIT_FAILED {
+		return e
+	} else if s != syscall.WAIT_OBJECT_0 {
+		return errors.New("Unexpected result while waiting for process to finish")
 	}
 
 	return nil

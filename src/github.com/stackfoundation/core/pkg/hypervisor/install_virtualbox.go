@@ -32,8 +32,8 @@ func InstallVirtualBox(fail bool) error {
 			return err
 		}
 
-		install.ElevatedExecute(os.Args[0], "virtualbox --fail")
+		err = install.ElevatedExecute(os.Args[0], "virtualbox --fail")
 	}
 
-	return nil
+	return err
 }

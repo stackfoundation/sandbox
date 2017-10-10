@@ -67,16 +67,15 @@ func SelectAndPrepareHypervisor(preferred string) string {
 				err = relaunchForInstall("virtualbox")
 
 				vboxManageCmd, found := DetectVBoxManageCmd()
+				if found {
+					vbox = vboxManageCmd
+				}
+
 				if err != nil {
-					if found {
-						vbox = vboxManageCmd
-					} else {
-						fmt.Println("Error installing VirtualBox: " + err.Error())
-						fmt.Println("Continuing but further failures might occur")
-					}
-				} else {
-					fmt.Println("Error installing VirtualBox!")
+					fmt.Println("Error installing VirtualBox: " + err.Error())
 					fmt.Println("Continuing but further failures might occur")
+				} else {
+					fmt.Println("VirtualBox installed!")
 				}
 			}
 		} else {

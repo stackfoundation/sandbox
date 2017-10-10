@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/stackfoundation/core/pkg/hypervisor"
 )
@@ -13,7 +15,10 @@ var virtualBoxCmd = &cobra.Command{
 	Short:  "Install VirtualBox",
 	Long:   `An internal command used to install VirtualBox on the current system`,
 	Run: func(command *cobra.Command, args []string) {
-		hypervisor.InstallVirtualBox(failVirtualBox)
+		err := hypervisor.InstallVirtualBox(failVirtualBox)
+		if err != nil {
+			fmt.Println("Error while installing VirtualBox: " + err.Error())
+		}
 	},
 }
 

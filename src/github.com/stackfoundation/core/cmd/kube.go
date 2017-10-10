@@ -119,7 +119,7 @@ func startKube() {
 
 	ms, err := cluster.GetHostStatus(api)
 	if err != nil {
-		log.Debugf("Error getting machine status:", err)
+		log.Debugf("Error getting machine status: %v", err)
 		MaybeReportErrorAndExit(err)
 	}
 
