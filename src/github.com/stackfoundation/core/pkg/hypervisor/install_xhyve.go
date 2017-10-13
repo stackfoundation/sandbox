@@ -70,19 +70,17 @@ func installXhyveDriver() error {
 }
 
 // InstallXhyve Perform a xhyve install
+// Will elevate by default
 func InstallXhyve(fail bool) error {
-	err := installXhyveDriver()
-	if err != nil {
-		if fail {
-			return err
-		}
-
-		err = install.ElevatedExecute(os.Args[0], "xhyve --fail")
-
-		if err != nil {
-			fmt.Println(err)
-		}
+	if fail {
+		return installXhyveDriver()
 	}
 
-	return nil
+	err := install.ElevatedExecute(os.Args[0], "xhyve --fail")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return err
 }
