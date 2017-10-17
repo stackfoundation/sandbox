@@ -16,6 +16,6 @@ goBinary 'Core',
 goBinary 'Bootstrap',
         ['windows-386', 'darwin-386', 'linux-386', 'linux-amd64'],
         true,
-        ["github.com/stackfoundation/install/binariesBucket=${defaultEnvironment.binariesBucketUrl}",
-         "github.com/stackfoundation/install/cliVersion=${cliVersion}"],
+        ["github.com/stackfoundation/bootstrap/install.binariesBucket=${defaultEnvironment.binariesBucketUrl}",
+         "github.com/stackfoundation/bootstrap/install.cliVersion=${cliVersion}"],
         'github.com/stackfoundation/bootstrap'
