@@ -44,3 +44,17 @@ func CombineStdStreams(command string, args ...string) error {
 
 	return err
 }
+
+// CommandWithoutOut Execute a process, wait till completion, and don't ouput process's streams
+func CommandWithoutOut(command string, args ...string) error {
+	log.Debugf("Executing %v %v", command, strings.Join(args, " "))
+
+	cmd := exec.Command(command, args...)
+	err := cmd.Run()
+
+	if err != nil {
+		log.Debugf("Error executing %v %v: %v", command, strings.Join(args, " "), err.Error())
+	}
+
+	return err
+}

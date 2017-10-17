@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/stackfoundation/log"
 	"github.com/stackfoundation/net/download"
 	"github.com/stackfoundation/process"
 
@@ -63,7 +64,7 @@ func SelectAndPrepareHypervisor(preferred string) string {
 				fmt.Println("Error downloading VirtualBox: " + err.Error())
 				fmt.Println("Continuing but further failures might occur")
 			} else {
-				fmt.Println("Installing Virtualbox")
+				fmt.Println("Installing Virtualbox (this may take some time)")
 				err = relaunchForInstall("virtualbox")
 
 				vboxManageCmd, found := DetectVBoxManageCmd()
@@ -73,6 +74,10 @@ func SelectAndPrepareHypervisor(preferred string) string {
 
 				if err != nil {
 					fmt.Println("Error installing VirtualBox: " + err.Error())
+					if !log.IsDebug() {
+						fmt.Println("Try running again with the --debug flag to see installation logs")
+					}
+
 					fmt.Println("Continuing but further failures might occur")
 				} else {
 					fmt.Println("VirtualBox installed!")

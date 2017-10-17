@@ -39,6 +39,11 @@ func Debug(code string, message string, arguments ...interface{}) {
 	}
 }
 
+// IsDebug Is debug output enabled?
+func IsDebug() bool {
+	return debug
+}
+
 func Debugf(message string, arguments ...interface{}) {
 	Debug("", message, arguments...)
 }

@@ -35,8 +35,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
-	"github.com/stackfoundation/core/pkg/minikube/config"
 	"github.com/stackfoundation/core/pkg/minikube/constants"
 	"github.com/stackfoundation/core/pkg/version"
 	"golang.org/x/crypto/ssh/terminal"
@@ -125,25 +123,6 @@ func UploadError(b []byte, url string) error {
 }
 
 func MaybeReportErrorAndExit(errToReport error) {
-	var err error
-	if viper.GetBool(config.WantReportError) {
-		err = ReportError(errToReport, constants.ReportingURL)
-	} else if viper.GetBool(config.WantReportErrorPrompt) {
-		fmt.Println(
-			`================================================================================
-An error has occurred. Would you like to opt in to sending anonymized crash
-information to minikube to help prevent future errors?
-To opt out of these messages, run the command:
-	minikube config set WantReportErrorPrompt false
-================================================================================`)
-		if PromptUserForAccept(os.Stdin) {
-			//minikubeConfig.Set(config.WantReportError, "true")
-			err = ReportError(errToReport, constants.ReportingURL)
-		}
-	}
-	if err != nil {
-		panic(err.Error())
-	}
 	os.Exit(1)
 }
 

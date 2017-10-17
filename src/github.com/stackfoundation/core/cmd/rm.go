@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/stackfoundation/core/pkg/minikube/cluster"
 	"github.com/stackfoundation/core/pkg/minikube/machine"
+	"github.com/stackfoundation/log"
 )
 
 var deleteHostCmd = &cobra.Command{
@@ -24,8 +24,7 @@ var deleteHostCmd = &cobra.Command{
 
 		err = cluster.DeleteHost(api)
 		if err != nil {
-			glog.Errorln("Error deleting host:", err)
-			MaybeReportErrorAndExit(err)
+			log.Errorf("Error deleting host: %v\n", err)
 		}
 	},
 }

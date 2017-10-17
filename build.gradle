@@ -10,12 +10,14 @@ goBinData 'github.com/stackfoundation/core',
 goBinary 'Core',
         ['windows-386', 'windows-amd64', 'darwin-amd64', 'linux-amd64'],
         false,
+        true,
         [],
         'github.com/stackfoundation/core'
 
 goBinary 'Bootstrap',
         ['windows-386', 'darwin-386', 'linux-386', 'linux-amd64'],
         true,
+        false,
         ["github.com/stackfoundation/bootstrap/install.binariesBucket=${defaultEnvironment.binariesBucketUrl}",
          "github.com/stackfoundation/bootstrap/install.cliVersion=${cliVersion}"],
         'github.com/stackfoundation/bootstrap'

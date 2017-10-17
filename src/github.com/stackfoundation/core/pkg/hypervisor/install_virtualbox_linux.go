@@ -1,7 +1,11 @@
 package hypervisor
 
-import "strings"
-import "github.com/stackfoundation/process"
+import (
+	"strings"
+
+	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/process"
+)
 
 func installVirtualBoxWithInstaller(installer string) error {
 	var script string
@@ -15,9 +19,15 @@ func installVirtualBoxWithInstaller(installer string) error {
 	} else if distro == "linux" {
 		script = installer
 	} else {
-		script = "dpkg -i " + installer + "; apt-get update; apt-get install -f ."
+		script = "dpkg -i " + installer + "; apt-get update; apt-get -f install"
 	}
 
-	err := process.CombineStdStreams("/bin/sh", "-c", script)
+	var err error
+	if log.IsDebug() {
+		err = process.CommandWithoutOut("bin/sh", "-c", script)
+	} else {
+		err = process.CombineStdStreams("/bin/sh", "-c", script)
+	}
+
 	return err
 }

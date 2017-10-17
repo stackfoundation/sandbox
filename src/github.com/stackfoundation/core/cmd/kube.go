@@ -134,7 +134,7 @@ func startKube() {
 
 	if diskSizeMB < constants.MinimumDiskSizeMB {
 		err := fmt.Errorf("Disk Size %dMB (%s) is too small, the minimum disk size is %dMB", diskSizeMB, diskSize, constants.MinimumDiskSizeMB)
-		glog.Errorln("Error parsing disk size:", err)
+		log.Errorf("Error parsing disk size: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -166,20 +166,20 @@ func startKube() {
 	start := func() (err error) {
 		host, err = cluster.StartHost(api, config)
 		if err != nil {
-			glog.Errorf("Error starting host: %s.\n\n Retrying.\n", err)
+			log.Errorf("Error starting host: %s.\n\n Retrying.\n", err)
 		}
 		return err
 	}
 	err = util.RetryAfter(5, start, 2*time.Second)
 	if err != nil {
-		glog.Errorln("Error starting host: ", err)
+		log.Errorf("Error starting host: %v\n", err)
 		MaybeReportErrorAndExit(err)
 	}
 
 	fmt.Println("Getting Sandbox VM IP address...")
 	ip, err := host.Driver.GetIP()
 	if err != nil {
-		glog.Errorln("Error getting Sandbox VM IP address: ", err)
+		log.Errorf("Error getting Sandbox VM IP address: %v\n", err)
 		MaybeReportErrorAndExit(err)
 	}
 	kubernetesConfig := cluster.KubernetesConfig{
@@ -195,27 +195,27 @@ func startKube() {
 
 	fmt.Println("Moving files into single-node Kubernetes cluster...")
 	if err := cluster.UpdateCluster(host.Driver, kubernetesConfig); err != nil {
-		glog.Errorln("Error updating cluster: ", err)
+		log.Errorf("Error updating cluster: %v", err)
 		MaybeReportErrorAndExit(err)
 	}
 
 	fmt.Println("Setting up certificates...")
 	if err := cluster.SetupCerts(host.Driver, kubernetesConfig.APIServerName, kubernetesConfig.DNSDomain); err != nil {
-		glog.Errorln("Error configuring authentication: ", err)
+		log.Errorf("Error configuring authentication: %v\n", err)
 		MaybeReportErrorAndExit(err)
 	}
 
 	fmt.Println("Starting single-node Kubernetes cluster components...")
 
 	if err := cluster.StartCluster(api, kubernetesConfig); err != nil {
-		glog.Errorln("Error starting cluster: ", err)
+		log.Errorf("Error starting cluster: %v\n", err)
 		MaybeReportErrorAndExit(err)
 	}
 
 	fmt.Println("Connecting to single-node Kubernetes cluster...")
 	kubeHost, err := host.Driver.GetURL()
 	if err != nil {
-		glog.Errorln("Error connecting to cluster: ", err)
+		log.Errorf("Error connecting to cluster: %v\n", err)
 	}
 	kubeHost = strings.Replace(kubeHost, "tcp://", "https://", -1)
 	kubeHost = strings.Replace(kubeHost, ":2376", ":"+strconv.Itoa(pkgutil.APIServerPort), -1)
@@ -242,7 +242,7 @@ func startKube() {
 	kubeCfgSetup.SetKubeConfigFile(kubeConfigFile)
 
 	if err := kubeconfig.SetupKubeConfig(kubeCfgSetup); err != nil {
-		glog.Errorln("Error setting up kubeconfig: ", err)
+		log.Errorf("Error setting up kubeconfig: %v\n", err)
 		MaybeReportErrorAndExit(err)
 	}
 
@@ -307,7 +307,7 @@ This can also be done automatically by setting the env var CHANGE_MINIKUBE_NONE_
 func validateK8sVersion(version string) {
 	validVersion, err := kubernetes_versions.IsValidLocalkubeVersion(version, constants.KubernetesVersionGCSURL)
 	if err != nil {
-		glog.Errorln("Error getting valid kubernetes versions", err)
+		log.Errorf("Error getting valid kubernetes versions: %v\n", err)
 		os.Exit(1)
 	}
 	if !validVersion {
