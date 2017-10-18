@@ -1,0 +1,44 @@
+{
+	"FixedFileInfo":
+	{
+		"FileVersion": {
+			"Major": 0,
+			"Minor": 1,
+			"Patch": 0,
+			"Build": 0
+		},
+		"ProductVersion": {
+			"Major": 0,
+			"Minor": 1,
+			"Patch": 0,
+			"Build": 0
+		},
+		"FileFlagsMask": "3f",
+		"FileFlags ": "00",
+		"FileOS": "040004",
+		"FileType": "01",
+		"FileSubType": "00"
+	},
+	"StringFileInfo":
+	{
+		"Comments": "",
+		"CompanyName": "StackFoundation Limited",
+		"FileDescription": "Sandbox CLI",
+		"FileVersion": "0.1.0",
+		"InternalName": "Sandbox CLI",
+		"LegalCopyright": "Copyright (c) 2017, StackFoundation Limited. All rights reserved.",
+		"LegalTrademarks": "",
+		"OriginalFilename": "",
+		"PrivateBuild": "",
+		"ProductName": "Sandbox CLI",
+		"ProductVersion": "v0.1.0.0",
+		"SpecialBuild": ""
+	},
+	"VarFileInfo":
+	{
+		"Translation": {
+			"LangID": "0409",
+			"CharsetID": "04B0"
+		}
+	}
+}
