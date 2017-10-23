@@ -1,6 +1,3 @@
-import org.gradle.internal.service.ServiceRegistry
-import org.gradle.nativeplatform.toolchain.internal.msvcpp.WindowsSdkLocator
-
 apply plugin: "cpp"
 
 apply from: '../../gradle/version.gradle'
@@ -26,40 +23,3 @@ goBinary 'Bootstrap',
         ["github.com/stackfoundation/bootstrap/install.binariesBucket=${defaultEnvironment.binariesBucketUrl}",
          "github.com/stackfoundation/bootstrap/install.cliVersion=${cliVersion}"],
         'github.com/stackfoundation/bootstrap'
-
-class SignToolTask extends RuleSource {
-    @Mutate
-    void createVersionFileTask(final ModelMap<Task> tasks, ServiceRegistry serviceRegistry) {
-        File toolLocation = null
-
-        WindowsSdkLocator locator = serviceRegistry.get(WindowsSdkLocator.class)
-        File[] files = locator.locateWindowsSdks(null).getSdk().getIncludeDirs()
-        for (File file : files) {
-            file = file.getParentFile()
-            while (file != null && !file.getName().contains("Include")) {
-                file = file.getParentFile()
-            }
-
-            if (file != null) {
-                file = file.getParentFile()
-            }
-
-            file = new File(file, "bin/x64/signtool.exe")
-            if (file.isFile()) {
-                toolLocation = file
-                break
-            }
-        }
-
-        tasks.create("signBinary") {
-            doLast {
-                if (toolLocation != null) {
-                    System.out.println(toolLocation)
-                }
-            }
-        }
-    }
-}
-
-apply plugin: SignToolTask
-
