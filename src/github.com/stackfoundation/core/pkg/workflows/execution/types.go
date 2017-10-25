@@ -25,9 +25,8 @@ type RunStepSpec struct {
 	Image            string
 	Name             string
 	PodListener      kube.PodListener
-	Ports            []string
+	Ports            []v1.Port
 	Readiness        *v1.HealthCheck
-	ServiceName      string
 	VariableReceiver func(string, string)
 	Volumes          []v1.Volume
 	WorkflowReceiver func(string)

@@ -24,7 +24,7 @@ func writePorts(dockerfile *bytes.Buffer, step *v1.WorkflowStep) {
 		dockerfile.WriteString("EXPOSE")
 		for _, port := range step.Ports {
 			dockerfile.WriteString(" ")
-			dockerfile.WriteString(port)
+			dockerfile.WriteString(port.ContainerPort)
 		}
 		dockerfile.WriteString("\n")
 	}

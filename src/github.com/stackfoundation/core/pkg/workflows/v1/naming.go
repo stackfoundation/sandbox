@@ -31,6 +31,18 @@ func GeneratePodName() string {
 	return "pod-" + uuid.String()[:8]
 }
 
+// GenerateServiceName Generates a service name
+func GenerateServiceName() string {
+	uuid := uuid.NewUUID()
+	return "svc-" + uuid.String()[:8]
+}
+
+// GenerateServiceAssociation Generates an association key between a service and a pod
+func GenerateServiceAssociation() string {
+	uuid := uuid.NewUUID()
+	return "assoc-" + uuid.String()[:8]
+}
+
 // GenerateVolumeName Generates a name for a step volume
 func GenerateVolumeName() string {
 	uuid := uuid.NewUUID()

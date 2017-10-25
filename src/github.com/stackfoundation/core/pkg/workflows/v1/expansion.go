@@ -99,15 +99,33 @@ func expandHealthCheck(check *HealthCheck, variables *properties.Properties) err
 	return nil
 }
 
-func expandPorts(ports []string, variables *properties.Properties) ([]string, error) {
+func expandPorts(ports []Port, variables *properties.Properties) ([]Port, error) {
 	expandedPorts := ports[:0]
 	composite := errors.NewCompositeError()
 
 	for _, port := range ports {
-		expandedPort, err := variables.Expand(port)
+		name, err := variables.Expand(port.Name)
 		composite.Append(err)
 
-		expandedPorts = append(expandedPorts, expandedPort)
+		containerPort, err := variables.Expand(port.ContainerPort)
+		composite.Append(err)
+
+		internalPort, err := variables.Expand(port.InternalPort)
+		composite.Append(err)
+
+		externalPort, err := variables.Expand(port.ExternalPort)
+		composite.Append(err)
+
+		protocol, err := variables.Expand(port.Protocol)
+		composite.Append(err)
+
+		expandedPorts = append(expandedPorts, Port{
+			Name:          name,
+			InternalPort:  internalPort,
+			ExternalPort:  externalPort,
+			ContainerPort: containerPort,
+			Protocol:      protocol,
+		})
 	}
 
 	return expandedPorts, composite.OrNilIfEmpty()
@@ -183,10 +201,6 @@ func ExpandStep(step *WorkflowStep, variables *properties.Properties) error {
 
 	script, err := variables.Expand(step.Script)
 	step.Script = script
-	composite.Append(err)
-
-	serviceName, err := variables.Expand(step.ServiceName)
-	step.ServiceName = serviceName
 	composite.Append(err)
 
 	sourceLocation, err := variables.Expand(step.SourceLocation)

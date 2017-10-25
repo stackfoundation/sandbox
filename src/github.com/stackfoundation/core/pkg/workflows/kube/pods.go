@@ -19,9 +19,11 @@ func cleanupPodIfNecessary(context *podContext) {
 		log.Debugf("Deleting pod %v", context.pod.Name)
 		context.podsClient.Delete(context.pod.Name, &metav1.DeleteOptions{})
 
-		if context.service != nil {
-			log.Debugf("Deleting service %v", context.service.Name)
-			context.serviceClient.Delete(context.service.Name, &metav1.DeleteOptions{})
+		if len(context.services) > 0 {
+			for _, service := range context.services {
+				log.Debugf("Deleting service %v", service.Name)
+				context.serviceClient.Delete(service.Name, &metav1.DeleteOptions{})
+			}
 		}
 
 		context.creationSpec.Cleanup.Done()
@@ -63,7 +65,7 @@ func CreateAndRunPod(clientSet *kubernetes.Clientset, creationSpec *PodCreationS
 	return nil
 }
 
-func createServicePort(port string) v1.ServicePort {
+func extractProtocol(port string) (v1.Protocol, string) {
 	protocol := v1.ProtocolTCP
 
 	protocolSeparator := strings.Index(port, "/")
@@ -75,23 +77,78 @@ func createServicePort(port string) v1.ServicePort {
 		port = port[:protocolSeparator]
 	}
 
-	sourcePort := parseInt(port, 0)
-	targetPort := sourcePort
+	return protocol, port
+}
 
-	portSeparator := strings.Index(port, ":")
-	if portSeparator > -1 {
-		sourcePort = parseInt(port[:portSeparator], 0)
-		targetPort = parseInt(port[portSeparator+1:], sourcePort)
+func createServicePort(port workflowsv1.Port) v1.ServicePort {
+	protocol := v1.ProtocolTCP
+
+	if strings.ToLower(port.Protocol) == "udp" {
+		protocol = v1.ProtocolUDP
 	}
 
-	return v1.ServicePort{
-		Port: sourcePort,
+	containerPort := parseInt(port.ContainerPort, 0)
+	internalPort := parseInt(port.InternalPort, 0)
+	if internalPort == 0 {
+		internalPort = containerPort
+	}
+
+	servicePort := v1.ServicePort{
+		Protocol: protocol,
 		TargetPort: intstr.IntOrString{
 			Type:   intstr.Int,
-			IntVal: targetPort,
+			IntVal: containerPort,
 		},
-		Protocol: protocol,
+		Port: internalPort,
 	}
+
+	if len(port.ExternalPort) > 0 {
+		servicePort.NodePort = parseInt(port.ExternalPort, 0)
+	}
+
+	return servicePort
+}
+
+func createService(context *podContext, port workflowsv1.Port, labels map[string]string) (*v1.Service, error) {
+	servicePort := createServicePort(port)
+
+	serviceType := v1.ServiceTypeClusterIP
+	if len(port.ExternalPort) > 0 {
+		serviceType = v1.ServiceTypeNodePort
+	}
+
+	serviceName := port.Name
+	if len(serviceName) == 0 {
+		serviceName = workflowsv1.GenerateServiceName()
+	}
+
+	log.Debugf("Creating service %v", serviceName)
+	return context.serviceClient.Create(&v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: serviceName,
+		},
+		Spec: v1.ServiceSpec{
+			Type:     serviceType,
+			Selector: labels,
+			Ports:    []v1.ServicePort{servicePort},
+		},
+	})
+}
+
+func createServices(context *podContext, labels map[string]string) ([]*v1.Service, error) {
+	creationSpec := context.creationSpec
+
+	services := make([]*v1.Service, 0, len(creationSpec.Ports))
+	for _, port := range creationSpec.Ports {
+		service, err := createService(context, port, labels)
+		if err != nil {
+			return nil, err
+		}
+
+		services = append(services, service)
+	}
+
+	return services, nil
 }
 
 func createPod(context *podContext, containerName string) error {
@@ -104,9 +161,9 @@ func createPod(context *podContext, containerName string) error {
 
 	var labels map[string]string
 
-	if len(creationSpec.ServiceName) > 0 {
-		labels := make(map[string]string, 1)
-		labels[serviceNameKey] = creationSpec.ServiceName
+	if len(creationSpec.Ports) > 0 {
+		labels = make(map[string]string, 1)
+		labels[serviceNameKey] = workflowsv1.GenerateServiceAssociation()
 	}
 
 	pod, err := context.podsClient.Create(&v1.Pod{
@@ -137,29 +194,13 @@ func createPod(context *podContext, containerName string) error {
 
 	context.pod = pod
 
-	if len(creationSpec.ServiceName) > 0 {
-		log.Debugf("Creating service %v", creationSpec.ServiceName)
-
-		ports := make([]v1.ServicePort, 0, 1)
-		for _, port := range creationSpec.Ports {
-			ports = append(ports, createServicePort(port))
-		}
-
-		service, err := context.serviceClient.Create(&v1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: creationSpec.ServiceName,
-			},
-			Spec: v1.ServiceSpec{
-				Selector: labels,
-				Ports:    ports,
-			},
-		})
-
+	if len(creationSpec.Ports) > 0 {
+		services, err := createServices(context, labels)
 		if err != nil {
 			return err
 		}
 
-		context.service = service
+		context.services = services
 	}
 
 	return nil

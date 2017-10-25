@@ -76,6 +76,15 @@ type StepState struct {
 	Prepared           bool   `json:"prepared" yaml:"prepared"`
 }
 
+// Port An exposed port
+type Port struct {
+	Protocol      string `json:"protocol" yaml:"protocol"`
+	Name          string `json:"name" yaml:"name"`
+	ContainerPort string `json:"containerPort" yaml:"containerPort"`
+	ExternalPort  string `json:"externalPort" yaml:"externalPort"`
+	InternalPort  string `json:"internalPort" yaml:"internalPort"`
+}
+
 // WorkflowStep Step within a workflow
 type WorkflowStep struct {
 	Dockerfile       string           `json:"dockerfile" yaml:"dockerfile"`
@@ -92,10 +101,9 @@ type WorkflowStep struct {
 	IncludeVariables []string         `json:"includeVariables" yaml:"includeVariables"`
 	Name             string           `json:"name" yaml:"name"`
 	OmitSource       string           `json:"omitSource" yaml:"omitSource"`
-	Ports            []string         `json:"ports" yaml:"ports"`
+	Ports            []Port           `json:"ports" yaml:"ports"`
 	Readiness        *HealthCheck     `json:"readiness" yaml:"readiness"`
 	Script           string           `json:"script" yaml:"script"`
-	ServiceName      string           `json:"serviceName" yaml:"serviceName"`
 	SourceLocation   string           `json:"sourceLocation" yaml:"sourceLocation"`
 	State            StepState        `json:"state" yaml:"state"`
 	Steps            []WorkflowStep   `json:"steps" yaml:"steps"`

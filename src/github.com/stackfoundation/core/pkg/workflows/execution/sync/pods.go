@@ -87,7 +87,6 @@ func runPodStepAndTransitionNext(e execution.Execution, c *execution.Context) er
 		PodListener:      completionListener,
 		Ports:            step.Ports,
 		Readiness:        step.Readiness,
-		ServiceName:      step.ServiceName,
 		VariableReceiver: completionListener.addVariable,
 		Volumes:          step.Volumes,
 		WorkflowReceiver: completionListener.addGeneratedWorkflow,

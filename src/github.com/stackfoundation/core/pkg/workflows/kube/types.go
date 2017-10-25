@@ -28,9 +28,8 @@ type PodCreationSpec struct {
 	Health           *workflowsv1.HealthCheck
 	Image            string
 	Name             string
-	ServiceName      string
 	LogPrefix        string
-	Ports            []string
+	Ports            []workflowsv1.Port
 	Readiness        *workflowsv1.HealthCheck
 	Listener         PodListener
 	VariableReceiver func(string, string)
@@ -43,6 +42,6 @@ type podContext struct {
 	podsClient    corev1.PodInterface
 	podDeleted    bool
 	pod           *v1.Pod
-	service       *v1.Service
+	services      []*v1.Service
 	serviceClient corev1.ServiceInterface
 }
