@@ -68,22 +68,37 @@ func getStackFoundationRoot() (string, error) {
 	return filepath.Join(path, "sf"), nil
 }
 
-// ElevatedExecute Executes a shell command, requesting elevated privileges
-func ElevatedExecute(binary, parameters string) error {
-	var info shellExecuteInfo
-	var errorCode int
-
-	info.cbSize = unsafe.Sizeof(info)
+func initializeExecuteInfo(info *shellExecuteInfo, binary, parameters string, errorCode *int) {
+	info.cbSize = unsafe.Sizeof(*info)
+	info.hwnd = uintptr(0)
 	info.fMask = seeMaskNoCloseProcess
 	info.lpVerb = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("runas")))
 	info.lpFile = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(binary)))
 	if len(parameters) != 0 {
 		info.lpParameters = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(parameters)))
 	}
-	info.hInstApp = uintptr(unsafe.Pointer(&errorCode))
+	info.lpDirectory = uintptr(0)
+	info.nShow = uintptr(0)
+	info.lpIDList = uintptr(0)
+	info.lpClass = uintptr(0)
+	info.hkeyClass = uintptr(0)
+	info.dwHotKey = 0
+	info.hIcon = uintptr(0)
+	info.hInstApp = uintptr(unsafe.Pointer(errorCode))
+}
 
-	_, _, _ = shellExecuteEx.Call(uintptr(unsafe.Pointer(&info)))
+// ElevatedExecute Executes a shell command, requesting elevated privileges
+func ElevatedExecute(binary, parameters string) error {
+	var info shellExecuteInfo
+	var errorCode int
+
+	initializeExecuteInfo(&info, binary, parameters, &errorCode)
+
+	r, _, err := shellExecuteEx.Call(uintptr(unsafe.Pointer(&info)))
 	s, e := syscall.WaitForSingleObject(syscall.Handle(info.hProcess), syscall.INFINITE)
+
+	if r == 0 && err != nil {
+	}
 
 	errorMsg := ""
 	if errorCode != 0 && errorCode <= 32 {
