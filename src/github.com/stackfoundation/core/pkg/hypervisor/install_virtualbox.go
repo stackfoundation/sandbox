@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/stackfoundation/install"
+	"github.com/stackfoundation/log"
 )
 
 func virtualBoxInstallerPath() (string, error) {
@@ -32,7 +33,12 @@ func InstallVirtualBox(fail bool) error {
 			return err
 		}
 
-		err = install.ElevatedExecute(os.Args[0], "virtualbox --fail")
+		command := "virtualbox --fail"
+		if log.IsDebug() {
+			command += " --debug"
+		}
+
+		err = install.ElevatedExecute(os.Args[0], command)
 	}
 
 	return err

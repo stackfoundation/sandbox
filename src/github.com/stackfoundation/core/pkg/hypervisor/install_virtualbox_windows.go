@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/stackfoundation/install"
+	"github.com/stackfoundation/log"
 )
 
 func selectInstaller(installers []os.FileInfo, use64Bit bool) string {
@@ -67,10 +68,14 @@ func installVirtualBoxWithInstaller(installer string) error {
 	cmd = exec.Command("msiexec", "/i", targetArchInstaller, "/qn", "/Lime!", installLog)
 	err = cmd.Start()
 	if err != nil {
+		log.Debugf("Check the installation logs at %v", installLog)
 		return err
 	}
 
 	err = cmd.Wait()
+	if err != nil {
+		log.Debugf("Check the installation logs at %v", installLog)
+	}
 
 	return err
 }

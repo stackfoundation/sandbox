@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"syscall"
 	"unsafe"
+
+	"github.com/stackfoundation/log"
 )
 
 const (
@@ -27,25 +29,48 @@ const (
 )
 
 var shell32 = syscall.NewLazyDLL("shell32.dll")
+var shellExecute = shell32.NewProc("ShellExecuteW")
 var shellExecuteEx = shell32.NewProc("ShellExecuteExW")
 var getFolderPath = shell32.NewProc("SHGetFolderPathW")
 
+/*
+typedef struct _SHELLEXECUTEINFO {
+  DWORD     cbSize;
+  ULONG     fMask;
+  HWND      hwnd;
+  LPCTSTR   lpVerb;
+  LPCTSTR   lpFile;
+  LPCTSTR   lpParameters;
+  LPCTSTR   lpDirectory;
+  int       nShow;
+  HINSTANCE hInstApp;
+  LPVOID    lpIDList;
+  LPCTSTR   lpClass;
+  HKEY      hkeyClass;
+  DWORD     dwHotKey;
+  union {
+    HANDLE hIcon;
+    HANDLE hMonitor;
+  } DUMMYUNIONNAME;
+  HANDLE    hProcess;
+} SHELLEXECUTEINFO, *LPSHELLEXECUTEINFO;
+*/
 type shellExecuteInfo struct {
-	cbSize       uintptr
+	cbSize       uint32
 	fMask        uint32
-	hwnd         uintptr
-	lpVerb       uintptr
-	lpFile       uintptr
-	lpParameters uintptr
-	lpDirectory  uintptr
-	nShow        uintptr
-	hInstApp     uintptr
-	lpIDList     uintptr
-	lpClass      uintptr
-	hkeyClass    uintptr
+	hwnd         unsafe.Pointer
+	lpVerb       unsafe.Pointer
+	lpFile       unsafe.Pointer
+	lpParameters unsafe.Pointer
+	lpDirectory  unsafe.Pointer
+	nShow        int32
+	hInstApp     unsafe.Pointer
+	lpIDList     unsafe.Pointer
+	lpClass      *uint16
+	hkeyClass    unsafe.Pointer
 	dwHotKey     uint32
-	hIcon        uintptr
-	hProcess     uintptr
+	hIcon        unsafe.Pointer
+	hProcess     unsafe.Pointer
 }
 
 func getRoamingAppDataDir() (string, error) {
@@ -69,22 +94,15 @@ func getStackFoundationRoot() (string, error) {
 }
 
 func initializeExecuteInfo(info *shellExecuteInfo, binary, parameters string, errorCode *int) {
-	info.cbSize = unsafe.Sizeof(*info)
-	info.hwnd = uintptr(0)
 	info.fMask = seeMaskNoCloseProcess
-	info.lpVerb = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("runas")))
-	info.lpFile = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(binary)))
+	info.lpVerb = unsafe.Pointer(syscall.StringToUTF16Ptr("runas"))
+	info.lpFile = unsafe.Pointer(syscall.StringToUTF16Ptr(binary))
 	if len(parameters) != 0 {
-		info.lpParameters = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(parameters)))
+		info.lpParameters = unsafe.Pointer(syscall.StringToUTF16Ptr(parameters))
 	}
-	info.lpDirectory = uintptr(0)
-	info.nShow = uintptr(0)
-	info.lpIDList = uintptr(0)
-	info.lpClass = uintptr(0)
-	info.hkeyClass = uintptr(0)
-	info.dwHotKey = 0
-	info.hIcon = uintptr(0)
-	info.hInstApp = uintptr(unsafe.Pointer(errorCode))
+
+	info.hInstApp = unsafe.Pointer(errorCode)
+	info.cbSize = uint32(unsafe.Sizeof(*info))
 }
 
 // ElevatedExecute Executes a shell command, requesting elevated privileges
@@ -94,10 +112,12 @@ func ElevatedExecute(binary, parameters string) error {
 
 	initializeExecuteInfo(&info, binary, parameters, &errorCode)
 
+	log.Debugf("Executing %v %v with elevation", binary, parameters)
 	r, _, err := shellExecuteEx.Call(uintptr(unsafe.Pointer(&info)))
 	s, e := syscall.WaitForSingleObject(syscall.Handle(info.hProcess), syscall.INFINITE)
 
 	if r == 0 && err != nil {
+		return err
 	}
 
 	errorMsg := ""
