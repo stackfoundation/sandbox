@@ -36,6 +36,10 @@ func downloadVirtualBoxIfNecessary() error {
 }
 
 func relaunchForInstall(command string) error {
+	if log.IsDebug() {
+		return process.CombineStdStreams(os.Args[0], command, "--debug")
+	}
+
 	return process.CombineStdStreams(os.Args[0], command)
 }
 
@@ -74,10 +78,6 @@ func SelectAndPrepareHypervisor(preferred string) string {
 
 				if err != nil {
 					fmt.Println("Error installing VirtualBox: " + err.Error())
-					if !log.IsDebug() {
-						fmt.Println("Try running again with the --debug flag to see installation logs")
-					}
-
 					fmt.Println("Continuing but further failures might occur")
 				} else {
 					fmt.Println("VirtualBox installed!")
