@@ -35,9 +35,9 @@ import (
 
 	"text/template"
 
-	"k8s.io/apimachinery/pkg/labels"
 	"github.com/stackfoundation/core/pkg/minikube/cluster"
 	"github.com/stackfoundation/core/pkg/util"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 type K8sClient interface {
@@ -54,7 +54,9 @@ func init() {
 
 func (*K8sClientGetter) GetCoreClient() (corev1.CoreV1Interface, error) {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	configOverrides := &clientcmd.ConfigOverrides{}
+	configOverrides := &clientcmd.ConfigOverrides{
+		CurrentContext: "sbox",
+	}
 	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
 	config, err := kubeConfig.ClientConfig()
 	if err != nil {
