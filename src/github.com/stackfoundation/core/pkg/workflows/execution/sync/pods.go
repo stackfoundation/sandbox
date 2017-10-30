@@ -61,7 +61,7 @@ func runPodStepAndTransitionNext(e execution.Execution, c *execution.Context) er
 	fmt.Println("Running step " + stepName + ":")
 
 	var command []string
-	if len(step.State.GeneratedScript) > 0 {
+	if !step.Cache && len(step.State.GeneratedScript) > 0 {
 		command = []string{"/bin/sh", "/" + step.State.GeneratedScript}
 	}
 
