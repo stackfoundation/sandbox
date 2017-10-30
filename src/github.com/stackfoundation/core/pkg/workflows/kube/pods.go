@@ -41,18 +41,18 @@ func CreateAndRunPod(clientSet *kubernetes.Clientset, creationSpec *PodCreationS
 
 	containerName := workflowsv1.GenerateContainerName()
 
+	creationSpec.Cleanup.Add(1)
+	go func() {
+		<-creationSpec.Context.Done()
+		cleanupPodIfNecessary(context)
+	}()
+
 	err := createPod(context, containerName)
 	if err != nil {
 		return err
 	}
 
 	log.Debugf("Created pod %v", context.pod.Name)
-
-	creationSpec.Cleanup.Add(1)
-	go func() {
-		<-creationSpec.Context.Done()
-		cleanupPodIfNecessary(context)
-	}()
 
 	printer := &podLogPrinter{
 		podsClient:       context.podsClient,

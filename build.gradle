@@ -14,7 +14,7 @@ goBinary 'Core',
         ['windows-386', 'windows-amd64', 'linux-amd64'],
         false,
         true,
-        [],
+        ["github.com/stackfoundation/core/cmd.coreVersion=${coreVersion}"],
         'github.com/stackfoundation/core'
 
 goBinary 'Bootstrap',
