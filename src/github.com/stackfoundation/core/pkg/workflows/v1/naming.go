@@ -2,6 +2,9 @@ package v1
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
+	"io"
 	"strconv"
 
 	"github.com/pborman/uuid"
@@ -17,6 +20,13 @@ func GenerateContainerName() string {
 func GenerateImageName() string {
 	uuid := uuid.NewUUID()
 	return "step:" + uuid.String()
+}
+
+// GenerateCachedScriptName Generates a name for a cached step script
+func GenerateCachedScriptName(content string) string {
+	hash := md5.New()
+	io.WriteString(hash, content)
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 // GenerateScriptName Generates a name for a step script

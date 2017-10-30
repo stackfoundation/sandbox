@@ -51,12 +51,24 @@ func writeSourceMount(dockerfile *bytes.Buffer, step *v1.WorkflowStep) {
 	}
 }
 
+func writeRunStepScriptInstruction(dockerfile *bytes.Buffer, step *v1.WorkflowStep) {
+	if len(step.State.GeneratedScript) > 0 {
+		dockerfile.WriteString("RUN [\"/bin/sh\", \"")
+		dockerfile.WriteString(step.State.GeneratedScript)
+		dockerfile.WriteString("\"]\n")
+	}
+}
+
 func buildDockerfile(step *v1.WorkflowStep) string {
 	var dockerfile bytes.Buffer
 
 	writeFromInstruction(&dockerfile, step)
 	writeSourceMount(&dockerfile, step)
 	writePorts(&dockerfile, step)
+
+	if step.Cache {
+		writeRunStepScriptInstruction(&dockerfile, step)
+	}
 
 	return dockerfile.String()
 }

@@ -87,6 +87,7 @@ type Port struct {
 
 // WorkflowStep Step within a workflow
 type WorkflowStep struct {
+	Cache            bool             `json:"cache" yaml:"cache"`
 	Dockerfile       string           `json:"dockerfile" yaml:"dockerfile"`
 	Dockerignore     string           `json:"dockerignore" yaml:"dockerignore"`
 	Environment      []VariableSource `json:"environment" yaml:"environment"`

@@ -18,7 +18,7 @@ func areFailuresIgnored(step *v1.WorkflowStep, stepSelector []int, workflow *v1.
 }
 
 func shouldIgnoreFailure(step *v1.WorkflowStep, stepSelector []int, workflow *v1.Workflow, err error) error {
-	if areFailuresIgnored(step, stepSelector, workflow) {
+	if !areFailuresIgnored(step, stepSelector, workflow) {
 		return err
 	}
 
