@@ -6,6 +6,8 @@ package image
 import (
 	"archive/tar"
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"io"
 	"io/ioutil"
 	"os"
@@ -193,6 +195,12 @@ func isUNC(path string) bool {
 	return runtime.GOOS == "windows" && strings.HasPrefix(path, `\\`)
 }
 
+func generateDockerfileName(content []byte) string {
+	hash := md5.New()
+	hash.Write(content)
+	return ".dockerfile." + hex.EncodeToString(hash.Sum(nil))
+}
+
 func addBuildFilesToBuildContext(
 	scriptName string,
 	dockerfileContent, scriptContent io.Reader,
@@ -230,7 +238,7 @@ func addBuildFilesToBuildContext(
 		ChangeTime: now,
 	}
 
-	dockerfileName := ".dockerfile." + GenerateRandomID()[:20]
+	dockerfileName := generateDockerfileName(dockerfile)
 
 	buildContext = replaceFileTarWrapper(buildContext, map[string]TarModifierFunc{
 		// Add the dockerfile with a random filename

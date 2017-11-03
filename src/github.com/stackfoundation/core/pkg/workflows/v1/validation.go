@@ -25,6 +25,22 @@ func containsPlaceholders(text string) bool {
 	return placeholderMatcher.MatchString(text)
 }
 
+func validateCache(step *WorkflowStep, stepSelector []int, ignorePlaceholders bool) error {
+	if len(step.Cache) > 0 {
+		if ignorePlaceholders && containsPlaceholders(step.Cache) {
+			return nil
+		}
+
+		_, err := strconv.ParseBool(step.Cache)
+		if err != nil {
+			return newValidationError("Cache be a boolean (true or false) in step " +
+				step.StepName(stepSelector))
+		}
+	}
+
+	return nil
+}
+
 func validateStepType(step *WorkflowStep, stepSelector []int, ignorePlaceholders bool) error {
 	if len(step.Type) > 0 {
 		if ignorePlaceholders && containsPlaceholders(step.Type) {
@@ -54,8 +70,41 @@ func validateStepSource(step *WorkflowStep, stepSelector []int, ignorePlaceholde
 				step.StepName(stepSelector))
 		}
 
-		if omitSource && len(step.SourceLocation) > 0 {
-			return newValidationError("Source location cannot be specified when source is omitted for " +
+		if omitSource {
+			if len(step.SourceLocation) > 0 {
+				return newValidationError("Source location cannot be specified when source is omitted for " +
+					step.StepName(stepSelector))
+			}
+
+			if len(step.SourceIncludes) > 0 {
+				return newValidationError("Source includes cannot be specified when source is omitted for " +
+					step.StepName(stepSelector))
+			}
+
+			if len(step.SourceExcludes) > 0 {
+				return newValidationError("Source excludes cannot be specified when source is omitted for " +
+					step.StepName(stepSelector))
+			}
+
+			if len(step.Dockerignore) > 0 {
+				return newValidationError("Dockerignore cannot be specified when source is omitted for " +
+					step.StepName(stepSelector))
+			}
+		}
+	}
+
+	if len(step.Dockerignore) > 0 {
+		if ignorePlaceholders && containsPlaceholders(step.Dockerignore) {
+			return nil
+		}
+
+		if len(step.SourceIncludes) > 0 {
+			return newValidationError("Source includes cannot be specified when dockerignore is also specified for " +
+				step.StepName(stepSelector))
+		}
+
+		if len(step.SourceExcludes) > 0 {
+			return newValidationError("Source excludes cannot be specified when dockerignore is also specified for " +
 				step.StepName(stepSelector))
 		}
 	}
@@ -192,6 +241,7 @@ func validateStepSubType(step *WorkflowStep, stepSelector []int) error {
 func validateStepInternal(step *WorkflowStep, stepSelector []int, ignorePlaceholders bool) error {
 	composite := errors.NewCompositeError()
 
+	composite.Append(validateCache(step, stepSelector, ignorePlaceholders))
 	composite.Append(validateStepType(step, stepSelector, ignorePlaceholders))
 	composite.Append(validateStepSubType(step, stepSelector))
 	composite.Append(validateStepSource(step, stepSelector, ignorePlaceholders))

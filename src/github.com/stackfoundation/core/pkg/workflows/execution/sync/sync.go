@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"sync/atomic"
 
 	"k8s.io/client-go/kubernetes"
 
@@ -18,6 +19,7 @@ import (
 )
 
 type syncExecution struct {
+	completed        uint32
 	cancel           context.CancelFunc
 	cleanupWaitGroup sync.WaitGroup
 	change           chan bool
@@ -38,6 +40,7 @@ func (e *syncExecution) ChildExecution(workflow *v1.Workflow) (execution.Executi
 
 func (e *syncExecution) Complete() error {
 	log.Debugf("Stopping workflow execution")
+	atomic.CompareAndSwapUint32(&e.completed, 0, 1)
 	close(e.change)
 	e.cancel()
 	return nil
@@ -102,7 +105,9 @@ func (e *syncExecution) TransitionNext(context *execution.Context, update func(*
 		workflow := context.Workflow
 		update(context, workflow)
 
-		e.change <- true
+		if atomic.LoadUint32(&e.completed) == 0 {
+			e.change <- true
+		}
 	}()
 
 	return nil

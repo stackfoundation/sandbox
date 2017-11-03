@@ -13,6 +13,8 @@ type BuildOptions struct {
 	ContextDirectory  string
 	DockerfilePath    string
 	Dockerignore      string
+	SourceIncludes    []string
+	SourceExcludes    []string
 	ScriptName        string
 	DockerfileContent io.Reader
 	ScriptContent     io.Reader
@@ -20,14 +22,21 @@ type BuildOptions struct {
 
 // BuildImageStream Build the tar stream for the context to send to a docker build
 func BuildImageStream(options *BuildOptions) (io.ReadCloser, string, error) {
-	dockerignore := options.Dockerignore
-	if len(dockerignore) < 1 {
-		dockerignore = filepath.Join(options.ContextDirectory, ".dockerignore")
-	}
+	var err error
+	var excludes []string
 
-	excludes, err := readDockerignore(dockerignore)
-	if err != nil {
-		return nil, "", err
+	if len(options.SourceIncludes) > 0 || len(options.SourceExcludes) > 0 {
+		excludes = composeDockerignore(options.SourceIncludes, options.SourceExcludes)
+	} else {
+		dockerignore := options.Dockerignore
+		if len(dockerignore) < 1 {
+			dockerignore = filepath.Join(options.ContextDirectory, ".dockerignore")
+		}
+
+		excludes, err = readDockerignore(dockerignore)
+		if err != nil {
+			return nil, "", err
+		}
 	}
 
 	dockerfileTarEntry := ""

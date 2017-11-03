@@ -155,12 +155,30 @@ func expandVolumes(volumes []Volume, variables *properties.Properties) ([]Volume
 	return expandedVolumes, composite.OrNilIfEmpty()
 }
 
+func expandStringSlice(slice []string, variables *properties.Properties) ([]string, error) {
+	expandedSlice := slice[:0]
+	composite := errors.NewCompositeError()
+
+	for _, element := range slice {
+		expanded, err := variables.Expand(element)
+		composite.Append(err)
+
+		expandedSlice = append(expandedSlice, expanded)
+	}
+
+	return expandedSlice, composite.OrNilIfEmpty()
+}
+
 // ExpandStep Expand any placeholders in this step that haven't been expanded yet
 func ExpandStep(step *WorkflowStep, variables *properties.Properties) error {
 	composite := errors.NewCompositeError()
 
 	dockerfile, err := variables.Expand(step.Dockerfile)
 	step.Dockerfile = dockerfile
+	composite.Append(err)
+
+	cache, err := variables.Expand(step.Cache)
+	step.Cache = cache
 	composite.Append(err)
 
 	dockerignore, err := variables.Expand(step.Dockerignore)
@@ -177,6 +195,14 @@ func ExpandStep(step *WorkflowStep, variables *properties.Properties) error {
 
 	composite.Append(expandHealthCheck(step.Health, variables))
 
+	excludeVariables, err := expandStringSlice(step.ExcludeVariables, variables)
+	step.ExcludeVariables = excludeVariables
+	composite.Append(err)
+
+	includeVariables, err := expandStringSlice(step.IncludeVariables, variables)
+	step.IncludeVariables = includeVariables
+	composite.Append(err)
+
 	image, err := variables.Expand(step.Image)
 	step.Image = image
 	composite.Append(err)
@@ -191,6 +217,14 @@ func ExpandStep(step *WorkflowStep, variables *properties.Properties) error {
 
 	omitSource, err := variables.Expand(step.OmitSource)
 	step.OmitSource = omitSource
+	composite.Append(err)
+
+	sourceIncludes, err := expandStringSlice(step.SourceIncludes, variables)
+	step.SourceIncludes = sourceIncludes
+	composite.Append(err)
+
+	sourceExcludes, err := expandStringSlice(step.SourceExcludes, variables)
+	step.SourceIncludes = sourceExcludes
 	composite.Append(err)
 
 	ports, err := expandPorts(step.Ports, variables)

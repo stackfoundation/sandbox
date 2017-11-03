@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/stackfoundation/core/pkg/workflows/docker"
@@ -29,7 +30,8 @@ func createBuildOptionsForStepImage(workflowSpec *v1.WorkflowSpec, step *v1.Work
 	}
 
 	if step.HasScript() {
-		if step.Cache {
+		cache, _ := strconv.ParseBool(step.Cache)
+		if cache {
 			step.State.GeneratedScript = v1.GenerateCachedScriptName(script)
 		} else {
 			step.State.GeneratedScript = v1.GenerateScriptName()

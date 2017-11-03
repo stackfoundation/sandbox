@@ -66,7 +66,8 @@ func buildDockerfile(step *v1.WorkflowStep) string {
 	writeSourceMount(&dockerfile, step)
 	writePorts(&dockerfile, step)
 
-	if step.Cache {
+	cache, _ := strconv.ParseBool(step.Cache)
+	if cache {
 		writeRunStepScriptInstruction(&dockerfile, step)
 	}
 

@@ -2,6 +2,7 @@ package sync
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
@@ -61,7 +62,8 @@ func runPodStepAndTransitionNext(e execution.Execution, c *execution.Context) er
 	fmt.Println("Running step " + stepName + ":")
 
 	var command []string
-	if !step.Cache && len(step.State.GeneratedScript) > 0 {
+	cache, _ := strconv.ParseBool(step.Cache)
+	if !cache && len(step.State.GeneratedScript) > 0 {
 		command = []string{"/bin/sh", "/" + step.State.GeneratedScript}
 	}
 

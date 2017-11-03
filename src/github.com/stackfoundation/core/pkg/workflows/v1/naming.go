@@ -26,7 +26,7 @@ func GenerateImageName() string {
 func GenerateCachedScriptName(content string) string {
 	hash := md5.New()
 	io.WriteString(hash, content)
-	return hex.EncodeToString(hash.Sum(nil))
+	return "script-" + hex.EncodeToString(hash.Sum(nil)) + ".sh"
 }
 
 // GenerateScriptName Generates a name for a step script
