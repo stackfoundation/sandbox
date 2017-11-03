@@ -50,6 +50,7 @@ func (t *stepDoneTransition) transition(c *execution.Context, w *v1.Workflow) {
 
 	step := w.Select(c.StepSelector)
 	step.State.GeneratedContainer = t.generatedContainer
+	step.State.Ready = true
 	step.State.Done = true
 
 	if step.IsGenerator() {
@@ -63,14 +64,17 @@ func (t *stepDoneTransition) transition(c *execution.Context, w *v1.Workflow) {
 }
 
 func stepReadyTransition(c *execution.Context, w *v1.Workflow) {
-	change := handleChangeAndAppend(c, w, c.StepSelector)
-
 	step := w.Select(c.StepSelector)
-	step.State.Ready = true
 
-	change.Type = v1.StepReady
+	if !step.State.Ready {
+		change := handleChangeAndAppend(c, w, c.StepSelector)
 
-	logChange(change)
+		step.State.Ready = true
+
+		change.Type = v1.StepReady
+
+		logChange(change)
+	}
 }
 
 func stepStartedTransition(c *execution.Context, w *v1.Workflow) {

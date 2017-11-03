@@ -19,7 +19,7 @@ import (
 )
 
 type syncExecution struct {
-	completed        uint32
+	completed        *uint32
 	cancel           context.CancelFunc
 	cleanupWaitGroup sync.WaitGroup
 	change           chan bool
@@ -40,7 +40,7 @@ func (e *syncExecution) ChildExecution(workflow *v1.Workflow) (execution.Executi
 
 func (e *syncExecution) Complete() error {
 	log.Debugf("Stopping workflow execution")
-	atomic.CompareAndSwapUint32(&e.completed, 0, 1)
+	atomic.CompareAndSwapUint32(e.completed, 0, 1)
 	close(e.change)
 	e.cancel()
 	return nil
@@ -59,7 +59,7 @@ func NewSyncExecution(workflow *v1.Workflow) (execution.Execution, error) {
 	}
 
 	context, cancel := context.WithCancel(context.Background())
-
+	var completed uint32
 	change := make(chan bool)
 
 	interruptChannel := make(chan os.Signal, 1)
@@ -67,12 +67,14 @@ func NewSyncExecution(workflow *v1.Workflow) (execution.Execution, error) {
 	go func() {
 		for _ = range interruptChannel {
 			log.Debugf("An interrupt was requested, performing clean-up!")
+			atomic.CompareAndSwapUint32(&completed, 0, 1)
 			close(change)
 			cancel()
 		}
 	}()
 
 	return &syncExecution{
+		completed:    &completed,
 		cancel:       cancel,
 		change:       change,
 		context:      context,
@@ -105,7 +107,7 @@ func (e *syncExecution) TransitionNext(context *execution.Context, update func(*
 		workflow := context.Workflow
 		update(context, workflow)
 
-		if atomic.LoadUint32(&e.completed) == 0 {
+		if atomic.LoadUint32(e.completed) == 0 {
 			e.change <- true
 		}
 	}()

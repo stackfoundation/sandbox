@@ -59,11 +59,11 @@ func runPodStepAndTransitionNext(e execution.Execution, c *execution.Context) er
 	step := c.Step
 	stepName := step.StepName(c.Change.StepSelector)
 
-	fmt.Println("Running step " + stepName + ":")
-
 	var command []string
 	cache, _ := strconv.ParseBool(step.Cache)
 	if !cache && len(step.State.GeneratedScript) > 0 {
+		fmt.Println("Running step " + stepName + ":")
+
 		command = []string{"/bin/sh", "/" + step.State.GeneratedScript}
 	}
 

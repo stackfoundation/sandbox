@@ -51,6 +51,8 @@ func createBuildOptionsForStepImage(workflowSpec *v1.WorkflowSpec, step *v1.Work
 		ContextDirectory:  workflowSpec.State.ProjectRoot,
 		DockerfilePath:    "",
 		Dockerignore:      step.Dockerignore,
+		SourceIncludes:    step.SourceIncludes,
+		SourceExcludes:    step.SourceExcludes,
 		ScriptName:        step.State.GeneratedScript,
 		DockerfileContent: strings.NewReader(dockerfileContent),
 		ScriptContent:     strings.NewReader(script),
@@ -68,7 +70,12 @@ func buildStepImage(e execution.Execution, c *execution.Context) error {
 		}
 	}
 
-	fmt.Println("Building image for step " + stepName + ":")
+	cache, _ := strconv.ParseBool(step.Cache)
+	if cache {
+		fmt.Println("Building image and running step " + stepName + ":")
+	} else {
+		fmt.Println("Building image for step " + stepName + ":")
+	}
 
 	step.State.GeneratedImage = v1.GenerateImageName()
 
