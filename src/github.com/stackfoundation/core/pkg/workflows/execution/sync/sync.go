@@ -40,8 +40,9 @@ func (e *syncExecution) ChildExecution(workflow *v1.Workflow) (execution.Executi
 
 func (e *syncExecution) Complete() error {
 	log.Debugf("Stopping workflow execution")
-	atomic.CompareAndSwapUint32(e.completed, 0, 1)
-	close(e.change)
+	if atomic.CompareAndSwapUint32(e.completed, 0, 1) {
+		close(e.change)
+	}
 	e.cancel()
 	return nil
 }
@@ -67,8 +68,9 @@ func NewSyncExecution(workflow *v1.Workflow) (execution.Execution, error) {
 	go func() {
 		for _ = range interruptChannel {
 			log.Debugf("An interrupt was requested, performing clean-up!")
-			atomic.CompareAndSwapUint32(&completed, 0, 1)
-			close(change)
+			if atomic.CompareAndSwapUint32(&completed, 0, 1) {
+				close(change)
+			}
 			cancel()
 		}
 	}()

@@ -224,7 +224,7 @@ func ExpandStep(step *WorkflowStep, variables *properties.Properties) error {
 	composite.Append(err)
 
 	sourceExcludes, err := expandStringSlice(step.SourceExcludes, variables)
-	step.SourceIncludes = sourceExcludes
+	step.SourceExcludes = sourceExcludes
 	composite.Append(err)
 
 	ports, err := expandPorts(step.Ports, variables)

@@ -46,21 +46,23 @@ type stepDoneTransition struct {
 }
 
 func (t *stepDoneTransition) transition(c *execution.Context, w *v1.Workflow) {
-	w.Spec.State.Variables.Merge(collectVariables(t.variables))
-
 	step := w.Select(c.StepSelector)
-	step.State.GeneratedContainer = t.generatedContainer
-	step.State.Ready = true
-	step.State.Done = true
+	if !step.State.Done {
+		w.Spec.State.Variables.Merge(collectVariables(t.variables))
 
-	if step.IsGenerator() {
-		step.State.GeneratedWorkflow = t.generatedWorkfow
+		step.State.GeneratedContainer = t.generatedContainer
+		step.State.Ready = true
+		step.State.Done = true
+
+		if step.IsGenerator() {
+			step.State.GeneratedWorkflow = t.generatedWorkfow
+		}
+
+		change := handleChangeAndAppend(c, w, c.StepSelector)
+		change.Type = v1.StepDone
+
+		logChange(change)
 	}
-
-	change := handleChangeAndAppend(c, w, c.StepSelector)
-	change.Type = v1.StepDone
-
-	logChange(change)
 }
 
 func stepReadyTransition(c *execution.Context, w *v1.Workflow) {
