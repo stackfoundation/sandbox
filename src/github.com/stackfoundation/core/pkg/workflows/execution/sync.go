@@ -1,4 +1,4 @@
-package sync
+package execution
 
 import (
 	"context"
@@ -12,7 +12,6 @@ import (
 
 	"github.com/docker/engine-api/client"
 	"github.com/stackfoundation/core/pkg/workflows/docker"
-	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/kube"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 	"github.com/stackfoundation/log"
@@ -34,7 +33,7 @@ func (e *syncExecution) abort(err error) {
 	fmt.Println(err.Error())
 }
 
-func (e *syncExecution) ChildExecution(workflow *v1.Workflow) (execution.Execution, error) {
+func (e *syncExecution) ChildExecution(workflow *v1.Workflow) (Execution, error) {
 	return NewSyncExecution(workflow)
 }
 
@@ -48,7 +47,7 @@ func (e *syncExecution) Complete() error {
 }
 
 // NewSyncExecution Create a new sync execution for a workflow
-func NewSyncExecution(workflow *v1.Workflow) (execution.Execution, error) {
+func NewSyncExecution(workflow *v1.Workflow) (Execution, error) {
 	dockerClient, err := docker.CreateDockerClient()
 	if err != nil {
 		return nil, err
@@ -104,7 +103,7 @@ func (e *syncExecution) Start() {
 	log.Debugf("Finished cleanup")
 }
 
-func (e *syncExecution) TransitionNext(context *execution.Context, update func(*execution.Context, *v1.Workflow)) error {
+func (e *syncExecution) TransitionNext(context *Context, update func(*Context, *v1.Workflow)) error {
 	go func() {
 		workflow := context.Workflow
 		update(context, workflow)

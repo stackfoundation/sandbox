@@ -1,4 +1,4 @@
-package sync
+package execution
 
 // From https://github.com/ryanuber/go-glob/blob/256dc444b735e061061cf46c809487313d5b0065/glob.go
 

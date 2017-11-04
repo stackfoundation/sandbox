@@ -1,4 +1,4 @@
-package sync
+package execution
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/stackfoundation/core/pkg/workflows/docker"
-	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/image"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 	"github.com/stackfoundation/log"
@@ -59,7 +58,7 @@ func createBuildOptionsForStepImage(workflowSpec *v1.WorkflowSpec, step *v1.Work
 	}
 }
 
-func buildStepImage(e execution.Execution, c *execution.Context) error {
+func buildStepImage(e Execution, c *Context) error {
 	step := c.NextStep
 	stepName := step.StepName(c.NextStepSelector)
 
@@ -90,7 +89,7 @@ func buildStepImage(e execution.Execution, c *execution.Context) error {
 	return nil
 }
 
-func buildStepImageAndTransitionNext(e execution.Execution, c *execution.Context) error {
+func buildStepImageAndTransitionNext(e Execution, c *Context) error {
 	err := prepareStepIfNecessary(c, c.NextStep, c.NextStepSelector)
 	if err != nil {
 		return err

@@ -1,7 +1,6 @@
-package sync
+package execution
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 	"github.com/stackfoundation/log"
 )
@@ -10,25 +9,25 @@ func logChange(c *v1.Change) {
 	log.Debugf("Raised %v event for step %v", c.Type, c.StepSelector)
 }
 
-func consumeTransition(c *execution.Context, w *v1.Workflow) {
+func consumeTransition(c *Context, w *v1.Workflow) {
 	w.MarkHandled(c.Change)
 }
 
-func handleChangeAndAppend(c *execution.Context, w *v1.Workflow, selector []int) *v1.Change {
+func handleChangeAndAppend(c *Context, w *v1.Workflow, selector []int) *v1.Change {
 	w.MarkHandled(c.Change)
 
 	change := v1.NewChange(selector)
 	return w.AppendChange(change)
 }
 
-func imageBuiltTransition(c *execution.Context, w *v1.Workflow) {
+func imageBuiltTransition(c *Context, w *v1.Workflow) {
 	change := handleChangeAndAppend(c, w, c.NextStepSelector)
 	change.Type = v1.StepImageBuilt
 
 	logChange(change)
 }
 
-func initialTransition(c *execution.Context, w *v1.Workflow) {
+func initialTransition(c *Context, w *v1.Workflow) {
 	w.Spec.State.Variables = collectVariables(w.Spec.Variables)
 
 	change := v1.NewChange([]int{})
@@ -45,7 +44,7 @@ type stepDoneTransition struct {
 	variables          []v1.VariableSource
 }
 
-func (t *stepDoneTransition) transition(c *execution.Context, w *v1.Workflow) {
+func (t *stepDoneTransition) transition(c *Context, w *v1.Workflow) {
 	step := w.Select(c.StepSelector)
 	if !step.State.Done {
 		w.Spec.State.Variables.Merge(collectVariables(t.variables))
@@ -65,7 +64,7 @@ func (t *stepDoneTransition) transition(c *execution.Context, w *v1.Workflow) {
 	}
 }
 
-func stepReadyTransition(c *execution.Context, w *v1.Workflow) {
+func stepReadyTransition(c *Context, w *v1.Workflow) {
 	step := w.Select(c.StepSelector)
 
 	if !step.State.Ready {
@@ -79,21 +78,21 @@ func stepReadyTransition(c *execution.Context, w *v1.Workflow) {
 	}
 }
 
-func stepStartedTransition(c *execution.Context, w *v1.Workflow) {
+func stepStartedTransition(c *Context, w *v1.Workflow) {
 	change := handleChangeAndAppend(c, w, c.StepSelector)
 	change.Type = v1.StepStarted
 
 	logChange(change)
 }
 
-func workflowWaitDoneTransition(c *execution.Context, w *v1.Workflow) {
+func workflowWaitDoneTransition(c *Context, w *v1.Workflow) {
 	change := handleChangeAndAppend(c, w, c.StepSelector)
 	change.Type = v1.WorkflowWaitDone
 
 	logChange(change)
 }
 
-func workflowWaitTransition(c *execution.Context, w *v1.Workflow) {
+func workflowWaitTransition(c *Context, w *v1.Workflow) {
 	change := handleChangeAndAppend(c, w, c.StepSelector)
 	change.Type = v1.WorkflowWait
 

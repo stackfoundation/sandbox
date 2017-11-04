@@ -1,14 +1,13 @@
-package sync
+package execution
 
 import (
 	"fmt"
 
 	"github.com/stackfoundation/core/pkg/workflows/docker"
-	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
-func commitPreviousStepImage(currentStep *v1.WorkflowStep, e execution.Execution, c *execution.Context) error {
+func commitPreviousStepImage(currentStep *v1.WorkflowStep, e Execution, c *Context) error {
 	for i := 0; i < len(c.Workflow.Spec.Steps); i++ {
 		step := &c.Workflow.Spec.Steps[i]
 		if step.Name == currentStep.Image {

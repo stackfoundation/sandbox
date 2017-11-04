@@ -1,7 +1,6 @@
-package sync
+package execution
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 	"github.com/stackfoundation/log"
 )
@@ -15,7 +14,7 @@ func (e *stepExpansionError) Error() string {
 	return "Error replacing variable placeholders in step " + e.step + ":\n" + e.err.Error()
 }
 
-func expandStep(c *execution.Context, step *v1.WorkflowStep, stepSelector []int) error {
+func expandStep(c *Context, step *v1.WorkflowStep, stepSelector []int) error {
 	stepName := step.StepName(stepSelector)
 	log.Debugf("Expanding variable placeholders in step %v", stepName)
 
@@ -35,7 +34,7 @@ func expandStep(c *execution.Context, step *v1.WorkflowStep, stepSelector []int)
 	return nil
 }
 
-func prepareStepIfNecessary(c *execution.Context, step *v1.WorkflowStep, stepSelector []int) error {
+func prepareStepIfNecessary(c *Context, step *v1.WorkflowStep, stepSelector []int) error {
 	if step != nil && !step.State.Prepared {
 		err := expandStep(c, step, stepSelector)
 		if err != nil {

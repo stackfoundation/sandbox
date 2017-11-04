@@ -1,11 +1,10 @@
-package sync
+package execution
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/kube"
 )
 
-func runStepAndTransitionNext(e execution.Execution, c *execution.Context) error {
+func runStepAndTransitionNext(e Execution, c *Context) error {
 	err := prepareStepIfNecessary(c, c.Step, c.StepSelector)
 	if err != nil {
 		return err
@@ -18,7 +17,7 @@ func runStepAndTransitionNext(e execution.Execution, c *execution.Context) error
 	return runExternalWorkflowAndTransitionNext(e, c)
 }
 
-func (e *syncExecution) RunStep(spec *execution.RunStepSpec) error {
+func (e *syncExecution) RunStep(spec *RunStepSpec) error {
 	return kube.CreateAndRunPod(
 		e.podsClient,
 		&kube.PodCreationSpec{

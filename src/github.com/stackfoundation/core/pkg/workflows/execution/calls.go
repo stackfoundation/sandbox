@@ -1,15 +1,14 @@
-package sync
+package execution
 
 import (
 	"fmt"
 
-	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/files"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 	"github.com/stackfoundation/log"
 )
 
-func runChildWorkflow(e execution.Execution, c *execution.Context, workflow *v1.Workflow) error {
+func runChildWorkflow(e Execution, c *Context, workflow *v1.Workflow) error {
 	child, err := e.ChildExecution(workflow)
 	if err != nil {
 		err = shouldIgnoreFailure(c.Step, c.StepSelector, c.Workflow, err)
@@ -34,7 +33,7 @@ func runChildWorkflow(e execution.Execution, c *execution.Context, workflow *v1.
 	return e.TransitionNext(c, workflowWaitTransition)
 }
 
-func runGeneratedWorfklowAndTransitionNext(e execution.Execution, c *execution.Context) error {
+func runGeneratedWorfklowAndTransitionNext(e Execution, c *Context) error {
 	step := c.Step
 	stepName := step.StepName(c.Change.StepSelector)
 
@@ -52,7 +51,7 @@ func runGeneratedWorfklowAndTransitionNext(e execution.Execution, c *execution.C
 	return runChildWorkflow(e, c, workflow)
 }
 
-func runExternalWorkflowAndTransitionNext(e execution.Execution, c *execution.Context) error {
+func runExternalWorkflowAndTransitionNext(e Execution, c *Context) error {
 	step := c.Step
 	stepName := step.StepName(c.Change.StepSelector)
 

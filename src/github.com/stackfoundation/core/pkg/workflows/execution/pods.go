@@ -1,16 +1,15 @@
-package sync
+package execution
 
 import (
 	"fmt"
 	"strconv"
 
-	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
 type podCompletionListener struct {
-	execution          execution.Execution
-	context            *execution.Context
+	execution          Execution
+	context            *Context
 	generatedContainer string
 	generatedWorkflow  string
 	variables          []v1.VariableSource
@@ -55,7 +54,7 @@ func (listener *podCompletionListener) Done(failed bool) {
 	listener.execution.TransitionNext(listener.context, transition.transition)
 }
 
-func runPodStepAndTransitionNext(e execution.Execution, c *execution.Context) error {
+func runPodStepAndTransitionNext(e Execution, c *Context) error {
 	step := c.Step
 	stepName := step.StepName(c.Change.StepSelector)
 
@@ -81,7 +80,7 @@ func runPodStepAndTransitionNext(e execution.Execution, c *execution.Context) er
 		stepName = "Step " + stepName
 	}
 
-	err := e.RunStep(&execution.RunStepSpec{
+	err := e.RunStep(&RunStepSpec{
 		Command:          command,
 		Environment:      environment,
 		Image:            step.State.GeneratedImage,

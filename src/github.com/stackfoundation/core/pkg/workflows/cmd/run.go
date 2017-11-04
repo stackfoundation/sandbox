@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/execution/sync"
+	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/files"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
@@ -18,7 +18,7 @@ func Run(workflowName string) error {
 		return err
 	}
 
-	execution, err := sync.NewSyncExecution(workflow)
+	execution, err := execution.NewSyncExecution(workflow)
 	if err != nil {
 		return err
 	}
