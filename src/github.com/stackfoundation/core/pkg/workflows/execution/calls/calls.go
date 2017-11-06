@@ -1,4 +1,4 @@
-package execution
+package calls
 
 import (
 	"fmt"
@@ -8,15 +8,15 @@ import (
 	"github.com/stackfoundation/log"
 )
 
-func runChildWorkflow(e Execution, c *Context, workflow *v1.Workflow) error {
-	child, err := e.ChildExecution(workflow)
+func (controller *Controller) runChildWorkflow(c *Context, workflow *v1.Workflow) error {
+	child, err := controller.childExecution(workflow)
 	if err != nil {
 		err = shouldIgnoreFailure(c.Step, c.StepSelector, c.Workflow, err)
 		if err != nil {
 			return err
 		}
 
-		return e.TransitionNext(c, workflowWaitDoneTransition)
+		return controller.transitionNext(c, workflowWaitDoneTransition)
 	}
 
 	workflow.Spec.State.Variables = filterVariables(
@@ -27,13 +27,13 @@ func runChildWorkflow(e Execution, c *Context, workflow *v1.Workflow) error {
 	go func() {
 		child.Start()
 		log.Debugf("Finished running workflow")
-		e.TransitionNext(c, workflowWaitDoneTransition)
+		controller.transitionNext(c, workflowWaitDoneTransition)
 	}()
 
-	return e.TransitionNext(c, workflowWaitTransition)
+	return controller.transitionNext(c, workflowWaitTransition)
 }
 
-func runGeneratedWorfklowAndTransitionNext(e Execution, c *Context) error {
+func (controller *Controller) runGeneratedWorfklowAndTransitionNext(c *Context) error {
 	step := c.Step
 	stepName := step.StepName(c.Change.StepSelector)
 
@@ -48,10 +48,10 @@ func runGeneratedWorfklowAndTransitionNext(e Execution, c *Context) error {
 		}
 	}
 
-	return runChildWorkflow(e, c, workflow)
+	return controller.runChildWorkflow(c, workflow)
 }
 
-func runExternalWorkflowAndTransitionNext(e Execution, c *Context) error {
+func (controller *Controller) runExternalWorkflowAndTransitionNext(c *Context) error {
 	step := c.Step
 	stepName := step.StepName(c.Change.StepSelector)
 
@@ -65,5 +65,5 @@ func runExternalWorkflowAndTransitionNext(e Execution, c *Context) error {
 		}
 	}
 
-	return runChildWorkflow(e, c, workflow)
+	return controller.runChildWorkflow(c, workflow)
 }

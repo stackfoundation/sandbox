@@ -1,13 +1,16 @@
-package execution
+package context
 
 import (
+	"context"
+
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
-// NewContext Create a new context with the given workflow and change
-func NewContext(w *v1.Workflow, c *v1.Change) *Context {
+// NewExecutionContext Create a new execution context
+func NewExecutionContext(context context.Context, w *v1.Workflow, c *v1.Change) *ExecutionContext {
 	nextStepSelector := w.IncrementStepSelector(c.StepSelector)
-	return &Context{
+	return &ExecutionContext{
+		Context:          context,
 		Workflow:         w,
 		Change:           c,
 		Step:             w.Select(c.StepSelector),
@@ -17,20 +20,20 @@ func NewContext(w *v1.Workflow, c *v1.Change) *Context {
 	}
 }
 
-func (c *Context) isAtCompoundStepBoundary() bool {
+func (c *ExecutionContext) isAtCompoundStepBoundary() bool {
 	currentSegmentCount := len(c.StepSelector)
 	nextSegmentCount := len(c.NextStepSelector)
 
 	return nextSegmentCount < currentSegmentCount
 }
 
-func (c *Context) isAtWorkflowBoundary() bool {
+func (c *ExecutionContext) isAtWorkflowBoundary() bool {
 	nextSegmentCount := len(c.NextStepSelector)
 	return nextSegmentCount == 0
 }
 
 // CanProceedToNextStep Can we move on to the next step in context?
-func (c *Context) CanProceedToNextStep() bool {
+func (c *ExecutionContext) CanProceedToNextStep() bool {
 	if (c.Change.Type == v1.StepReady && c.Step.IsServiceWithWait()) ||
 		(c.Change.Type == v1.StepStarted && (c.Step == nil || c.Step.IsAsync())) ||
 		(c.Change.Type == v1.StepDone && !c.Step.IsAsync()) ||
@@ -42,7 +45,7 @@ func (c *Context) CanProceedToNextStep() bool {
 }
 
 // IsCompoundStepComplete Is the current step in context a compound step that's complete?
-func (c *Context) IsCompoundStepComplete() bool {
+func (c *ExecutionContext) IsCompoundStepComplete() bool {
 	if c.isAtCompoundStepBoundary() {
 		parent := c.Workflow.Parent(c.StepSelector)
 		if parent != nil {
@@ -54,16 +57,16 @@ func (c *Context) IsCompoundStepComplete() bool {
 }
 
 // IsGeneratedWorkflowReadyToRun Is the current generated workflow step in context ready to run?
-func (c *Context) IsGeneratedWorkflowReadyToRun() bool {
+func (c *ExecutionContext) IsGeneratedWorkflowReadyToRun() bool {
 	return c.Change.Type == v1.StepDone && c.Step.IsGenerator()
 }
 
 // IsStepReadyToRun Is the current step in context ready to run?
-func (c *Context) IsStepReadyToRun() bool {
+func (c *ExecutionContext) IsStepReadyToRun() bool {
 	return c.Change.Type == v1.StepImageBuilt
 }
 
 // IsWorkflowComplete Is the workflow in context complete?
-func (c *Context) IsWorkflowComplete() bool {
+func (c *ExecutionContext) IsWorkflowComplete() bool {
 	return c.isAtWorkflowBoundary() && c.CanProceedToNextStep()
 }

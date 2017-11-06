@@ -1,4 +1,4 @@
-package execution
+package run
 
 import (
 	"github.com/stackfoundation/core/pkg/workflows/properties"

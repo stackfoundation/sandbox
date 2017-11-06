@@ -1,4 +1,4 @@
-package execution
+package controller
 
 import (
 	"github.com/stackfoundation/core/pkg/workflows/v1"
@@ -97,4 +97,26 @@ func workflowWaitTransition(c *Context, w *v1.Workflow) {
 	change.Type = v1.WorkflowWait
 
 	logChange(change)
+}
+
+func (c *executionController) processTransitions() {
+	for {
+		select {
+		case transition := <-c.pendingTransitions:
+			transition.transition(transition.context, transition.context.Workflow)
+		default:
+			return
+		}
+	}
+}
+
+func (c *executionController) transitionNext(context *Context, transition func(*executioncontext.Context, *v1.Workflow)) error {
+	go func() {
+		c.pendingTransitions <- pendingTransition{
+			context:    context,
+			transition: transition,
+		}
+	}()
+
+	return nil
 }

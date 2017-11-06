@@ -1,6 +1,7 @@
-package execution
+package preparation
 
 import (
+	"github.com/stackfoundation/core/pkg/workflows/execution/context"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 	"github.com/stackfoundation/log"
 )
@@ -14,7 +15,7 @@ func (e *stepExpansionError) Error() string {
 	return "Error replacing variable placeholders in step " + e.step + ":\n" + e.err.Error()
 }
 
-func expandStep(c *Context, step *v1.WorkflowStep, stepSelector []int) error {
+func expandStep(c *context.Context, step *v1.WorkflowStep, stepSelector []int) error {
 	stepName := step.StepName(stepSelector)
 	log.Debugf("Expanding variable placeholders in step %v", stepName)
 
@@ -34,7 +35,21 @@ func expandStep(c *Context, step *v1.WorkflowStep, stepSelector []int) error {
 	return nil
 }
 
-func prepareStepIfNecessary(c *Context, step *v1.WorkflowStep, stepSelector []int) error {
+func shouldIgnoreValidation(step *v1.WorkflowStep, stepSelector []int, workflow *v1.Workflow, err error) error {
+	if step.IgnoreValidation == nil {
+		if !workflow.Spec.IgnoreValidation {
+			return err
+		}
+	} else if !*step.IgnoreValidation {
+		return err
+	}
+
+	log.Debugf("Ignoring validation errors in step %v:\n%v", step.StepName(stepSelector), err)
+	return nil
+}
+
+// PrepareStepIfNecessary Prepare the step for execution
+func PrepareStepIfNecessary(c *context.Context, step *v1.WorkflowStep, stepSelector []int) error {
 	if step != nil && !step.State.Prepared {
 		err := expandStep(c, step, stepSelector)
 		if err != nil {

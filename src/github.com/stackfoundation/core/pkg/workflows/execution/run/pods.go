@@ -1,15 +1,18 @@
-package execution
+package run
 
 import (
 	"fmt"
 	"strconv"
 
+	"github.com/stackfoundation/core/pkg/workflows/execution"
+	"github.com/stackfoundation/core/pkg/workflows/execution/context"
+	"github.com/stackfoundation/core/pkg/workflows/execution/coordinator"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
 type podCompletionListener struct {
-	execution          Execution
-	context            *Context
+	execution          execution.Execution
+	context            *context.Context
 	generatedContainer string
 	generatedWorkflow  string
 	variables          []v1.VariableSource
@@ -54,7 +57,8 @@ func (listener *podCompletionListener) Done(failed bool) {
 	listener.execution.TransitionNext(listener.context, transition.transition)
 }
 
-func runPodStepAndTransitionNext(e Execution, c *Context) error {
+// RunPodStep Run a pod-based step
+func RunPodStep(coordinator coordinator.Coordinator, c *context.Context) error {
 	step := c.Step
 	stepName := step.StepName(c.Change.StepSelector)
 
@@ -80,7 +84,7 @@ func runPodStepAndTransitionNext(e Execution, c *Context) error {
 		stepName = "Step " + stepName
 	}
 
-	err := e.RunStep(&RunStepSpec{
+	err := coordinator.RunStep(&RunStepSpec{
 		Command:          command,
 		Environment:      environment,
 		Image:            step.State.GeneratedImage,
@@ -94,12 +98,7 @@ func runPodStepAndTransitionNext(e Execution, c *Context) error {
 	})
 	if err != nil {
 		err = shouldIgnoreFailure(c.Step, c.StepSelector, c.Workflow, err)
-		if err != nil {
-			return err
-		}
-
-		return e.TransitionNext(c, (&stepDoneTransition{}).transition)
 	}
 
-	return e.TransitionNext(c, stepStartedTransition)
+	return err
 }

@@ -1,4 +1,4 @@
-package execution
+package controller
 
 import (
 	"github.com/stackfoundation/core/pkg/workflows/v1"
@@ -23,18 +23,5 @@ func shouldIgnoreFailure(step *v1.WorkflowStep, stepSelector []int, workflow *v1
 	}
 
 	log.Debugf("Ignoring failure in step %v:\n%v", step.StepName(stepSelector), err)
-	return nil
-}
-
-func shouldIgnoreValidation(step *v1.WorkflowStep, stepSelector []int, workflow *v1.Workflow, err error) error {
-	if step.IgnoreValidation == nil {
-		if !workflow.Spec.IgnoreValidation {
-			return err
-		}
-	} else if !*step.IgnoreValidation {
-		return err
-	}
-
-	log.Debugf("Ignoring validation errors in step %v:\n%v", step.StepName(stepSelector), err)
 	return nil
 }
