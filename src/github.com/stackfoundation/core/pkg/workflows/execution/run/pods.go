@@ -4,63 +4,49 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/stackfoundation/core/pkg/workflows/execution"
 	"github.com/stackfoundation/core/pkg/workflows/execution/context"
 	"github.com/stackfoundation/core/pkg/workflows/execution/coordinator"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
-type podCompletionListener struct {
-	execution          execution.Execution
-	context            *context.Context
-	generatedContainer string
-	generatedWorkflow  string
-	variables          []v1.VariableSource
-}
-
-func (listener *podCompletionListener) addVariable(name string, value string) {
-	listener.variables = append(listener.variables, v1.VariableSource{
+func (l *podCompletionListener) addVariable(name string, value string) {
+	l.variables = append(l.variables, v1.VariableSource{
 		Name:  name,
 		Value: value,
 	})
 }
 
-func (listener *podCompletionListener) addGeneratedWorkflow(content string) {
-	listener.generatedWorkflow = content
+func (l *podCompletionListener) addGeneratedWorkflow(content string) {
+	l.generatedWorkflow = content
 }
 
-func (listener *podCompletionListener) Container(containerID string) {
-	listener.generatedContainer = containerID
+func (l *podCompletionListener) Container(containerID string) {
+	l.generatedContainer = containerID
 }
 
-func (listener *podCompletionListener) Ready() {
-	listener.execution.TransitionNext(listener.context, stepReadyTransition)
+func (l *podCompletionListener) Ready() {
+	l.listener.Ready(l.stepContext)
 }
 
-func (listener *podCompletionListener) Done(failed bool) {
-	transition := stepDoneTransition{
-		variables:          listener.variables,
-		generatedContainer: listener.generatedContainer,
-		generatedWorkfow:   listener.generatedWorkflow,
+func (l *podCompletionListener) Done(failed bool) {
+	result := &Result{
+		Container: l.generatedContainer,
+		Workflow:  l.generatedWorkflow,
+		Variables: l.variables,
 	}
 
 	if failed {
-		if !areFailuresIgnored(listener.context.Step, listener.context.StepSelector, listener.context.Workflow) {
-			fmt.Printf("Step %v failed, aborting!\n", listener.context.Step.StepName(listener.context.StepSelector))
-			listener.execution.Complete()
-			return
-		}
-
-		fmt.Printf("Step %v failed, but ignoring and continuing\n", listener.context.Step.StepName(listener.context.StepSelector))
+		l.listener.Failed(l.stepContext, result)
+		return
 	}
 
-	listener.execution.TransitionNext(listener.context, transition.transition)
+	l.listener.Done(l.stepContext, result)
 }
 
 // RunPodStep Run a pod-based step
-func RunPodStep(coordinator coordinator.Coordinator, c *context.Context) error {
-	step := c.Step
-	stepName := step.StepName(c.Change.StepSelector)
+func RunPodStep(c coordinator.Coordinator, sc *context.StepContext, l Listener) error {
+	step := sc.Step
+	stepName := step.StepName(sc.Change.StepSelector)
 
 	var command []string
 	cache, _ := strconv.ParseBool(step.Cache)
@@ -70,35 +56,35 @@ func RunPodStep(coordinator coordinator.Coordinator, c *context.Context) error {
 		command = []string{"/bin/sh", "/" + step.State.GeneratedScript}
 	}
 
-	step.Volumes = normalizeVolumePaths(c.Workflow.Spec.State.ProjectRoot, step.Volumes)
+	step.Volumes = normalizeVolumePaths(sc.WorkflowContext.Workflow.Spec.State.ProjectRoot, step.Volumes)
 
 	completionListener := &podCompletionListener{
-		execution: e,
-		context:   c,
+		listener:    l,
+		stepContext: sc,
 	}
 
 	environment := collectVariables(step.Environment)
-	environment.ResolveFrom(c.Workflow.Spec.State.Variables)
+	environment.ResolveFrom(sc.WorkflowContext.Workflow.Spec.State.Variables)
 
 	if len(step.Name) < 1 {
 		stepName = "Step " + stepName
 	}
 
-	err := coordinator.RunStep(&RunStepSpec{
-		Command:          command,
-		Environment:      environment,
-		Image:            step.State.GeneratedImage,
-		Name:             stepName,
-		PodListener:      completionListener,
-		Ports:            step.Ports,
-		Readiness:        step.Readiness,
-		VariableReceiver: completionListener.addVariable,
-		Volumes:          step.Volumes,
-		WorkflowReceiver: completionListener.addGeneratedWorkflow,
-	})
-	if err != nil {
-		err = shouldIgnoreFailure(c.Step, c.StepSelector, c.Workflow, err)
-	}
+	err := c.RunStep(
+		sc.WorkflowContext.Context,
+		&coordinator.RunStepSpec{
+			Command:          command,
+			Cleanup:          sc.WorkflowContext.Cleanup,
+			Environment:      environment,
+			Image:            step.State.GeneratedImage,
+			Name:             stepName,
+			PodListener:      completionListener,
+			Ports:            step.Ports,
+			Readiness:        step.Readiness,
+			VariableReceiver: completionListener.addVariable,
+			Volumes:          step.Volumes,
+			WorkflowReceiver: completionListener.addGeneratedWorkflow,
+		})
 
 	return err
 }

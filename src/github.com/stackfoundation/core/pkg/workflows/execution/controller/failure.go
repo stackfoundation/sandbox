@@ -5,7 +5,7 @@ import (
 	"github.com/stackfoundation/log"
 )
 
-func areFailuresIgnored(step *v1.WorkflowStep, stepSelector []int, workflow *v1.Workflow) bool {
+func areFailuresIgnored(workflow *v1.Workflow, step *v1.WorkflowStep, stepSelector []int) bool {
 	if step.IgnoreFailure == nil {
 		if !workflow.Spec.IgnoreFailure {
 			return false
@@ -17,8 +17,8 @@ func areFailuresIgnored(step *v1.WorkflowStep, stepSelector []int, workflow *v1.
 	return true
 }
 
-func shouldIgnoreFailure(step *v1.WorkflowStep, stepSelector []int, workflow *v1.Workflow, err error) error {
-	if !areFailuresIgnored(step, stepSelector, workflow) {
+func shouldIgnoreFailure(workflow *v1.Workflow, step *v1.WorkflowStep, stepSelector []int, err error) error {
+	if !areFailuresIgnored(workflow, step, stepSelector) {
 		return err
 	}
 

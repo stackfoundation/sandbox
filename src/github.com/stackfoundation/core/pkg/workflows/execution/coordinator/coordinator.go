@@ -48,7 +48,7 @@ func (c *executionCoordinator) RunStep(context context.Context, spec *RunStepSpe
 			Readiness:        spec.Readiness,
 			Volumes:          spec.Volumes,
 			Context:          context,
-			Cleanup:          &e.cleanupWaitGroup,
+			Cleanup:          spec.Cleanup,
 			Listener:         spec.PodListener,
 			VariableReceiver: spec.VariableReceiver,
 			WorkflowReceiver: spec.WorkflowReceiver,

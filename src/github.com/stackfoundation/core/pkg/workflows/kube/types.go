@@ -40,7 +40,6 @@ type PodCreationSpec struct {
 type podContext struct {
 	creationSpec  *PodCreationSpec
 	podsClient    corev1.PodInterface
-	podDeleted    bool
 	pod           *v1.Pod
 	services      []*v1.Service
 	serviceClient corev1.ServiceInterface

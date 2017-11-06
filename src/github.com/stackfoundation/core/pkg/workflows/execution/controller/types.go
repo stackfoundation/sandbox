@@ -1,14 +1,16 @@
 package controller
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/execution/context"
+	"context"
+
+	executioncontext "github.com/stackfoundation/core/pkg/workflows/execution/context"
 	"github.com/stackfoundation/core/pkg/workflows/execution/coordinator"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
 // Controller A controller used to execute workflows
 type Controller interface {
-	Execute(workflow *v1.Workflow) error
+	Execute(context context.Context, workflow *v1.Workflow) error
 }
 
 type executionController struct {
@@ -17,6 +19,10 @@ type executionController struct {
 }
 
 type pendingTransition struct {
-	context    *context.Context
-	transition func(*context.Context, *v1.Workflow)
+	context    *executioncontext.StepContext
+	transition func(*executioncontext.StepContext)
+}
+
+type runListener struct {
+	controller *executionController
 }

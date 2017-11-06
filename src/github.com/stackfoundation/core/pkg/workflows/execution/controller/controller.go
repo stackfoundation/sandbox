@@ -2,9 +2,10 @@ package controller
 
 import (
 	"context"
-	"os"
-	"os/signal"
+	"fmt"
+	"sync"
 
+	executioncontext "github.com/stackfoundation/core/pkg/workflows/execution/context"
 	"github.com/stackfoundation/core/pkg/workflows/execution/coordinator"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 	"github.com/stackfoundation/log"
@@ -22,24 +23,35 @@ func NewController() (Controller, error) {
 	}, nil
 }
 
-// Execute Execute the specified workflow
-func (c *executionController) Execute(context context.Context, workflow *v1.Workflow) {
-	c.processTransitions()
-
-	err := Execute(e, workflow)
-	if err != nil {
-		e.abort(err)
-	}
-
-	for _ = range e.change {
-		err := Execute(e, e.workflow)
+func (c *executionController) processTransitionsAndChanges(wc *executioncontext.WorkflowContext) {
+	for {
+		c.processTransitions(wc)
+		err := c.processNextChange(wc)
 		if err != nil {
-			e.abort(err)
+			fmt.Println(err.Error())
+			wc.Cancel()
+		}
+
+		select {
+		case transition := <-c.pendingTransitions:
+			transition.perform()
+
+		case <-wc.Context.Done():
+			return
 		}
 	}
+}
+
+// Execute Execute the specified workflow
+func (c *executionController) Execute(context context.Context, workflow *v1.Workflow) {
+	cleanup := &sync.WaitGroup{}
+
+	completion, cancel := context.WithCancel(ctx)
+	wc := executioncontext.NewWorkflowContext(completion, cancel, cleanup, workflow)
+
+	c.processTransitionsAndChanges(wc)
 
 	log.Debugf("Performing cleanup...")
-	e.cleanupWaitGroup.Wait()
+	cleanup.Wait()
 	log.Debugf("Finished cleanup")
-}
 }

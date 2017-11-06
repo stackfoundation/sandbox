@@ -1,9 +1,6 @@
 package kube
 
 import (
-	"fmt"
-	"sync/atomic"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
@@ -13,20 +10,17 @@ import (
 )
 
 func cleanupPodIfNecessary(context *podContext) {
-	if !context.podDeleted {
-		log.Debugf("Deleting pod %v", context.pod.Name)
-		context.podsClient.Delete(context.pod.Name, &metav1.DeleteOptions{})
+	log.Debugf("Deleting pod %v", context.pod.Name)
+	context.podsClient.Delete(context.pod.Name, &metav1.DeleteOptions{})
 
-		if len(context.services) > 0 {
-			for _, service := range context.services {
-				log.Debugf("Deleting service %v", service.Name)
-				context.serviceClient.Delete(service.Name, &metav1.DeleteOptions{})
-			}
+	if len(context.services) > 0 {
+		for _, service := range context.services {
+			log.Debugf("Deleting service %v", service.Name)
+			context.serviceClient.Delete(service.Name, &metav1.DeleteOptions{})
 		}
-
-		context.creationSpec.Cleanup.Done()
-		context.podDeleted = true
 	}
+
+	context.creationSpec.Cleanup.Done()
 }
 
 // CreateAndRunPod Create and run a pod according to the given specifications
@@ -116,60 +110,4 @@ func createPod(context *podContext, containerName string) error {
 	}
 
 	return nil
-}
-
-func waitForPod(context *podContext, logPrinter *podLogPrinter) {
-	log.Debugf("Starting watch on pod %v", context.pod.Name)
-	podWatch, err := logPrinter.podsClient.Watch(metav1.ListOptions{Watch: true})
-	if err != nil {
-		fmt.Println(err.Error())
-		cleanupPodIfNecessary(context)
-		return
-	}
-
-	var containerAvailable int32
-	var podReady int32
-
-	channel := podWatch.ResultChan()
-	for event := range channel {
-		eventPod, ok := event.Object.(*v1.Pod)
-		if ok && eventPod.Name == context.pod.Name {
-			logPrinter.printLogs(eventPod)
-
-			listener := context.creationSpec.Listener
-			if listener != nil {
-				containerID := getContainerID(&eventPod.Status)
-				if len(containerID) > 0 {
-					if atomic.CompareAndSwapInt32(&containerAvailable, 0, 1) {
-						listener.Container(containerID)
-					}
-				}
-
-				if isPodReady(eventPod) {
-					if atomic.CompareAndSwapInt32(&podReady, 0, 1) {
-						listener.Ready()
-					}
-				}
-
-				if isPullFail(eventPod) {
-					if listener != nil {
-						listener.Done(true)
-					}
-
-					break
-				}
-			}
-
-			if isPodFinished(eventPod) {
-				failed := eventPod.Status.Phase == v1.PodFailed
-				logPrinter.close()
-
-				if listener != nil {
-					listener.Done(failed)
-				}
-
-				break
-			}
-		}
-	}
 }

@@ -1,7 +1,6 @@
 package preparation
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/execution/context"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 	"github.com/stackfoundation/log"
 )
@@ -15,14 +14,14 @@ func (e *stepExpansionError) Error() string {
 	return "Error replacing variable placeholders in step " + e.step + ":\n" + e.err.Error()
 }
 
-func expandStep(c *context.Context, step *v1.WorkflowStep, stepSelector []int) error {
+func expandStep(workflow *v1.Workflow, step *v1.WorkflowStep, stepSelector []int) error {
 	stepName := step.StepName(stepSelector)
 	log.Debugf("Expanding variable placeholders in step %v", stepName)
 
-	err := v1.ExpandStep(step, c.Workflow.Spec.State.Variables)
+	err := v1.ExpandStep(step, workflow.Spec.State.Variables)
 	if err != nil {
 		if step.IgnoreMissing == nil {
-			if !c.Workflow.Spec.IgnoreMissing {
+			if !workflow.Spec.IgnoreMissing {
 				return &stepExpansionError{err: err, step: stepName}
 			}
 		} else if !*step.IgnoreMissing {
@@ -35,7 +34,7 @@ func expandStep(c *context.Context, step *v1.WorkflowStep, stepSelector []int) e
 	return nil
 }
 
-func shouldIgnoreValidation(step *v1.WorkflowStep, stepSelector []int, workflow *v1.Workflow, err error) error {
+func shouldIgnoreValidation(workflow *v1.Workflow, step *v1.WorkflowStep, stepSelector []int, err error) error {
 	if step.IgnoreValidation == nil {
 		if !workflow.Spec.IgnoreValidation {
 			return err
@@ -49,16 +48,16 @@ func shouldIgnoreValidation(step *v1.WorkflowStep, stepSelector []int, workflow 
 }
 
 // PrepareStepIfNecessary Prepare the step for execution
-func PrepareStepIfNecessary(c *context.Context, step *v1.WorkflowStep, stepSelector []int) error {
+func PrepareStepIfNecessary(workflow *v1.Workflow, step *v1.WorkflowStep, stepSelector []int) error {
 	if step != nil && !step.State.Prepared {
-		err := expandStep(c, step, stepSelector)
+		err := expandStep(workflow, step, stepSelector)
 		if err != nil {
 			return err
 		}
 
 		err = v1.ValidateStep(step, stepSelector)
 		if err != nil {
-			err = shouldIgnoreValidation(step, stepSelector, c.Workflow, err)
+			err = shouldIgnoreValidation(workflow, step, stepSelector, err)
 			if err != nil {
 				return err
 			}

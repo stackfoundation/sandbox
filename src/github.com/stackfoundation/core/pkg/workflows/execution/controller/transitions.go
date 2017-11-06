@@ -1,6 +1,7 @@
 package controller
 
 import (
+	executioncontext "github.com/stackfoundation/core/pkg/workflows/execution/context"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 	"github.com/stackfoundation/log"
 )
@@ -9,25 +10,26 @@ func logChange(c *v1.Change) {
 	log.Debugf("Raised %v event for step %v", c.Type, c.StepSelector)
 }
 
-func consumeTransition(c *Context, w *v1.Workflow) {
-	w.MarkHandled(c.Change)
+func consumeTransition(sc *executioncontext.StepContext) {
+	sc.WorkflowContext.Workflow.MarkHandled(sc.Change)
 }
 
-func handleChangeAndAppend(c *Context, w *v1.Workflow, selector []int) *v1.Change {
-	w.MarkHandled(c.Change)
+func handleChangeAndAppend(sc *executioncontext.StepContext, w *v1.Workflow, selector []int) *v1.Change {
+	w.MarkHandled(sc.Change)
 
 	change := v1.NewChange(selector)
 	return w.AppendChange(change)
 }
 
-func imageBuiltTransition(c *Context, w *v1.Workflow) {
-	change := handleChangeAndAppend(c, w, c.NextStepSelector)
+func imageBuiltTransition(sc *executioncontext.StepContext) {
+	change := handleChangeAndAppend(sc, sc.WorkflowContext.Workflow, sc.NextStepSelector)
 	change.Type = v1.StepImageBuilt
 
 	logChange(change)
 }
 
-func initialTransition(c *Context, w *v1.Workflow) {
+func initialTransition(sc *executioncontext.StepContext) {
+	w := sc.WorkflowContext.Workflow
 	w.Spec.State.Variables = collectVariables(w.Spec.Variables)
 
 	change := v1.NewChange([]int{})
@@ -44,8 +46,9 @@ type stepDoneTransition struct {
 	variables          []v1.VariableSource
 }
 
-func (t *stepDoneTransition) transition(c *Context, w *v1.Workflow) {
-	step := w.Select(c.StepSelector)
+func (t *stepDoneTransition) transition(sc *executioncontext.StepContext) {
+	w := sc.WorkflowContext.Workflow
+	step := w.Select(sc.StepSelector)
 	if !step.State.Done {
 		w.Spec.State.Variables.Merge(collectVariables(t.variables))
 
@@ -57,18 +60,19 @@ func (t *stepDoneTransition) transition(c *Context, w *v1.Workflow) {
 			step.State.GeneratedWorkflow = t.generatedWorkfow
 		}
 
-		change := handleChangeAndAppend(c, w, c.StepSelector)
+		change := handleChangeAndAppend(sc, w, sc.StepSelector)
 		change.Type = v1.StepDone
 
 		logChange(change)
 	}
 }
 
-func stepReadyTransition(c *Context, w *v1.Workflow) {
-	step := w.Select(c.StepSelector)
+func stepReadyTransition(sc *executioncontext.StepContext) {
+	w := sc.WorkflowContext.Workflow
+	step := w.Select(sc.StepSelector)
 
 	if !step.State.Ready {
-		change := handleChangeAndAppend(c, w, c.StepSelector)
+		change := handleChangeAndAppend(sc, w, sc.StepSelector)
 
 		step.State.Ready = true
 
@@ -78,42 +82,49 @@ func stepReadyTransition(c *Context, w *v1.Workflow) {
 	}
 }
 
-func stepStartedTransition(c *Context, w *v1.Workflow) {
-	change := handleChangeAndAppend(c, w, c.StepSelector)
+func stepStartedTransition(sc *executioncontext.StepContext) {
+	change := handleChangeAndAppend(sc, sc.WorkflowContext.Workflow, sc.StepSelector)
 	change.Type = v1.StepStarted
 
 	logChange(change)
 }
 
-func workflowWaitDoneTransition(c *Context, w *v1.Workflow) {
-	change := handleChangeAndAppend(c, w, c.StepSelector)
+func workflowWaitDoneTransition(sc *executioncontext.StepContext) {
+	change := handleChangeAndAppend(sc, sc.WorkflowContext.Workflow, sc.StepSelector)
 	change.Type = v1.WorkflowWaitDone
 
 	logChange(change)
 }
 
-func workflowWaitTransition(c *Context, w *v1.Workflow) {
-	change := handleChangeAndAppend(c, w, c.StepSelector)
+func workflowWaitTransition(sc *executioncontext.StepContextw) {
+	change := handleChangeAndAppend(sc, sc.WorkflowContext.Workflow, sc.StepSelector)
 	change.Type = v1.WorkflowWait
 
 	logChange(change)
 }
 
-func (c *executionController) processTransitions() {
+func (t *pendingTransition) perform() {
+	t.transition(t.context, t.context.Workflow)
+}
+
+func (c *executionController) processTransitions(wc *executioncontext.WorkflowContext) {
 	for {
 		select {
 		case transition := <-c.pendingTransitions:
-			transition.transition(transition.context, transition.context.Workflow)
+			transition.perform()
+		case <-wc.Done():
 		default:
 			return
 		}
 	}
 }
 
-func (c *executionController) transitionNext(context *Context, transition func(*executioncontext.Context, *v1.Workflow)) error {
+func (c *executionController) transitionNext(
+	sc *executioncontext.StepContext,
+	transition func(*executioncontext.StepContext)) error {
 	go func() {
 		c.pendingTransitions <- pendingTransition{
-			context:    context,
+			context:    sc,
 			transition: transition,
 		}
 	}()

@@ -2,6 +2,7 @@ package coordinator
 
 import (
 	"context"
+	"sync"
 
 	"github.com/docker/engine-api/client"
 	"github.com/stackfoundation/core/pkg/workflows/image"
@@ -25,6 +26,7 @@ type executionCoordinator struct {
 
 // RunStepSpec Spec for a step to run
 type RunStepSpec struct {
+	Cleanup          *sync.WaitGroup
 	Command          []string
 	Environment      *properties.Properties
 	Image            string
