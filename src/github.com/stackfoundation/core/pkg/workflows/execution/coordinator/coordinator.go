@@ -9,7 +9,7 @@ import (
 )
 
 // NewCoordinator Create a new coordinator which uses the specified context
-func NewCoordinator(context context.Context) (Coordinator, error) {
+func NewCoordinator() (Coordinator, error) {
 	dockerClient, err := docker.CreateDockerClient()
 	if err != nil {
 		return nil, err

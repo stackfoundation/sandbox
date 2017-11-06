@@ -19,23 +19,25 @@ func NewController() (Controller, error) {
 	}
 
 	return &executionController{
-		coordinator: coordinator,
+		coordinator:        coordinator,
+		pendingTransitions: make(chan pendingTransition),
 	}, nil
 }
 
 func (c *executionController) processTransitionsAndChanges(wc *executioncontext.WorkflowContext) {
+	log.Debugf("Running workflow \"%v\"", wc.Workflow.Name)
 	for {
 		c.processTransitions(wc)
 		err := c.processNextChange(wc)
 		if err != nil {
 			fmt.Println(err.Error())
 			wc.Cancel()
+			return
 		}
 
 		select {
 		case transition := <-c.pendingTransitions:
 			transition.perform()
-
 		case <-wc.Context.Done():
 			return
 		}
@@ -43,7 +45,7 @@ func (c *executionController) processTransitionsAndChanges(wc *executioncontext.
 }
 
 // Execute Execute the specified workflow
-func (c *executionController) Execute(context context.Context, workflow *v1.Workflow) {
+func (c *executionController) Execute(ctx context.Context, workflow *v1.Workflow) {
 	cleanup := &sync.WaitGroup{}
 
 	completion, cancel := context.WithCancel(ctx)

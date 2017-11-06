@@ -1,12 +1,12 @@
-package run
+package v1
 
 import (
 	"github.com/stackfoundation/core/pkg/workflows/properties"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
 	"github.com/stackfoundation/log"
 )
 
-func collectVariables(variables []v1.VariableSource) *properties.Properties {
+// CollectVariables Collect all the variables from the specified sources
+func CollectVariables(variables []VariableSource) *properties.Properties {
 	numSources := len(variables)
 	props := properties.NewProperties()
 

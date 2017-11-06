@@ -30,7 +30,7 @@ func imageBuiltTransition(sc *executioncontext.StepContext) {
 
 func initialTransition(sc *executioncontext.StepContext) {
 	w := sc.WorkflowContext.Workflow
-	w.Spec.State.Variables = collectVariables(w.Spec.Variables)
+	w.Spec.State.Variables = v1.CollectVariables(w.Spec.Variables)
 
 	change := v1.NewChange([]int{})
 	change.Type = v1.StepStarted
@@ -50,7 +50,7 @@ func (t *stepDoneTransition) transition(sc *executioncontext.StepContext) {
 	w := sc.WorkflowContext.Workflow
 	step := w.Select(sc.StepSelector)
 	if !step.State.Done {
-		w.Spec.State.Variables.Merge(collectVariables(t.variables))
+		w.Spec.State.Variables.Merge(v1.CollectVariables(t.variables))
 
 		step.State.GeneratedContainer = t.generatedContainer
 		step.State.Ready = true
@@ -96,7 +96,7 @@ func workflowWaitDoneTransition(sc *executioncontext.StepContext) {
 	logChange(change)
 }
 
-func workflowWaitTransition(sc *executioncontext.StepContextw) {
+func workflowWaitTransition(sc *executioncontext.StepContext) {
 	change := handleChangeAndAppend(sc, sc.WorkflowContext.Workflow, sc.StepSelector)
 	change.Type = v1.WorkflowWait
 
@@ -104,7 +104,7 @@ func workflowWaitTransition(sc *executioncontext.StepContextw) {
 }
 
 func (t *pendingTransition) perform() {
-	t.transition(t.context, t.context.Workflow)
+	t.transition(t.context)
 }
 
 func (c *executionController) processTransitions(wc *executioncontext.WorkflowContext) {
@@ -112,7 +112,8 @@ func (c *executionController) processTransitions(wc *executioncontext.WorkflowCo
 		select {
 		case transition := <-c.pendingTransitions:
 			transition.perform()
-		case <-wc.Done():
+		case <-wc.Context.Done():
+			return
 		default:
 			return
 		}

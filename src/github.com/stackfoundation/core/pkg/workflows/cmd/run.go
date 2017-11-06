@@ -23,7 +23,7 @@ func Run(workflowName string) error {
 		return err
 	}
 
-	controller, err := controller.NewController()
+	c, err := controller.NewController()
 	if err != nil {
 		return err
 	}
@@ -39,5 +39,6 @@ func Run(workflowName string) error {
 		}
 	}()
 
-	return controller.Execute(workflow)
+	c.Execute(context, workflow)
+	return nil
 }

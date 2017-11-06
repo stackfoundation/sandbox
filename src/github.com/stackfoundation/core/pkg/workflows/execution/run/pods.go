@@ -63,7 +63,7 @@ func RunPodStep(c coordinator.Coordinator, sc *context.StepContext, l Listener) 
 		stepContext: sc,
 	}
 
-	environment := collectVariables(step.Environment)
+	environment := v1.CollectVariables(step.Environment)
 	environment.ResolveFrom(sc.WorkflowContext.Workflow.Spec.State.Variables)
 
 	if len(step.Name) < 1 {

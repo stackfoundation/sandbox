@@ -35,7 +35,7 @@ func (l *runListener) Failed(sc *executioncontext.StepContext, r *run.Result) {
 }
 
 func (c *executionController) runPodStepAndTransitionNext(sc *executioncontext.StepContext) error {
-	err := run.RunPodStep(controller.coordinator, sc, &runListener{controller: c})
+	err := run.RunPodStep(c.coordinator, sc, &runListener{controller: c})
 	if err != nil {
 		if err == context.Canceled {
 			return err

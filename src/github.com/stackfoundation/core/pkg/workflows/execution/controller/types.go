@@ -10,7 +10,7 @@ import (
 
 // Controller A controller used to execute workflows
 type Controller interface {
-	Execute(context context.Context, workflow *v1.Workflow) error
+	Execute(context context.Context, workflow *v1.Workflow)
 }
 
 type executionController struct {

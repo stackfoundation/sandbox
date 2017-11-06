@@ -16,7 +16,7 @@ func (c *executionController) executeChild(sc *context.StepContext, child *v1.Wo
 		sc.WorkflowContext.Workflow.Spec.State.Variables)
 
 	go func() {
-		err := c.Execute(sc.WorkflowContext.Context, child)
+		c.Execute(sc.WorkflowContext.Context, child)
 		log.Debugf("Finished called workflow")
 		c.transitionNext(sc, workflowWaitDoneTransition)
 	}()
