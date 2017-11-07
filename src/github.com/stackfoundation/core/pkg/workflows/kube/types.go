@@ -43,4 +43,5 @@ type podContext struct {
 	pod           *v1.Pod
 	services      []*v1.Service
 	serviceClient corev1.ServiceInterface
+	podClosed     chan bool
 }

@@ -43,6 +43,7 @@ func waitForPod(context *podContext, logPrinter *podLogPrinter) {
 				}
 
 				if isPullFail(eventPod) {
+					context.podClosed <- true
 					if listener != nil {
 						listener.Done(true)
 					}
@@ -54,6 +55,7 @@ func waitForPod(context *podContext, logPrinter *podLogPrinter) {
 			if isPodFinished(eventPod) {
 				failed := eventPod.Status.Phase == v1.PodFailed
 				logPrinter.close()
+				context.podClosed <- true
 
 				if listener != nil {
 					listener.Done(failed)
@@ -63,4 +65,6 @@ func waitForPod(context *podContext, logPrinter *podLogPrinter) {
 			}
 		}
 	}
+
+	close(context.podClosed)
 }

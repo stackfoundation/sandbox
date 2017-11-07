@@ -1,6 +1,8 @@
 package kube
 
 import (
+	"time"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
@@ -20,6 +22,13 @@ func cleanupPodIfNecessary(context *podContext) {
 		}
 	}
 
+	select {
+	case <-context.podClosed:
+		break
+	case <-time.After(10 * time.Second):
+		break
+	}
+
 	context.creationSpec.Cleanup.Done()
 }
 
@@ -29,6 +38,7 @@ func CreateAndRunPod(clientSet *kubernetes.Clientset, creationSpec *PodCreationS
 		creationSpec:  creationSpec,
 		podsClient:    clientSet.Pods("default"),
 		serviceClient: clientSet.Services("default"),
+		podClosed:     make(chan bool, 2),
 	}
 
 	containerName := workflowsv1.GenerateContainerName()
