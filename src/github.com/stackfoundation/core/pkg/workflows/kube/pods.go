@@ -1,8 +1,6 @@
 package kube
 
 import (
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
@@ -20,13 +18,6 @@ func cleanupPodIfNecessary(context *podContext) {
 			log.Debugf("Deleting service %v", service.Name)
 			context.serviceClient.Delete(service.Name, &metav1.DeleteOptions{})
 		}
-	}
-
-	select {
-	case <-context.podClosed:
-		break
-	case <-time.After(10 * time.Second):
-		break
 	}
 
 	context.creationSpec.Cleanup.Done()
