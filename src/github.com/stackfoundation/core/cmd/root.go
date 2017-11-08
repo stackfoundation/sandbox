@@ -110,30 +110,6 @@ func setFlagsUsingViper() {
 	//}
 }
 
-func filterArgs(args []string) []string {
-	var filtered []string
-	var ignoreNext bool
-
-	for _, arg := range args {
-		if arg == "-d" || arg == "--debug" {
-			log.SetDebug(true)
-		} else if arg == "--original-command" {
-			ignoreNext = true
-		} else if ignoreNext {
-			ignoreNext = false
-		} else {
-			filtered = append(filtered, arg)
-		}
-	}
-
-	return filtered
-}
-
-func combineArgs(args []string) string {
-	filtered := filterArgs(args)
-	return strings.Join(filtered, " ")
-}
-
 func init() {
 	RootCmd.PersistentFlags().StringP(config.MachineProfile, "p", constants.DefaultMachineName, `The name of the VM being used.
 	This can be modified to allow for multiple VMs to be run independently`)

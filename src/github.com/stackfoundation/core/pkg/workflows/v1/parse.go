@@ -17,6 +17,7 @@ func ParseWorkflow(projectRoot, workflowName string, content []byte) (*Workflow,
 	workflowSpec.State = WorkflowState{
 		ID:          GenerateWorkflowID(),
 		ProjectRoot: projectRoot,
+		Variables:   CollectVariables(workflowSpec.Variables),
 	}
 
 	for i, step := range workflowSpec.Steps {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 
 	"github.com/stackfoundation/core/pkg/workflows/execution/controller"
 	"github.com/stackfoundation/core/pkg/workflows/files"
@@ -12,7 +14,7 @@ import (
 )
 
 // Run Run a workflow in the current project
-func Run(workflowName string) error {
+func Run(workflowName string, args []string) error {
 	workflow, err := files.ReadWorkflow(workflowName)
 	if err != nil {
 		return err
@@ -22,6 +24,13 @@ func Run(workflowName string) error {
 	if err != nil {
 		return err
 	}
+
+	for i, arg := range args {
+		workflow.Spec.State.Variables.Set("arg"+strconv.Itoa(i), arg)
+	}
+
+	combinedArgs := strings.Join(args, " ")
+	workflow.Spec.State.Variables.Set("args", combinedArgs)
 
 	c, err := controller.NewController()
 	if err != nil {
