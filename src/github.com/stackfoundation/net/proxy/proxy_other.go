@@ -49,6 +49,10 @@ func (e *envOnce) init() {
 const ProxyOverrideSeparator = ","
 
 func platformProxy(request *http.Request) (*url.URL, error) {
+	if len(ProxyArg) > 0 {
+		return parseProxyURL(ProxyArg)
+	}
+
 	return http.ProxyFromEnvironment(request)
 }
 

@@ -44,6 +44,7 @@ var dirs = [...]string{
 	constants.MakeMiniPath("logs"),
 }
 var originalCommand string
+var proxyArg string
 
 var viperWhiteList = []string{
 	"v",
@@ -117,6 +118,7 @@ func init() {
 	//pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 
 	RootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Turn on debug logging")
+	RootCmd.PersistentFlags().StringVar(&proxyArg, "proxy", "", "Specify a proxy to use")
 
 	RootCmd.PersistentFlags().StringVar(&originalCommand, "original-command", "", "Original path of sbox command")
 	RootCmd.PersistentFlags().MarkHidden("original-command")
@@ -129,7 +131,7 @@ func init() {
 func initConfig() {
 	configPath := constants.ConfigFile
 	viper.SetConfigFile(configPath)
-	viper.SetConfigType("json")
+	viper.SetConfigType("properties")
 	err := viper.ReadInConfig()
 	if err != nil {
 		//glog.Warningf("Error reading config file at %s: %s", configPath, err)

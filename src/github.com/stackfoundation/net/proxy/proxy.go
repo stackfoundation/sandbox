@@ -8,6 +8,12 @@ import (
 	"github.com/stackfoundation/log"
 )
 
+// ProxyArg Proxy provided as an argument
+var ProxyArg string
+
+// BypassArg Proxy bypass list provided as an argument
+var BypassArg string
+
 // ProxyCapableClient An HTTP client that uses the current system proxy settings
 var ProxyCapableClient = &http.Client{
 	Transport: &http.Transport{
@@ -17,6 +23,10 @@ var ProxyCapableClient = &http.Client{
 
 // SystemSettings Get system proxy settings
 func SystemSettings() (string, string) {
+	if len(ProxyArg) > 0 {
+		return ProxyArg, BypassArg
+	}
+
 	proxy, overrides, _ := proxyFromSystem()
 	return proxy, overrides
 }
@@ -39,18 +49,23 @@ var proxyWasCached bool
 
 func cachingProxy(request *http.Request) (*url.URL, error) {
 	if !proxyWasCached {
-		httpProxy, proxyOverrides, err := proxyFromSystem()
-		if err != nil {
-			log.Debug("ProxyError", "Error while detecting system proxy settings: %v", err.Error())
+		if len(ProxyArg) > 0 {
+			cachedProxy, _ = parseProxyURL(ProxyArg)
+			cachedOverrides = BypassArg
 		} else {
-			cachedProxy, err = parseProxyURL(httpProxy)
-			cachedOverrides = proxyOverrides
-
-			if cachedProxy == nil {
-				log.Debug("NoProxy", "No proxy is set")
+			httpProxy, proxyOverrides, err := proxyFromSystem()
+			if err != nil {
+				log.Debug("ProxyError", "Error while detecting system proxy settings: %v", err.Error())
 			} else {
-				log.Debug("Proxy", "Using %v as the proxy server", cachedProxy.String())
+				cachedProxy, err = parseProxyURL(httpProxy)
+				cachedOverrides = proxyOverrides
 			}
+		}
+
+		if cachedProxy == nil {
+			log.Debug("NoProxy", "No proxy is set")
+		} else {
+			log.Debug("Proxy", "Using %v as the proxy server", cachedProxy.String())
 		}
 
 		proxyWasCached = true

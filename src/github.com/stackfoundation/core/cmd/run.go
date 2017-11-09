@@ -23,9 +23,9 @@ func parseFlags(args []string) []string {
 			ignoreNext = true
 		} else if ignoreNext {
 			ignoreNext = false
+		} else {
+			filtered = append(filtered, arg)
 		}
-
-		filtered = append(filtered, arg)
 	}
 
 	return filtered

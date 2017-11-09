@@ -8,7 +8,6 @@ import (
 
 func (c *executionController) processChangeAndTransitionNext(sc *executioncontext.StepContext) error {
 	change := sc.Change
-	log.Debugf("%v event for step %v", change.Type, change.StepSelector)
 
 	switch {
 	case sc.IsStepReadyToRun():

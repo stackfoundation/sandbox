@@ -13,6 +13,18 @@ import (
 	"github.com/stackfoundation/log"
 )
 
+func addArgumentVariables(workflow *v1.Workflow, args []string) {
+	if len(args) > 0 {
+		for i, arg := range args {
+			variable := "arg" + strconv.Itoa(i)
+			workflow.Spec.State.Variables.Set(variable, arg)
+		}
+
+		combinedArgs := strings.Join(args, " ")
+		workflow.Spec.State.Variables.Set("args", combinedArgs)
+	}
+}
+
 // Run Run a workflow in the current project
 func Run(workflowName string, args []string) error {
 	workflow, err := files.ReadWorkflow(workflowName)
@@ -20,17 +32,12 @@ func Run(workflowName string, args []string) error {
 		return err
 	}
 
+	addArgumentVariables(workflow, args)
+
 	err = v1.Validate(&workflow.Spec)
 	if err != nil {
 		return err
 	}
-
-	for i, arg := range args {
-		workflow.Spec.State.Variables.Set("arg"+strconv.Itoa(i), arg)
-	}
-
-	combinedArgs := strings.Join(args, " ")
-	workflow.Spec.State.Variables.Set("args", combinedArgs)
 
 	c, err := controller.NewController()
 	if err != nil {

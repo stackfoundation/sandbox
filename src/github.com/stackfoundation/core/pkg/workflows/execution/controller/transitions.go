@@ -30,7 +30,6 @@ func imageBuiltTransition(sc *executioncontext.StepContext) {
 
 func initialTransition(sc *executioncontext.StepContext) {
 	w := sc.WorkflowContext.Workflow
-	w.Spec.State.Variables = v1.CollectVariables(w.Spec.Variables)
 
 	change := v1.NewChange([]int{})
 	change.Type = v1.StepStarted
