@@ -30,12 +30,20 @@ func (w *Workflow) NextUnhandled() *Change {
 
 // IsCompoundStepComplete Is the compound step complete?
 func (s *WorkflowStep) IsCompoundStepComplete() bool {
-	for _, step := range s.Steps {
-		if step.Type == StepService {
+	for _, step := range s.Compound.Steps {
+		if step.Service != nil {
 			if !step.State.Ready || !step.State.Done {
 				return false
 			}
-		} else if step.Type == StepParallel {
+		} else if step.Run != nil && step.Run.Parallel == "true" {
+			if !step.State.Done {
+				return false
+			}
+		} else if step.Generator != nil && step.Generator.Parallel == "true" {
+			if !step.State.Done {
+				return false
+			}
+		} else if step.External != nil && step.External.Parallel == "true" {
 			if !step.State.Done {
 				return false
 			}

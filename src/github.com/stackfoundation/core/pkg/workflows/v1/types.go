@@ -58,12 +58,6 @@ type HealthCheck struct {
 // ImageSource Image source
 type ImageSource string
 
-// SourceImage Docker image
-const SourceImage ImageSource = "image"
-
-// SourceStep Source is previous step image
-const SourceStep ImageSource = "step"
-
 // StepState State of step
 type StepState struct {
 	GeneratedBaseImage string `json:"baseImage" yaml:"baseImage"`
@@ -78,42 +72,99 @@ type StepState struct {
 
 // Port An exposed port
 type Port struct {
-	Protocol      string `json:"protocol" yaml:"protocol"`
-	Name          string `json:"name" yaml:"name"`
-	ContainerPort string `json:"containerPort" yaml:"containerPort"`
-	ExternalPort  string `json:"externalPort" yaml:"externalPort"`
-	InternalPort  string `json:"internalPort" yaml:"internalPort"`
+	Protocol  string `json:"protocol" yaml:"protocol"`
+	Name      string `json:"name" yaml:"name"`
+	Container string `json:"container" yaml:"container"`
+	External  string `json:"external" yaml:"external"`
+	Internal  string `json:"internal" yaml:"internal"`
+}
+
+// SourceOptions Source options for a step
+type SourceOptions struct {
+	Dockerignore string   `json:"dockerignore" yaml:"dockerignore"`
+	Exclude      []string `json:"exclude" yaml:"exclude"`
+	Include      []string `json:"include" yaml:"include"`
+	Location     string   `json:"location" yaml:"location"`
+	Omit         string   `json:"omit" yaml:"omit"`
+}
+
+// VariableOptions Variable options for a step
+type VariableOptions struct {
+	Exclude []string `json:"exclude" yaml:"exclude"`
+	Include []string `json:"include" yaml:"include"`
+}
+
+// StepOptions Options for all types of steps
+type StepOptions struct {
+	Name             string `json:"name" yaml:"name"`
+	IgnoreFailure    *bool  `json:"ignoreFailure" yaml:"ignoreFailure"`
+	IgnoreMissing    *bool  `json:"ignoreMissing" yaml:"ignoreMissing"`
+	IgnoreValidation *bool  `json:"ignoreValidation" yaml:"ignoreValidation"`
+}
+
+// ExternalStepOptions Options for external steps
+type ExternalStepOptions struct {
+	StepOptions `json:",inline" yaml:",inline"`
+
+	Parallel  string          `json:"parallel" yaml:"parallel"`
+	Variables VariableOptions `json:"variables" yaml:"variables"`
+	Workflow  string          `json:"workflow" yaml:"workflow"`
+}
+
+// CompoundStepOptions Options for compound steps
+type CompoundStepOptions struct {
+	StepOptions `json:",inline" yaml:",inline"`
+
+	Steps []WorkflowStep `json:"steps" yaml:"steps"`
+}
+
+// ScriptStepOptions Options for script-based steps
+type ScriptStepOptions struct {
+	StepOptions `json:",inline" yaml:",inline"`
+
+	Dockerfile  string           `json:"dockerfile" yaml:"dockerfile"`
+	Environment []VariableSource `json:"environment" yaml:"environment"`
+	Image       string           `json:"image" yaml:"image"`
+	Script      string           `json:"script" yaml:"script"`
+	Source      SourceOptions    `json:"source" yaml:"source"`
+	Step        string           `json:"step" yaml:"step"`
+	Volumes     []Volume         `json:"volumes" yaml:"volumes"`
+}
+
+// ServiceStepOptions Options for a service step
+type ServiceStepOptions struct {
+	ScriptStepOptions `json:",inline" yaml:",inline"`
+
+	Grace     string       `json:"grace" yaml:"grace"`
+	Health    *HealthCheck `json:"health" yaml:"health"`
+	Ports     []Port       `json:"ports" yaml:"ports"`
+	Readiness *HealthCheck `json:"readiness" yaml:"readiness"`
+}
+
+// GeneratorStepOptions Options for a generator step
+type GeneratorStepOptions struct {
+	ScriptStepOptions `json:",inline" yaml:",inline"`
+
+	Parallel  string          `json:"parallel" yaml:"parallel"`
+	Variables VariableOptions `json:"variables" yaml:"variables"`
+}
+
+// RunStepOptions Options for a run step
+type RunStepOptions struct {
+	ScriptStepOptions `json:",inline" yaml:",inline"`
+
+	Cache    string `json:"cache" yaml:"cache"`
+	Parallel string `json:"parallel" yaml:"parallel"`
 }
 
 // WorkflowStep Step within a workflow
 type WorkflowStep struct {
-	Cache            string           `json:"cache" yaml:"cache"`
-	Dockerfile       string           `json:"dockerfile" yaml:"dockerfile"`
-	Dockerignore     string           `json:"dockerignore" yaml:"dockerignore"`
-	Environment      []VariableSource `json:"environment" yaml:"environment"`
-	ExcludeVariables []string         `json:"excludeVariables" yaml:"excludeVariables"`
-	Generator        string           `json:"generator" yaml:"generator"`
-	Health           *HealthCheck     `json:"health" yaml:"health"`
-	Image            string           `json:"image" yaml:"image"`
-	IgnoreFailure    *bool            `json:"ignoreFailure" yaml:"ignoreFailure"`
-	IgnoreMissing    *bool            `json:"ignoreMissing" yaml:"ignoreMissing"`
-	IgnoreValidation *bool            `json:"ignoreValidation" yaml:"ignoreValidation"`
-	ImageSource      ImageSource      `json:"imageSource" yaml:"imageSource"`
-	IncludeVariables []string         `json:"includeVariables" yaml:"includeVariables"`
-	Name             string           `json:"name" yaml:"name"`
-	OmitSource       string           `json:"omitSource" yaml:"omitSource"`
-	Ports            []Port           `json:"ports" yaml:"ports"`
-	Readiness        *HealthCheck     `json:"readiness" yaml:"readiness"`
-	Script           string           `json:"script" yaml:"script"`
-	SourceIncludes   []string         `json:"sourceIncludes" yaml:"sourceIncludes"`
-	SourceExcludes   []string         `json:"sourceExcludes" yaml:"sourceExcludes"`
-	SourceLocation   string           `json:"sourceLocation" yaml:"sourceLocation"`
-	State            StepState        `json:"state" yaml:"state"`
-	Steps            []WorkflowStep   `json:"steps" yaml:"steps"`
-	Target           string           `json:"target" yaml:"target"`
-	TerminationGrace string           `json:"terminationGrace" yaml:"terminationGrace"`
-	Type             string           `json:"type" yaml:"type"`
-	Volumes          []Volume         `json:"volumes" yaml:"volumes"`
+	Compound  *CompoundStepOptions  `json:"compound" yaml:"compound"`
+	External  *ExternalStepOptions  `json:"external" yaml:"external"`
+	Generator *GeneratorStepOptions `json:"generator" yaml:"generator"`
+	Run       *RunStepOptions       `json:"run" yaml:"run"`
+	Service   *ServiceStepOptions   `json:"service" yaml:"service"`
+	State     StepState             `json:"state" yaml:"state"`
 }
 
 // StepStarted A step was started
@@ -215,18 +266,6 @@ const DefaultRetries = 3
 
 // DefaultTimeout Default timeout in seconds
 const DefaultTimeout = 10
-
-// StepSequential Sequential step
-const StepSequential = "sequential"
-
-// StepParallel Parallel step
-const StepParallel = "parallel"
-
-// StepCompound Compound step
-const StepCompound = "compound"
-
-// StepService Service step
-const StepService = "service"
 
 // SchemeGroupVersion Workflows GroupVersion
 var SchemeGroupVersion = schema.GroupVersion{

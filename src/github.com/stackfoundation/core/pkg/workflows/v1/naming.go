@@ -71,11 +71,11 @@ func GenerateChangeID() string {
 	return "c-" + uuid.String()
 }
 
-// StepName Returns the name for a step
-func (s *WorkflowStep) StepName(selector []int) string {
+// StepName Returns the name based on step options
+func (s *StepOptions) StepName(selector []int) string {
 	var stepName string
 
-	if len(s.Name) > 0 {
+	if s != nil && len(s.Name) > 0 {
 		stepName = s.Name
 	} else {
 		var nameBuilder bytes.Buffer
@@ -92,4 +92,22 @@ func (s *WorkflowStep) StepName(selector []int) string {
 	}
 
 	return stepName
+}
+
+// StepName Returns the name for a step
+func (s *WorkflowStep) StepName(selector []int) string {
+	var options *StepOptions
+	if s.Run != nil {
+		options = &s.Run.StepOptions
+	} else if s.External != nil {
+		options = &s.External.StepOptions
+	} else if s.Generator != nil {
+		options = &s.Generator.StepOptions
+	} else if s.Service != nil {
+		options = &s.Service.StepOptions
+	} else if s.Compound != nil {
+		options = &s.Compound.StepOptions
+	}
+
+	return options.StepName(selector)
 }

@@ -10,10 +10,16 @@ import (
 )
 
 func (c *executionController) executeChild(sc *context.StepContext, child *v1.Workflow) error {
-	child.Spec.State.Variables = filterVariables(
-		sc.Step.IncludeVariables,
-		sc.Step.ExcludeVariables,
-		sc.WorkflowContext.Workflow.Spec.State.Variables)
+	var include []string
+	var exclude []string
+
+	source := sc.Step.Source()
+	if source != nil {
+		include = source.Include
+		exclude = source.Exclude
+	}
+
+	child.Spec.State.Variables = filterVariables(include, exclude, sc.WorkflowContext.Workflow.Spec.State.Variables)
 
 	go func() {
 		c.Execute(sc.WorkflowContext.Context, child)
@@ -45,7 +51,7 @@ func (c *executionController) callExternalWorkflow(sc *context.StepContext) erro
 
 	fmt.Println("Running step " + stepName + ":")
 
-	workflow, err := files.ReadWorkflow(sc.Step.Target)
+	workflow, err := files.ReadWorkflow(sc.Step.External.Workflow)
 	if err != nil {
 		return err
 	}

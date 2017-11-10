@@ -2,6 +2,7 @@ package preparation
 
 import (
 	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/core/pkg/workflows/validation"
 	"github.com/stackfoundation/log"
 )
 
@@ -20,11 +21,11 @@ func expandStep(workflow *v1.Workflow, step *v1.WorkflowStep, stepSelector []int
 
 	err := v1.ExpandStep(step, workflow.Spec.State.Variables)
 	if err != nil {
-		if step.IgnoreMissing == nil {
+		if step.IgnoreMissing() == nil {
 			if !workflow.Spec.IgnoreMissing {
 				return &stepExpansionError{err: err, step: stepName}
 			}
-		} else if !*step.IgnoreMissing {
+		} else if !*step.IgnoreMissing() {
 			return &stepExpansionError{err: err, step: stepName}
 		}
 
@@ -35,11 +36,11 @@ func expandStep(workflow *v1.Workflow, step *v1.WorkflowStep, stepSelector []int
 }
 
 func shouldIgnoreValidation(workflow *v1.Workflow, step *v1.WorkflowStep, stepSelector []int, err error) error {
-	if step.IgnoreValidation == nil {
+	if step.IgnoreValidation() == nil {
 		if !workflow.Spec.IgnoreValidation {
 			return err
 		}
-	} else if !*step.IgnoreValidation {
+	} else if !*step.IgnoreValidation() {
 		return err
 	}
 
@@ -55,7 +56,7 @@ func PrepareStepIfNecessary(workflow *v1.Workflow, step *v1.WorkflowStep, stepSe
 			return err
 		}
 
-		err = v1.ValidateStep(step, stepSelector)
+		err = validation.ValidateStep(step, stepSelector)
 		if err != nil {
 			err = shouldIgnoreValidation(workflow, step, stepSelector, err)
 			if err != nil {

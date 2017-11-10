@@ -8,7 +8,7 @@ func (w *Workflow) Select(selector []int) *WorkflowStep {
 		if step == nil {
 			step = &w.Spec.Steps[segment]
 		} else {
-			step = &step.Steps[segment]
+			step = &step.Compound.Steps[segment]
 		}
 	}
 
@@ -25,7 +25,7 @@ func (w *Workflow) Parent(selector []int) *WorkflowStep {
 			step = &w.Spec.Steps[segment]
 		} else {
 			parent = step
-			step = &step.Steps[segment]
+			step = &step.Compound.Steps[segment]
 		}
 	}
 
@@ -46,7 +46,7 @@ func (w *Workflow) IncrementStepSelector(selector []int) []int {
 	stepCounts := make([]int, numSegments)
 	for i, segment := range selector {
 		stepCounts[i] = len(steps)
-		steps = steps[segment].Steps
+		steps = steps[segment].Compound.Steps
 	}
 
 	segment := numSegments - 1
@@ -64,7 +64,7 @@ func (w *Workflow) IncrementStepSelector(selector []int) []int {
 	if len(newSelector) > 0 {
 		for {
 			step := w.Select(newSelector)
-			if step.Type == StepCompound {
+			if step.Compound != nil {
 				newSelector = append(newSelector, 0)
 			} else {
 				break

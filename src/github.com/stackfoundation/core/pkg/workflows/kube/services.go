@@ -32,8 +32,8 @@ func createServicePort(port workflowsv1.Port) v1.ServicePort {
 		protocol = v1.ProtocolUDP
 	}
 
-	containerPort := parseInt(port.ContainerPort, 0)
-	internalPort := parseInt(port.InternalPort, 0)
+	containerPort := parseInt(port.Container, 0)
+	internalPort := parseInt(port.Internal, 0)
 	if internalPort == 0 {
 		internalPort = containerPort
 	}
@@ -47,8 +47,8 @@ func createServicePort(port workflowsv1.Port) v1.ServicePort {
 		Port: internalPort,
 	}
 
-	if len(port.ExternalPort) > 0 {
-		servicePort.NodePort = parseInt(port.ExternalPort, 0)
+	if len(port.External) > 0 {
+		servicePort.NodePort = parseInt(port.External, 0)
 	}
 
 	return servicePort
@@ -58,7 +58,7 @@ func createService(context *podContext, port workflowsv1.Port, labels map[string
 	servicePort := createServicePort(port)
 
 	serviceType := v1.ServiceTypeClusterIP
-	if len(port.ExternalPort) > 0 {
+	if len(port.External) > 0 {
 		serviceType = v1.ServiceTypeNodePort
 	}
 

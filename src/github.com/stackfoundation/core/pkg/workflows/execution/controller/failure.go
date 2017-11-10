@@ -6,11 +6,11 @@ import (
 )
 
 func areFailuresIgnored(workflow *v1.Workflow, step *v1.WorkflowStep, stepSelector []int) bool {
-	if step.IgnoreFailure == nil {
+	if step.IgnoreFailure() == nil {
 		if !workflow.Spec.IgnoreFailure {
 			return false
 		}
-	} else if !*step.IgnoreFailure {
+	} else if !*step.IgnoreFailure() {
 		return false
 	}
 

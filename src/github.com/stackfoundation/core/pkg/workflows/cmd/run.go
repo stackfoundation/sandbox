@@ -10,6 +10,7 @@ import (
 	"github.com/stackfoundation/core/pkg/workflows/execution/controller"
 	"github.com/stackfoundation/core/pkg/workflows/files"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/core/pkg/workflows/validation"
 	"github.com/stackfoundation/log"
 )
 
@@ -34,7 +35,7 @@ func Run(workflowName string, args []string) error {
 
 	addArgumentVariables(workflow, args)
 
-	err = v1.Validate(&workflow.Spec)
+	err = validation.Validate(&workflow.Spec)
 	if err != nil {
 		return err
 	}

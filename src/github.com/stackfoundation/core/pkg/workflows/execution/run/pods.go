@@ -2,7 +2,6 @@ package run
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/stackfoundation/core/pkg/workflows/execution/context"
 	"github.com/stackfoundation/core/pkg/workflows/execution/coordinator"
@@ -49,24 +48,23 @@ func RunPodStep(c coordinator.Coordinator, sc *context.StepContext, l Listener) 
 	stepName := step.StepName(sc.Change.StepSelector)
 
 	var command []string
-	cache, _ := strconv.ParseBool(step.Cache)
-	if !cache && len(step.State.GeneratedScript) > 0 {
+	if !step.Cached() && len(step.State.GeneratedScript) > 0 {
 		fmt.Println("Running step " + stepName + ":")
 
 		command = []string{"/bin/sh", "/" + step.State.GeneratedScript}
 	}
 
-	step.Volumes = normalizeVolumePaths(sc.WorkflowContext.Workflow.Spec.State.ProjectRoot, step.Volumes)
+	step.SetVolumes(normalizeVolumePaths(sc.WorkflowContext.Workflow.Spec.State.ProjectRoot, step.Volumes()))
 
 	completionListener := &podCompletionListener{
 		listener:    l,
 		stepContext: sc,
 	}
 
-	environment := v1.CollectVariables(step.Environment)
+	environment := v1.CollectVariables(step.Environment())
 	environment.ResolveFrom(sc.WorkflowContext.Workflow.Spec.State.Variables)
 
-	if len(step.Name) < 1 {
+	if len(step.Name()) < 1 {
 		stepName = "Step " + stepName
 	}
 
@@ -79,10 +77,10 @@ func RunPodStep(c coordinator.Coordinator, sc *context.StepContext, l Listener) 
 			Image:            step.State.GeneratedImage,
 			Name:             stepName,
 			PodListener:      completionListener,
-			Ports:            step.Ports,
-			Readiness:        step.Readiness,
+			Ports:            step.Service.Ports,
+			Readiness:        step.Service.Readiness,
 			VariableReceiver: completionListener.addVariable,
-			Volumes:          step.Volumes,
+			Volumes:          step.Volumes(),
 			WorkflowReceiver: completionListener.addGeneratedWorkflow,
 		})
 
