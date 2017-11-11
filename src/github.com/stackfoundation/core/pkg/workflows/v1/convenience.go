@@ -1,5 +1,7 @@
 package v1
 
+import "strconv"
+
 // Dockerfile Get the Dockerfile for this step, if it has one
 func (s *WorkflowStep) Dockerfile() string {
 	scriptOptions := s.scriptStepOptions()
@@ -71,6 +73,25 @@ func (s *WorkflowStep) SetVolumes(volumes []Volume) {
 	if scriptOptions != nil {
 		scriptOptions.Volumes = volumes
 	}
+}
+
+// SkipWait Is skip waiting configured for this check?
+func (c *HealthCheck) SkipWait() bool {
+	if c.TCP != nil {
+		skipWait, _ := strconv.ParseBool(c.TCP.SkipWait)
+		return skipWait
+	} else if c.HTTP != nil {
+		skipWait, _ := strconv.ParseBool(c.HTTP.SkipWait)
+		return skipWait
+	} else if c.HTTPS != nil {
+		skipWait, _ := strconv.ParseBool(c.HTTPS.SkipWait)
+		return skipWait
+	} else if c.Script != nil {
+		skipWait, _ := strconv.ParseBool(c.Script.SkipWait)
+		return skipWait
+	}
+
+	return false
 }
 
 // Source Get the source options for this step, if it has any

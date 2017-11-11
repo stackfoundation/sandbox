@@ -59,7 +59,7 @@ func (s *WorkflowStep) IgnoreValidation() *bool {
 
 // IsAsync Is this an async step (a paralell or service step that skips wait)?
 func (s *WorkflowStep) IsAsync() bool {
-	return (s.Service != nil && s.Service.Readiness != nil && s.Service.Readiness.SkipWait == "true") ||
+	return (s.Service != nil && s.Service.Readiness != nil && s.Service.Readiness.SkipWait()) ||
 		(s.Run != nil && s.Run.Parallel == "true") ||
 		(s.External != nil && s.External.Parallel == "true") ||
 		(s.Generator != nil && s.Generator.Parallel == "true")
@@ -72,7 +72,7 @@ func (s *WorkflowStep) IsGenerator() bool {
 
 // IsServiceWithWait Is this a service step that waits for readiness?
 func (s *WorkflowStep) IsServiceWithWait() bool {
-	return s.Service != nil && s.Service.Readiness != nil && s.Service.Readiness.SkipWait != "true"
+	return s.Service != nil && s.Service.Readiness != nil && !s.Service.Readiness.SkipWait()
 }
 
 // ScriptlessImageBuild Does the step require an image to be built but doesn't have a script?

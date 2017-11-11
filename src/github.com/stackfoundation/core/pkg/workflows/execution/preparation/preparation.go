@@ -1,6 +1,7 @@
 package preparation
 
 import (
+	"github.com/stackfoundation/core/pkg/workflows/expansion"
 	"github.com/stackfoundation/core/pkg/workflows/v1"
 	"github.com/stackfoundation/core/pkg/workflows/validation"
 	"github.com/stackfoundation/log"
@@ -19,7 +20,7 @@ func expandStep(workflow *v1.Workflow, step *v1.WorkflowStep, stepSelector []int
 	stepName := step.StepName(stepSelector)
 	log.Debugf("Expanding variable placeholders in step %v", stepName)
 
-	err := v1.ExpandStep(step, workflow.Spec.State.Variables)
+	err := expansion.ExpandStep(step, workflow.Spec.State.Variables)
 	if err != nil {
 		if step.IgnoreMissing() == nil {
 			if !workflow.Spec.IgnoreMissing {

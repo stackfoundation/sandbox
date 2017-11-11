@@ -1,11 +1,12 @@
-package v1
+package expansion
 
 import (
 	"github.com/stackfoundation/core/pkg/workflows/errors"
 	"github.com/stackfoundation/core/pkg/workflows/properties"
+	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
-func expandEnvironment(environment []VariableSource, variables *properties.Properties) ([]VariableSource, error) {
+func expandEnvironment(environment []v1.VariableSource, variables *properties.Properties) ([]v1.VariableSource, error) {
 	expandedEnvironment := environment[:0]
 	composite := errors.NewCompositeError()
 
@@ -19,7 +20,7 @@ func expandEnvironment(environment []VariableSource, variables *properties.Prope
 		file, err := variables.Expand(variable.File)
 		composite.Append(err)
 
-		expandedEnvironment = append(expandedEnvironment, VariableSource{
+		expandedEnvironment = append(expandedEnvironment, v1.VariableSource{
 			Name:  name,
 			Value: value,
 			File:  file,
@@ -29,7 +30,7 @@ func expandEnvironment(environment []VariableSource, variables *properties.Prope
 	return expandedEnvironment, composite.OrNilIfEmpty()
 }
 
-func expandScriptStepOptions(scriptOptions *ScriptStepOptions, variables *properties.Properties) error {
+func expandScriptStepOptions(scriptOptions *v1.ScriptStepOptions, variables *properties.Properties) error {
 	composite := errors.NewCompositeError()
 
 	composite.Append(expandStepOptions(&scriptOptions.StepOptions, variables))
@@ -63,7 +64,7 @@ func expandScriptStepOptions(scriptOptions *ScriptStepOptions, variables *proper
 	return composite.OrNilIfEmpty()
 }
 
-func expandSourceOptions(sourceOptions *SourceOptions, variables *properties.Properties) error {
+func expandSourceOptions(sourceOptions *v1.SourceOptions, variables *properties.Properties) error {
 	composite := errors.NewCompositeError()
 
 	dockerignore, err := variables.Expand(sourceOptions.Dockerignore)
@@ -89,7 +90,7 @@ func expandSourceOptions(sourceOptions *SourceOptions, variables *properties.Pro
 	return composite.OrNilIfEmpty()
 }
 
-func expandVolumes(volumes []Volume, variables *properties.Properties) ([]Volume, error) {
+func expandVolumes(volumes []v1.Volume, variables *properties.Properties) ([]v1.Volume, error) {
 	expandedVolumes := volumes[:0]
 	composite := errors.NewCompositeError()
 
@@ -103,7 +104,7 @@ func expandVolumes(volumes []Volume, variables *properties.Properties) ([]Volume
 		mountPath, err := variables.Expand(volume.MountPath)
 		composite.Append(err)
 
-		expandedVolumes = append(expandedVolumes, Volume{
+		expandedVolumes = append(expandedVolumes, v1.Volume{
 			Name:      name,
 			HostPath:  hostPath,
 			MountPath: mountPath,

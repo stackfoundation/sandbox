@@ -26,37 +26,45 @@ type HTTPHeader struct {
 	Value string `json:"value" yaml:"value"`
 }
 
-// HealthCheckType Health check type
-type HealthCheckType string
-
-// TCPCheck TCP health check
-const TCPCheck HealthCheckType = "tcp"
-
-// HTTPCheck HTTP health check
-const HTTPCheck HealthCheckType = "http"
-
-// HTTPSCheck HTTPS health check
-const HTTPSCheck HealthCheckType = "https"
-
-// ScriptCheck Script health check
-const ScriptCheck HealthCheckType = "script"
-
-// HealthCheck HealthCheck checks for a workflow step
-type HealthCheck struct {
-	Grace    string          `json:"grace" yaml:"grace"`
-	Headers  []HTTPHeader    `json:"headers" yaml:"headers"`
-	Interval string          `json:"interval" yaml:"interval"`
-	Path     string          `json:"path" yaml:"path"`
-	Port     string          `json:"port" yaml:"port"`
-	Retries  string          `json:"retries" yaml:"retries"`
-	Script   string          `json:"script" yaml:"script"`
-	SkipWait string          `json:"skipWait" yaml:"skipWait"`
-	Timeout  string          `json:"timeout" yaml:"timeout"`
-	Type     HealthCheckType `json:"type" yaml:"type"`
+// HealthCheckOptions Base options for health checks
+type HealthCheckOptions struct {
+	Grace    string `json:"grace" yaml:"grace"`
+	Interval string `json:"interval" yaml:"interval"`
+	Retries  string `json:"retries" yaml:"retries"`
+	SkipWait string `json:"skipWait" yaml:"skipWait"`
+	Timeout  string `json:"timeout" yaml:"timeout"`
 }
 
-// ImageSource Image source
-type ImageSource string
+// TCPHealthCheckOptions Options for TCP health checks
+type TCPHealthCheckOptions struct {
+	HealthCheckOptions `json:",inline" yaml:",inline"`
+
+	Port string `json:"port" yaml:"port"`
+}
+
+// ScriptHealthCheckOptions Options for script health checks
+type ScriptHealthCheckOptions struct {
+	HealthCheckOptions `json:",inline" yaml:",inline"`
+
+	Path string `json:"path" yaml:"path"`
+}
+
+// HTTPHealthCheckOptions Options for HTTP/HTTPS health checks
+type HTTPHealthCheckOptions struct {
+	HealthCheckOptions `json:",inline" yaml:",inline"`
+
+	Headers []HTTPHeader `json:"headers" yaml:"headers"`
+	Path    string       `json:"path" yaml:"path"`
+	Port    string       `json:"port" yaml:"port"`
+}
+
+// HealthCheck Health check for a workflow step
+type HealthCheck struct {
+	HTTP   *HTTPHealthCheckOptions   `json:"http" yaml:"http"`
+	HTTPS  *HTTPHealthCheckOptions   `json:"https" yaml:"https"`
+	TCP    *TCPHealthCheckOptions    `json:"tcp" yaml:"tcp"`
+	Script *ScriptHealthCheckOptions `json:"script" yaml:"script"`
+}
 
 // StepState State of step
 type StepState struct {

@@ -1,8 +1,9 @@
-package v1
+package expansion
 
 import (
 	"github.com/stackfoundation/core/pkg/workflows/errors"
 	"github.com/stackfoundation/core/pkg/workflows/properties"
+	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
 func expandStringSlice(slice []string, variables *properties.Properties) ([]string, error) {
@@ -19,7 +20,7 @@ func expandStringSlice(slice []string, variables *properties.Properties) ([]stri
 	return expandedSlice, composite.OrNilIfEmpty()
 }
 
-func expandVariableOptions(variableOptions *VariableOptions, variables *properties.Properties) error {
+func expandVariableOptions(variableOptions *v1.VariableOptions, variables *properties.Properties) error {
 	composite := errors.NewCompositeError()
 
 	exclude, err := expandStringSlice(variableOptions.Exclude, variables)
@@ -33,7 +34,7 @@ func expandVariableOptions(variableOptions *VariableOptions, variables *properti
 	return composite.OrNilIfEmpty()
 }
 
-func expandGeneratorStepOptions(generator *GeneratorStepOptions, variables *properties.Properties) error {
+func expandGeneratorStepOptions(generator *v1.GeneratorStepOptions, variables *properties.Properties) error {
 	composite := errors.NewCompositeError()
 
 	composite.Append(expandScriptStepOptions(&generator.ScriptStepOptions, variables))
@@ -47,7 +48,7 @@ func expandGeneratorStepOptions(generator *GeneratorStepOptions, variables *prop
 	return composite.OrNilIfEmpty()
 }
 
-func expandExternalStepOptions(external *ExternalStepOptions, variables *properties.Properties) error {
+func expandExternalStepOptions(external *v1.ExternalStepOptions, variables *properties.Properties) error {
 	composite := errors.NewCompositeError()
 
 	composite.Append(expandStepOptions(&external.StepOptions, variables))

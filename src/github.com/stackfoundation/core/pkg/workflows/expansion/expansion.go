@@ -1,17 +1,18 @@
-package v1
+package expansion
 
 import (
 	"github.com/stackfoundation/core/pkg/workflows/errors"
 	"github.com/stackfoundation/core/pkg/workflows/properties"
+	"github.com/stackfoundation/core/pkg/workflows/v1"
 )
 
-func expandStepOptions(step *StepOptions, variables *properties.Properties) error {
+func expandStepOptions(step *v1.StepOptions, variables *properties.Properties) error {
 	name, err := variables.Expand(step.Name)
 	step.Name = name
 	return err
 }
 
-func expandRunStepOptions(run *RunStepOptions, variables *properties.Properties) error {
+func expandRunStepOptions(run *v1.RunStepOptions, variables *properties.Properties) error {
 	composite := errors.NewCompositeError()
 
 	composite.Append(expandScriptStepOptions(&run.ScriptStepOptions, variables))
@@ -28,7 +29,7 @@ func expandRunStepOptions(run *RunStepOptions, variables *properties.Properties)
 }
 
 // ExpandStep Expand any placeholders in this step that haven't been expanded yet
-func ExpandStep(step *WorkflowStep, variables *properties.Properties) error {
+func ExpandStep(step *v1.WorkflowStep, variables *properties.Properties) error {
 	if step.Run != nil {
 		return expandRunStepOptions(step.Run, variables)
 	} else if step.Generator != nil {

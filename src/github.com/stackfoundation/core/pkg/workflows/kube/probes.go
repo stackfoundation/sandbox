@@ -8,8 +8,15 @@ import (
 	"k8s.io/client-go/pkg/api/v1"
 )
 
-func createTCPProbe(check *workflowsv1.HealthCheck) *v1.Probe {
-	return &v1.Probe{
+func setupProbeOptions(probe *v1.Probe, check *workflowsv1.HealthCheckOptions) {
+	probe.InitialDelaySeconds = parseInt(check.Grace, workflowsv1.DefaultGrace)
+	probe.PeriodSeconds = parseInt(check.Interval, workflowsv1.DefaultInterval)
+	probe.TimeoutSeconds = parseInt(check.Timeout, workflowsv1.DefaultTimeout)
+	probe.FailureThreshold = parseInt(check.Retries, workflowsv1.DefaultRetries)
+}
+
+func createTCPProbe(check *workflowsv1.TCPHealthCheckOptions) *v1.Probe {
+	probe := &v1.Probe{
 		Handler: v1.Handler{
 			TCPSocket: &v1.TCPSocketAction{
 				Port: intstr.IntOrString{
@@ -19,9 +26,12 @@ func createTCPProbe(check *workflowsv1.HealthCheck) *v1.Probe {
 			},
 		},
 	}
+
+	setupProbeOptions(probe, &check.HealthCheckOptions)
+	return probe
 }
 
-func createHTTPHeaders(check *workflowsv1.HealthCheck) []v1.HTTPHeader {
+func createHTTPHeaders(check *workflowsv1.HTTPHealthCheckOptions) []v1.HTTPHeader {
 	numHeaders := len(check.Headers)
 	if numHeaders > 0 {
 		headers := make([]v1.HTTPHeader, 0, numHeaders)
@@ -38,15 +48,15 @@ func createHTTPHeaders(check *workflowsv1.HealthCheck) []v1.HTTPHeader {
 	return nil
 }
 
-func createHTTPGetProbe(check *workflowsv1.HealthCheck) *v1.Probe {
+func createHTTPGetProbe(check *workflowsv1.HTTPHealthCheckOptions, https bool) *v1.Probe {
 	scheme := v1.URISchemeHTTP
-	if check.Type == workflowsv1.HTTPSCheck {
+	if https {
 		scheme = v1.URISchemeHTTPS
 	}
 
 	headers := createHTTPHeaders(check)
 
-	return &v1.Probe{
+	probe := &v1.Probe{
 		Handler: v1.Handler{
 			HTTPGet: &v1.HTTPGetAction{
 				Port: intstr.IntOrString{
@@ -59,16 +69,22 @@ func createHTTPGetProbe(check *workflowsv1.HealthCheck) *v1.Probe {
 			},
 		},
 	}
+
+	setupProbeOptions(probe, &check.HealthCheckOptions)
+	return probe
 }
 
-func createExecProbe(check *workflowsv1.HealthCheck) *v1.Probe {
-	return &v1.Probe{
+func createExecProbe(check *workflowsv1.ScriptHealthCheckOptions) *v1.Probe {
+	probe := &v1.Probe{
 		Handler: v1.Handler{
 			Exec: &v1.ExecAction{
-				Command: []string{"/bin/sh", check.Script},
+				Command: []string{"/bin/sh", check.Path},
 			},
 		},
 	}
+
+	setupProbeOptions(probe, &check.HealthCheckOptions)
+	return probe
 }
 
 func parseInt(value string, defaultValue int32) int32 {
@@ -83,34 +99,17 @@ func parseInt(value string, defaultValue int32) int32 {
 	return defaultValue
 }
 
-func setupProbeOptions(probe *v1.Probe, check *workflowsv1.HealthCheck) {
-	probe.InitialDelaySeconds = parseInt(check.Grace, workflowsv1.DefaultGrace)
-	probe.PeriodSeconds = parseInt(check.Interval, workflowsv1.DefaultInterval)
-	probe.TimeoutSeconds = parseInt(check.Timeout, workflowsv1.DefaultTimeout)
-	probe.FailureThreshold = parseInt(check.Retries, workflowsv1.DefaultRetries)
-}
-
 func createProbe(check *workflowsv1.HealthCheck) *v1.Probe {
 	if check != nil {
-		var probe *v1.Probe
-		switch check.Type {
-		case workflowsv1.TCPCheck:
-			probe = createTCPProbe(check)
-		case workflowsv1.HTTPSCheck:
-			fallthrough
-		case workflowsv1.HTTPCheck:
-			probe = createHTTPGetProbe(check)
-		case workflowsv1.ScriptCheck:
-			probe = createExecProbe(check)
-		default:
-			probe = nil
+		if check.TCP != nil {
+			return createTCPProbe(check.TCP)
+		} else if check.HTTPS != nil {
+			return createHTTPGetProbe(check.HTTPS, true)
+		} else if check.HTTP != nil {
+			return createHTTPGetProbe(check.HTTP, false)
+		} else if check.Script != nil {
+			return createExecProbe(check.Script)
 		}
-
-		if probe != nil {
-			setupProbeOptions(probe, check)
-		}
-
-		return probe
 	}
 
 	return nil
