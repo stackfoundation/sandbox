@@ -93,6 +93,8 @@ func validateStepInternal(step *v1.WorkflowStep, selector []int, ignorePlacehold
 
 	if step.Run != nil {
 		return validateRunStep(step.Run, selector, ignorePlaceholders)
+	} else if step.Service != nil {
+		return validateServiceStep(step.Service, selector, ignorePlaceholders)
 	} else if step.External != nil {
 		return validateExternalStep(step.External, selector, ignorePlaceholders)
 	} else if step.Generator != nil {
