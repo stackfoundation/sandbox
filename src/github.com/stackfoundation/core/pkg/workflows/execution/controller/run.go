@@ -25,6 +25,10 @@ func (l *runListener) Done(sc *executioncontext.StepContext, r *run.Result) {
 
 func (l *runListener) Failed(sc *executioncontext.StepContext, r *run.Result) {
 	if !areFailuresIgnored(sc.WorkflowContext.Workflow, sc.Step, sc.StepSelector) {
+		if len(r.Message) > 0 {
+			fmt.Println(r.Message)
+		}
+
 		fmt.Printf("Step %v failed, aborting!\n", sc.Step.StepName(sc.StepSelector))
 		sc.WorkflowContext.Cancel()
 		return

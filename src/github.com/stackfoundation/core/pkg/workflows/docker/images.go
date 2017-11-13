@@ -44,8 +44,15 @@ func BuildImage(ctx context.Context, dockerClient *client.Client, imageName stri
 		return err
 	}
 
-	jsonmessage.DisplayJSONMessagesStream(response.Body, os.Stdout, 0, true, nil)
-	_, _ = io.Copy(os.Stdout, response.Body)
+	err = jsonmessage.DisplayJSONMessagesStream(response.Body, os.Stdout, 0, true, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(os.Stdout, response.Body)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

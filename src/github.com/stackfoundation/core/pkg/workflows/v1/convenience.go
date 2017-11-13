@@ -2,6 +2,16 @@ package v1
 
 import "strconv"
 
+// CherryPick Get the cherry picked files for this step, if it has any
+func (s *WorkflowStep) CherryPick() []CherryPick {
+	scriptOptions := s.scriptStepOptions()
+	if scriptOptions != nil {
+		return scriptOptions.CherryPick
+	}
+
+	return nil
+}
+
 // Dockerfile Get the Dockerfile for this step, if it has one
 func (s *WorkflowStep) Dockerfile() string {
 	scriptOptions := s.scriptStepOptions()
@@ -44,12 +54,9 @@ func (s *WorkflowStep) Name() string {
 
 // Script Get the script for this step, if it has one
 func (s *WorkflowStep) Script() string {
-	if s.Run != nil {
-		return s.Run.ScriptStepOptions.Script
-	} else if s.Service != nil {
-
-	} else if s.Generator != nil {
-		return s.Generator.ScriptStepOptions.Script
+	scriptOptions := s.scriptStepOptions()
+	if scriptOptions != nil {
+		return scriptOptions.Script
 	}
 
 	return ""

@@ -46,7 +46,11 @@ func (w *Workflow) IncrementStepSelector(selector []int) []int {
 	stepCounts := make([]int, numSegments)
 	for i, segment := range selector {
 		stepCounts[i] = len(steps)
-		steps = steps[segment].Compound.Steps
+		if steps[segment].Compound != nil {
+			steps = steps[segment].Compound.Steps
+		} else {
+			steps = nil
+		}
 	}
 
 	segment := numSegments - 1

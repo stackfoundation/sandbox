@@ -48,7 +48,9 @@ func (sc *StepContext) CanProceedToNextStep() bool {
 		(sc.Change.Type == v1.StepStarted && (sc.Step == nil || sc.Step.IsAsync())) ||
 		(sc.Change.Type == v1.StepDone && !sc.Step.IsAsync()) ||
 		sc.Change.Type == v1.WorkflowWaitDone {
-		return true
+		if !sc.isAtWorkflowBoundary() {
+			return true
+		}
 	}
 
 	return false
@@ -78,5 +80,5 @@ func (sc *StepContext) IsStepReadyToRun() bool {
 
 // IsWorkflowComplete Is the workflow in context complete?
 func (sc *StepContext) IsWorkflowComplete() bool {
-	return sc.isAtWorkflowBoundary() && sc.CanProceedToNextStep()
+	return sc.isAtWorkflowBoundary() && sc.CanProceedToNextStep() && sc.Step.Service == nil
 }

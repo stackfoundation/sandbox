@@ -8,6 +8,7 @@ import (
 // Result Stores the result of a pod step run
 type Result struct {
 	Container string
+	Message   string
 	Workflow  string
 	Variables []v1.VariableSource
 }

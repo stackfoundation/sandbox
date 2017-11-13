@@ -27,9 +27,10 @@ func (l *podCompletionListener) Ready() {
 	l.listener.Ready(l.stepContext)
 }
 
-func (l *podCompletionListener) Done(failed bool) {
+func (l *podCompletionListener) Done(failed bool, message string) {
 	result := &Result{
 		Container: l.generatedContainer,
+		Message:   message,
 		Workflow:  l.generatedWorkflow,
 		Variables: l.variables,
 	}
@@ -68,17 +69,28 @@ func RunPodStep(c coordinator.Coordinator, sc *context.StepContext, l Listener) 
 		stepName = "Step " + stepName
 	}
 
+	var ports []v1.Port
+	var health *v1.HealthCheck
+	var readiness *v1.HealthCheck
+
+	if step.Service != nil {
+		ports = step.Service.Ports
+		health = step.Service.Health
+		readiness = step.Service.Readiness
+	}
+
 	err := c.RunStep(
 		sc.WorkflowContext.Context,
 		&coordinator.RunStepSpec{
 			Command:          command,
 			Cleanup:          sc.WorkflowContext.Cleanup,
 			Environment:      environment,
+			Health:           health,
 			Image:            step.State.GeneratedImage,
 			Name:             stepName,
 			PodListener:      completionListener,
-			Ports:            step.Service.Ports,
-			Readiness:        step.Service.Readiness,
+			Ports:            ports,
+			Readiness:        readiness,
 			VariableReceiver: completionListener.addVariable,
 			Volumes:          step.Volumes(),
 			WorkflowReceiver: completionListener.addGeneratedWorkflow,

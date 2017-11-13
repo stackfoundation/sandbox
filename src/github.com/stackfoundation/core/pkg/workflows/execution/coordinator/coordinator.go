@@ -44,6 +44,7 @@ func (c *executionCoordinator) RunStep(context context.Context, spec *RunStepSpe
 			Image:            spec.Image,
 			Command:          spec.Command,
 			Environment:      spec.Environment,
+			Health:           spec.Health,
 			Ports:            spec.Ports,
 			Readiness:        spec.Readiness,
 			Volumes:          spec.Volumes,

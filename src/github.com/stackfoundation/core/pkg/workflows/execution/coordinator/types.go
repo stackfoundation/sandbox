@@ -29,6 +29,7 @@ type RunStepSpec struct {
 	Cleanup          *sync.WaitGroup
 	Command          []string
 	Environment      *properties.Properties
+	Health           *v1.HealthCheck
 	Image            string
 	Name             string
 	PodListener      kube.PodListener

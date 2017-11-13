@@ -66,6 +66,12 @@ type HealthCheck struct {
 	Script *ScriptHealthCheckOptions `json:"script" yaml:"script"`
 }
 
+// Pick Cherry picked files for a step
+type Pick struct {
+	GeneratedBaseImage string   `json:"baseImage" yaml:"baseImage"`
+	Copies             []string `json:"copies" yaml:"copies"`
+}
+
 // StepState State of step
 type StepState struct {
 	GeneratedBaseImage string `json:"baseImage" yaml:"baseImage"`
@@ -73,6 +79,7 @@ type StepState struct {
 	GeneratedContainer string `json:"generatedContainer" yaml:"generatedContainer"`
 	GeneratedScript    string `json:"generatedScript" yaml:"generatedScript"`
 	GeneratedWorkflow  string `json:"generatedWorkflow" yaml:"generatedWorkflow"`
+	Picks              []Pick `json:"picks" yaml:"picks"`
 	Ready              bool   `json:"ready" yaml:"ready"`
 	Done               bool   `json:"done" yaml:"done"`
 	Prepared           bool   `json:"prepared" yaml:"prepared"`
@@ -126,10 +133,18 @@ type CompoundStepOptions struct {
 	Steps []WorkflowStep `json:"steps" yaml:"steps"`
 }
 
+// CherryPick Cherry pick a single location
+type CherryPick struct {
+	Step string `json:"step" yaml:"step"`
+	From string `json:"from" yaml:"from"`
+	To   string `json:"to" yaml:"to"`
+}
+
 // ScriptStepOptions Options for script-based steps
 type ScriptStepOptions struct {
 	StepOptions `json:",inline" yaml:",inline"`
 
+	CherryPick  []CherryPick     `json:"cherryPick" yaml:"cherryPick"`
 	Dockerfile  string           `json:"dockerfile" yaml:"dockerfile"`
 	Environment []VariableSource `json:"environment" yaml:"environment"`
 	Image       string           `json:"image" yaml:"image"`

@@ -82,7 +82,7 @@ func (s *WorkflowStep) ScriptlessImageBuild() bool {
 
 // RequiresBuild Does the step require an image to be built (all except call steps)?
 func (s *WorkflowStep) RequiresBuild() bool {
-	return s.HasScript()
+	return s.Service != nil || s.Run != nil || s.Generator != nil
 }
 
 // OmitsSource Does the specified source options omit source?
