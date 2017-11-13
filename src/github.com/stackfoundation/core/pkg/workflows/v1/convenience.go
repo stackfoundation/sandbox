@@ -4,10 +4,10 @@ import "strconv"
 
 // CherryPick Get the cherry picked files for this step, if it has any
 func (s *WorkflowStep) CherryPick() []CherryPick {
-	scriptOptions := s.scriptStepOptions()
-	if scriptOptions != nil {
-		return scriptOptions.CherryPick
-	}
+	// scriptOptions := s.scriptStepOptions()
+	// if scriptOptions != nil {
+	// 	return scriptOptions.CherryPick
+	// }
 
 	return nil
 }

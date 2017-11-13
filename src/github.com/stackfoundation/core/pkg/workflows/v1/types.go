@@ -144,7 +144,7 @@ type CherryPick struct {
 type ScriptStepOptions struct {
 	StepOptions `json:",inline" yaml:",inline"`
 
-	CherryPick  []CherryPick     `json:"cherryPick" yaml:"cherryPick"`
+	// CherryPick  []CherryPick     `json:"cherryPick" yaml:"cherryPick"`
 	Dockerfile  string           `json:"dockerfile" yaml:"dockerfile"`
 	Environment []VariableSource `json:"environment" yaml:"environment"`
 	Image       string           `json:"image" yaml:"image"`

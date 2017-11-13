@@ -3,8 +3,8 @@ package controller
 import (
 	"context"
 
-	"github.com/stackfoundation/core/pkg/workflows/execution/build"
 	executioncontext "github.com/stackfoundation/core/pkg/workflows/execution/context"
+	"github.com/stackfoundation/core/pkg/workflows/execution/image"
 	"github.com/stackfoundation/core/pkg/workflows/execution/preparation"
 )
 
@@ -15,7 +15,7 @@ func (c *executionController) buildStepImageAndTransitionNext(sc *executionconte
 	}
 
 	if sc.NextStep.RequiresBuild() {
-		err := build.BuildStepImage(c.coordinator, sc)
+		err := image.BuildStepImage(c.coordinator, sc)
 		if err != nil {
 			if err == context.Canceled {
 				return err
