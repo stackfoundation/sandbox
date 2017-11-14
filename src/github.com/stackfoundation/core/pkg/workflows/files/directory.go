@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const workflowExtension = ".wflow"
+const workflowExtension = ".yml"
 
 func directoryExists(path string) (bool, error) {
 	info, err := os.Stat(path)
