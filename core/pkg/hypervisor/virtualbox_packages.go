@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/stackfoundation/net/proxy"
+	"github.com/stackfoundation/sandbox/net/proxy"
 )
 
 const downloadsURL = "http://download.virtualbox.org/virtualbox/5.1.28/"

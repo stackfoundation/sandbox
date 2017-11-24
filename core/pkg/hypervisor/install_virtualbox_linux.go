@@ -3,8 +3,8 @@ package hypervisor
 import (
 	"strings"
 
-	"github.com/stackfoundation/log"
-	"github.com/stackfoundation/process"
+	"github.com/stackfoundation/sandbox/log"
+	"github.com/stackfoundation/sandbox/process"
 )
 
 func installVirtualBoxWithInstaller(installer string) error {

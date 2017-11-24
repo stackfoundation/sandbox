@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/log"
 
 	"golang.org/x/sys/windows/registry"
 )

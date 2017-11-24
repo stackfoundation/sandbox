@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/stackfoundation/core/cmd"
+	"github.com/stackfoundation/sandbox/core/cmd"
 )
 
 func main() {

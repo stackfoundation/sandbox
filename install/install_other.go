@@ -5,7 +5,7 @@ package install
 import (
 	"fmt"
 
-	"github.com/stackfoundation/process"
+	"github.com/stackfoundation/sandbox/process"
 )
 
 func getStackFoundationRoot() (string, error) {

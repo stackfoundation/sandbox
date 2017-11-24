@@ -25,7 +25,7 @@ import (
 
 	"text/template"
 
-	"github.com/stackfoundation/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
 )
 
 // Kill any running instances.

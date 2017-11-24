@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/properties"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/properties"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )

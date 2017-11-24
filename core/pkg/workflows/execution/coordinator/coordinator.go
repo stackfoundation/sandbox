@@ -3,9 +3,9 @@ package coordinator
 import (
 	"context"
 
-	"github.com/stackfoundation/core/pkg/workflows/docker"
-	"github.com/stackfoundation/core/pkg/workflows/image"
-	"github.com/stackfoundation/core/pkg/workflows/kube"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/docker"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/image"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/kube"
 )
 
 // NewCoordinator Create a new coordinator which uses the specified context

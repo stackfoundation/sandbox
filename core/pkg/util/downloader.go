@@ -23,12 +23,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/stackfoundation/net/proxy"
+	"github.com/stackfoundation/sandbox/net/proxy"
 
 	"github.com/golang/glog"
 	download "github.com/jimmidyson/go-download"
 	"github.com/pkg/errors"
-	"github.com/stackfoundation/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
 )
 
 const fileScheme = "file"

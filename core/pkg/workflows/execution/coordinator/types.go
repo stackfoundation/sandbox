@@ -5,10 +5,10 @@ import (
 	"sync"
 
 	"github.com/docker/engine-api/client"
-	"github.com/stackfoundation/core/pkg/workflows/image"
-	"github.com/stackfoundation/core/pkg/workflows/kube"
-	"github.com/stackfoundation/core/pkg/workflows/properties"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/image"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/kube"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/properties"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
 	"k8s.io/client-go/kubernetes"
 )
 

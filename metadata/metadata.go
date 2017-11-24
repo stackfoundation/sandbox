@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/stackfoundation/install"
-	"github.com/stackfoundation/io"
+	"github.com/stackfoundation/sandbox/install"
+	"github.com/stackfoundation/sandbox/io"
 )
 
 const cliMetadataFile = "cli.json"

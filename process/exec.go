@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/log"
 )
 
 // CommandOut Execute a process, wait till completion, and return the stdout

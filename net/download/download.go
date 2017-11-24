@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/stackfoundation/log"
-	"github.com/stackfoundation/net/proxy"
-	"github.com/stackfoundation/progress"
+	"github.com/stackfoundation/sandbox/log"
+	"github.com/stackfoundation/sandbox/net/proxy"
+	"github.com/stackfoundation/sandbox/progress"
 )
 
 // WithProgress Download from an external URL to a local location, with progress

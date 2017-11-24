@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
 )
 
 // NewWorkflowContext Create a new workflow execution context

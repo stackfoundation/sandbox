@@ -5,8 +5,8 @@ import (
 	"io"
 	"strings"
 
-	coreio "github.com/stackfoundation/core/pkg/io"
-	"github.com/stackfoundation/core/pkg/workflows/buffer"
+	coreio "github.com/stackfoundation/sandbox/core/pkg/io"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/buffer"
 )
 
 const maxVariableNameLength = 256

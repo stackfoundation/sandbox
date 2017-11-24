@@ -29,9 +29,9 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/spf13/viper"
-	"github.com/stackfoundation/core/pkg/minikube/config"
-	"github.com/stackfoundation/core/pkg/minikube/tests"
-	"github.com/stackfoundation/core/pkg/version"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/config"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/tests"
+	"github.com/stackfoundation/sandbox/core/pkg/version"
 )
 
 func TestShouldCheckURL(t *testing.T) {

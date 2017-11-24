@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/stackfoundation/core/pkg/workflows/files"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/files"
 )
 
 var listCmd = &cobra.Command{

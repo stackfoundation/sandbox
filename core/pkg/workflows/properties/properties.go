@@ -2,7 +2,7 @@ package properties
 
 import (
 	"github.com/magiconair/properties"
-	"github.com/stackfoundation/core/pkg/workflows/errors"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/errors"
 )
 
 const placeholderPrefix = "${"

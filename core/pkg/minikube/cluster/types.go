@@ -16,7 +16,7 @@ limitations under the License.
 
 package cluster
 
-import "github.com/stackfoundation/core/pkg/util"
+import "github.com/stackfoundation/sandbox/core/pkg/util"
 
 // MachineConfig contains the parameters used to start a cluster.
 type MachineConfig struct {

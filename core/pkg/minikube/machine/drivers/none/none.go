@@ -26,7 +26,7 @@ import (
 	"github.com/docker/machine/libmachine/mcnflag"
 	"github.com/docker/machine/libmachine/state"
 	"github.com/pkg/errors"
-	"github.com/stackfoundation/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
 )
 
 const driverName = "none"

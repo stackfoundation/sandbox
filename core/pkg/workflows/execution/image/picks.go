@@ -3,9 +3,9 @@ package image
 import (
 	"fmt"
 
-	"github.com/stackfoundation/core/pkg/workflows/execution/context"
-	"github.com/stackfoundation/core/pkg/workflows/execution/coordinator"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/execution/context"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/execution/coordinator"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
 )
 
 func collectCherryPicks(coordinator coordinator.Coordinator, sc *context.StepContext, step *v1.WorkflowStep) {

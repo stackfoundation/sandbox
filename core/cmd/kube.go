@@ -27,10 +27,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stackfoundation/core/pkg/hypervisor"
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/core/pkg/hypervisor"
+	"github.com/stackfoundation/sandbox/log"
 
-	"github.com/stackfoundation/net/proxy"
+	"github.com/stackfoundation/sandbox/net/proxy"
 
 	units "github.com/docker/go-units"
 	"github.com/docker/machine/libmachine/host"
@@ -38,14 +38,14 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/stackfoundation/core/pkg/minikube/cluster"
-	cfg "github.com/stackfoundation/core/pkg/minikube/config"
-	"github.com/stackfoundation/core/pkg/minikube/constants"
-	"github.com/stackfoundation/core/pkg/minikube/kubernetes_versions"
-	"github.com/stackfoundation/core/pkg/minikube/machine"
-	"github.com/stackfoundation/core/pkg/util"
-	pkgutil "github.com/stackfoundation/core/pkg/util"
-	"github.com/stackfoundation/core/pkg/util/kubeconfig"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/cluster"
+	cfg "github.com/stackfoundation/sandbox/core/pkg/minikube/config"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/kubernetes_versions"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/machine"
+	"github.com/stackfoundation/sandbox/core/pkg/util"
+	pkgutil "github.com/stackfoundation/sandbox/core/pkg/util"
+	"github.com/stackfoundation/sandbox/core/pkg/util/kubeconfig"
 )
 
 const (

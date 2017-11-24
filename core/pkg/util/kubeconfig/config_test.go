@@ -25,7 +25,7 @@ import (
 	"testing"
 
 	"k8s.io/client-go/tools/clientcmd/api"
-	"github.com/stackfoundation/core/pkg/util"
+	"github.com/stackfoundation/sandbox/core/pkg/util"
 )
 
 var fakeKubeCfg = []byte(`

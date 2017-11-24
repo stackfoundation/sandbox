@@ -1,7 +1,7 @@
 package kube
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/properties"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/properties"
 	"k8s.io/client-go/pkg/api/v1"
 )
 

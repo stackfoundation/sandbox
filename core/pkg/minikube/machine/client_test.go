@@ -29,7 +29,7 @@ import (
 	"github.com/docker/machine/libmachine/drivers"
 
 	"github.com/docker/machine/libmachine/drivers/plugin/localbinary"
-	"github.com/stackfoundation/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
 )
 
 var expectedDrivers = map[string]drivers.Driver{

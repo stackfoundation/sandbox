@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/stackfoundation/core/pkg/workflows/errors"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/errors"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
 )
 
 var placeholderMatcher = regexp.MustCompile("\\$\\{[\\w]+\\}")

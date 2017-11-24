@@ -31,10 +31,10 @@ import (
 	"github.com/docker/machine/libmachine/host"
 	"github.com/docker/machine/libmachine/provision"
 	"github.com/docker/machine/libmachine/state"
-	"github.com/stackfoundation/core/pkg/minikube/assets"
-	"github.com/stackfoundation/core/pkg/minikube/config"
-	"github.com/stackfoundation/core/pkg/minikube/constants"
-	"github.com/stackfoundation/core/pkg/minikube/tests"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/assets"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/config"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/tests"
 )
 
 type MockDownloader struct{}

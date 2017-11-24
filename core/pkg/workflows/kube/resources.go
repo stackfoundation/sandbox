@@ -3,8 +3,8 @@ package kube
 import (
 	"errors"
 
-	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
-	log "github.com/stackfoundation/log"
+	workflowsv1 "github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
+	log "github.com/stackfoundation/sandbox/log"
 	extensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	extensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	kubeerr "k8s.io/apimachinery/pkg/api/errors"

@@ -29,9 +29,9 @@ import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	"github.com/stackfoundation/core/pkg/minikube/config"
-	"github.com/stackfoundation/core/pkg/minikube/constants"
-	"github.com/stackfoundation/core/pkg/version"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/config"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/version"
 )
 
 const updateLinkPrefix = "https://github.com/kubernetes/minikube/releases/tag/v"

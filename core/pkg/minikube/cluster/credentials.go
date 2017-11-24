@@ -20,7 +20,7 @@ import (
 	"net"
 
 	"github.com/pkg/errors"
-	"github.com/stackfoundation/core/pkg/util"
+	"github.com/stackfoundation/sandbox/core/pkg/util"
 )
 
 var (

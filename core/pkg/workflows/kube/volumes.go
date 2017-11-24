@@ -1,8 +1,8 @@
 package kube
 
 import (
-	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
-	log "github.com/stackfoundation/log"
+	workflowsv1 "github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
+	log "github.com/stackfoundation/sandbox/log"
 	"k8s.io/client-go/pkg/api/v1"
 )
 

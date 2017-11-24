@@ -25,7 +25,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stackfoundation/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
 )
 
 func TestGenerateCACert(t *testing.T) {

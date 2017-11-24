@@ -1,6 +1,6 @@
 package controller
 
-import "github.com/stackfoundation/core/pkg/workflows/properties"
+import "github.com/stackfoundation/sandbox/core/pkg/workflows/properties"
 
 func filterVariables(inclusions []string, exclusions []string, variables *properties.Properties) *properties.Properties {
 	includeAll := false

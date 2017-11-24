@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackfoundation/core/pkg/workflows/execution/context"
-	"github.com/stackfoundation/core/pkg/workflows/execution/coordinator"
-	"github.com/stackfoundation/core/pkg/workflows/image"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/execution/context"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/execution/coordinator"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/image"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/log"
 )
 
 type buildError struct {

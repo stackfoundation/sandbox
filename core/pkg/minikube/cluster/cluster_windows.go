@@ -19,8 +19,8 @@ package cluster
 import (
 	"github.com/docker/machine/drivers/hyperv"
 	"github.com/docker/machine/libmachine/drivers"
-	cfg "github.com/stackfoundation/core/pkg/minikube/config"
-	"github.com/stackfoundation/core/pkg/minikube/constants"
+	cfg "github.com/stackfoundation/sandbox/core/pkg/minikube/config"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
 )
 
 func createHypervHost(config MachineConfig) drivers.Driver {

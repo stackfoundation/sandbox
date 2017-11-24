@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	log "github.com/stackfoundation/log"
+	log "github.com/stackfoundation/sandbox/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/pkg/api/v1"
 )

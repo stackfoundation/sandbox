@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/stackfoundation/process"
+	"github.com/stackfoundation/sandbox/process"
 )
 
 const ProxyOverrideSeparator = ","

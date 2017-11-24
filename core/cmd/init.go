@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/stackfoundation/core/pkg/wrapper"
-	coreio "github.com/stackfoundation/io"
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/core/pkg/wrapper"
+	coreio "github.com/stackfoundation/sandbox/io"
+	"github.com/stackfoundation/sandbox/log"
 
 	"github.com/spf13/cobra"
 )

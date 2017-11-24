@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/stackfoundation/core/pkg/minikube/cluster"
-	"github.com/stackfoundation/core/pkg/minikube/machine"
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/cluster"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/machine"
+	"github.com/stackfoundation/sandbox/log"
 )
 
 var deleteHostCmd = &cobra.Command{

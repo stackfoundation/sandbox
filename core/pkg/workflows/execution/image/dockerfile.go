@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"strconv"
 
-	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
 )
 
 func writeCherryPickCopies(dockerfile *bytes.Buffer, step *v1.WorkflowStep) {

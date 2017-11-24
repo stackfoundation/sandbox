@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
 )
 
 var driveLetterReplacement = regexp.MustCompile("^([a-zA-Z])\\:")

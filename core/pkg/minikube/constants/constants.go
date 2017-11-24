@@ -24,7 +24,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 	"k8s.io/kubernetes/pkg/version"
-	minikubeVersion "github.com/stackfoundation/core/pkg/version"
+	minikubeVersion "github.com/stackfoundation/sandbox/core/pkg/version"
 )
 
 // APIServerPort is the port that the API server should listen on.

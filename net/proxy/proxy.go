@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/log"
 )
 
 // ProxyArg Proxy provided as an argument

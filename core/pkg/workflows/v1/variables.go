@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/properties"
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/properties"
+	"github.com/stackfoundation/sandbox/log"
 )
 
 // CollectVariables Collect all the variables from the specified sources

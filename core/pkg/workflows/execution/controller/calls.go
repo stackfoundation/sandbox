@@ -3,10 +3,10 @@ package controller
 import (
 	"fmt"
 
-	"github.com/stackfoundation/core/pkg/workflows/execution/context"
-	"github.com/stackfoundation/core/pkg/workflows/files"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/execution/context"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/files"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/log"
 )
 
 func (c *executionController) executeChild(sc *context.StepContext, child *v1.Workflow) error {

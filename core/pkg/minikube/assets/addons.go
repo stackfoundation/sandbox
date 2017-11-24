@@ -22,9 +22,9 @@ import (
 	"strconv"
 
 	"github.com/golang/glog"
-	"github.com/stackfoundation/core/pkg/minikube/config"
-	"github.com/stackfoundation/core/pkg/minikube/constants"
-	"github.com/stackfoundation/core/pkg/util"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/config"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/util"
 )
 
 type Addon struct {

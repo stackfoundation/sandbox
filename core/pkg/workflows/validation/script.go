@@ -1,8 +1,8 @@
 package validation
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/errors"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/errors"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
 )
 
 func validateSource(script *v1.ScriptStepOptions, selector []int, ignorePlaceholders bool) error {

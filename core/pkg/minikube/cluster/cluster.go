@@ -45,13 +45,13 @@ import (
 
 	"path"
 
-	"github.com/stackfoundation/core/pkg/hypervisor"
-	"github.com/stackfoundation/core/pkg/minikube/assets"
-	cfg "github.com/stackfoundation/core/pkg/minikube/config"
-	"github.com/stackfoundation/core/pkg/minikube/constants"
-	"github.com/stackfoundation/core/pkg/minikube/sshutil"
-	"github.com/stackfoundation/core/pkg/util"
-	"github.com/stackfoundation/core/pkg/util/kubeconfig"
+	"github.com/stackfoundation/sandbox/core/pkg/hypervisor"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/assets"
+	cfg "github.com/stackfoundation/sandbox/core/pkg/minikube/config"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/sshutil"
+	"github.com/stackfoundation/sandbox/core/pkg/util"
+	"github.com/stackfoundation/sandbox/core/pkg/util/kubeconfig"
 )
 
 var (

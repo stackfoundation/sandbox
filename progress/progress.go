@@ -5,7 +5,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/log"
 )
 
 const barWidth = 52

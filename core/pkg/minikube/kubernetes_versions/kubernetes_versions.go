@@ -22,7 +22,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/stackfoundation/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"

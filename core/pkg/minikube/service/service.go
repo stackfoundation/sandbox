@@ -35,8 +35,8 @@ import (
 
 	"text/template"
 
-	"github.com/stackfoundation/core/pkg/minikube/cluster"
-	"github.com/stackfoundation/core/pkg/util"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/cluster"
+	"github.com/stackfoundation/sandbox/core/pkg/util"
 	"k8s.io/apimachinery/pkg/labels"
 )
 

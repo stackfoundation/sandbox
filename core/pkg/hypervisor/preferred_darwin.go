@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackfoundation/process"
+	"github.com/stackfoundation/sandbox/process"
 )
 
 func compare(number string, value int) int {

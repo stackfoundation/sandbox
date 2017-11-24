@@ -9,7 +9,7 @@ import (
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 
-	"github.com/stackfoundation/core/pkg/workflows/image"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/image"
 )
 
 // CommitContainer Commit a container as an image

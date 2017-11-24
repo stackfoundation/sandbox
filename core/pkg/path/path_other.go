@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/stackfoundation/io"
+	"github.com/stackfoundation/sandbox/io"
 )
 
 func AddSboxToSystemPath(installDirectory string) error {

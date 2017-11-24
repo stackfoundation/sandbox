@@ -23,7 +23,7 @@ import (
 )
 
 // The current version of the minikube and localkube
-// This is a private field and should be set when compiling with --ldflags="-X github.com/stackfoundation/core/pkg/version.version=vX.Y.Z"
+// This is a private field and should be set when compiling with --ldflags="-X github.com/stackfoundation/sandbox/core/pkg/version.version=vX.Y.Z"
 const VersionPrefix = "v"
 
 var version = "v0.21.0"

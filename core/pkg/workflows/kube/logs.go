@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/stackfoundation/core/pkg/workflows/processors"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/processors"
 
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/pkg/api/v1"

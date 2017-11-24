@@ -1,6 +1,6 @@
 package hypervisor
 
-import "github.com/stackfoundation/process"
+import "github.com/stackfoundation/sandbox/process"
 
 func installVirtualBoxWithInstaller(installer string) error {
 	_, err := process.CommandOut("/bin/sh", "-c", "sudo hdiutil attach \""+installer+"\"")

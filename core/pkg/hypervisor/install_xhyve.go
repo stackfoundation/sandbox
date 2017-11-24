@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/stackfoundation/core/pkg/minikube/assets"
-	"github.com/stackfoundation/install"
-	"github.com/stackfoundation/process"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/assets"
+	"github.com/stackfoundation/sandbox/install"
+	"github.com/stackfoundation/sandbox/process"
 )
 
 func isxhyveInstalled() bool {

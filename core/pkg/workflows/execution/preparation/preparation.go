@@ -1,10 +1,10 @@
 package preparation
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/expansion"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
-	"github.com/stackfoundation/core/pkg/workflows/validation"
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/expansion"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/validation"
+	"github.com/stackfoundation/sandbox/log"
 )
 
 type stepExpansionError struct {

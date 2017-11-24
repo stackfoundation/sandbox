@@ -3,9 +3,9 @@ package controller
 import (
 	"context"
 
-	executioncontext "github.com/stackfoundation/core/pkg/workflows/execution/context"
-	"github.com/stackfoundation/core/pkg/workflows/execution/coordinator"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
+	executioncontext "github.com/stackfoundation/sandbox/core/pkg/workflows/execution/context"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/execution/coordinator"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
 )
 
 // Controller A controller used to execute workflows

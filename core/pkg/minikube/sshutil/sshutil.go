@@ -28,7 +28,7 @@ import (
 	machinessh "github.com/docker/machine/libmachine/ssh"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
-	"github.com/stackfoundation/core/pkg/minikube/assets"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/assets"
 )
 
 // SSHSession provides methods for running commands on a host.

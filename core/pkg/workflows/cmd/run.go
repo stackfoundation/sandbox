@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackfoundation/core/pkg/workflows/execution/controller"
-	"github.com/stackfoundation/core/pkg/workflows/files"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
-	"github.com/stackfoundation/core/pkg/workflows/validation"
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/execution/controller"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/files"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/validation"
+	"github.com/stackfoundation/sandbox/log"
 )
 
 func addArgumentVariables(workflow *v1.Workflow, args []string) {

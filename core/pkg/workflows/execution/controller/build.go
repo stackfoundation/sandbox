@@ -3,9 +3,9 @@ package controller
 import (
 	"context"
 
-	executioncontext "github.com/stackfoundation/core/pkg/workflows/execution/context"
-	"github.com/stackfoundation/core/pkg/workflows/execution/image"
-	"github.com/stackfoundation/core/pkg/workflows/execution/preparation"
+	executioncontext "github.com/stackfoundation/sandbox/core/pkg/workflows/execution/context"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/execution/image"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/execution/preparation"
 )
 
 func (c *executionController) buildStepImageAndTransitionNext(sc *executioncontext.StepContext) error {

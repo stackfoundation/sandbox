@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	executioncontext "github.com/stackfoundation/core/pkg/workflows/execution/context"
-	"github.com/stackfoundation/core/pkg/workflows/execution/preparation"
-	"github.com/stackfoundation/core/pkg/workflows/execution/run"
+	executioncontext "github.com/stackfoundation/sandbox/core/pkg/workflows/execution/context"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/execution/preparation"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/execution/run"
 )
 
 func (l *runListener) Ready(sc *executioncontext.StepContext) {

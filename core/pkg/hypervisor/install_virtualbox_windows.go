@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/stackfoundation/install"
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/install"
+	"github.com/stackfoundation/sandbox/log"
 )
 
 func selectInstaller(installers []os.FileInfo, use64Bit bool) string {

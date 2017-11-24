@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/stackfoundation/core/pkg/workflows/cmd"
-	"github.com/stackfoundation/log"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/cmd"
+	"github.com/stackfoundation/sandbox/log"
 )
 
 func parseFlags(args []string) []string {

@@ -31,9 +31,9 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
-	"github.com/stackfoundation/core/pkg/minikube/constants"
-	"github.com/stackfoundation/core/pkg/minikube/kubernetes_versions"
-	"github.com/stackfoundation/core/pkg/version"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/kubernetes_versions"
+	"github.com/stackfoundation/sandbox/core/pkg/version"
 )
 
 type RetriableError struct {

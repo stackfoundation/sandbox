@@ -24,7 +24,7 @@ import (
 	"github.com/docker/machine/libmachine/drivers/plugin"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	"github.com/stackfoundation/core/pkg/minikube/machine/drivers/none"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/machine/drivers/none"
 )
 
 var driverMap = map[string]driverGetter{

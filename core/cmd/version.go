@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/stackfoundation/core/pkg/version"
+	"github.com/stackfoundation/sandbox/core/pkg/version"
 )
 
 var coreVersion = "0.1.0"

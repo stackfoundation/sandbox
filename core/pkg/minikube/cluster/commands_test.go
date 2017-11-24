@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stackfoundation/core/pkg/util"
+	"github.com/stackfoundation/sandbox/core/pkg/util"
 )
 
 func TestGetStartCommandCustomValues(t *testing.T) {

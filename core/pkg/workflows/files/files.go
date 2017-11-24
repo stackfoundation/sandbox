@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
-	log "github.com/stackfoundation/log"
+	workflowsv1 "github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
+	log "github.com/stackfoundation/sandbox/log"
 )
 
 // ReadWorkflow Read the workflow with the specified name from the current project directory

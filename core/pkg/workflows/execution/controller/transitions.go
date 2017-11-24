@@ -1,9 +1,9 @@
 package controller
 
 import (
-	executioncontext "github.com/stackfoundation/core/pkg/workflows/execution/context"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
-	"github.com/stackfoundation/log"
+	executioncontext "github.com/stackfoundation/sandbox/core/pkg/workflows/execution/context"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/log"
 )
 
 func logChange(c *v1.Change) {

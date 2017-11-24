@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"os"
 
-	"github.com/stackfoundation/core/pkg/io"
-	"github.com/stackfoundation/core/pkg/minikube/assets"
+	"github.com/stackfoundation/sandbox/core/pkg/io"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/assets"
 )
 
 // ExtractWrappers Extract the CLI wrappers to the specified directory

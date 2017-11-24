@@ -3,8 +3,8 @@ package validation
 import (
 	"strconv"
 
-	"github.com/stackfoundation/core/pkg/workflows/errors"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/errors"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
 )
 
 func validatePositiveInt(step *v1.StepOptions, value string, propertyName string, checkName string, selector []int, ignorePlaceholders bool) error {

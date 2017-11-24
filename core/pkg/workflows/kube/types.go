@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/stackfoundation/core/pkg/workflows/properties"
-	workflowsv1 "github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/properties"
+	workflowsv1 "github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/pkg/api/v1"
 )

@@ -6,13 +6,13 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/stackfoundation/log"
-	"github.com/stackfoundation/net/download"
-	"github.com/stackfoundation/process"
+	"github.com/stackfoundation/sandbox/log"
+	"github.com/stackfoundation/sandbox/net/download"
+	"github.com/stackfoundation/sandbox/process"
 
-	"github.com/stackfoundation/core/pkg/io"
-	"github.com/stackfoundation/install"
-	"github.com/stackfoundation/metadata"
+	"github.com/stackfoundation/sandbox/core/pkg/io"
+	"github.com/stackfoundation/sandbox/install"
+	"github.com/stackfoundation/sandbox/metadata"
 )
 
 func downloadVirtualBoxIfNecessary() error {

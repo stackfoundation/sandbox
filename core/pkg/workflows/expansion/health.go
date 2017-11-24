@@ -1,9 +1,9 @@
 package expansion
 
 import (
-	"github.com/stackfoundation/core/pkg/workflows/errors"
-	"github.com/stackfoundation/core/pkg/workflows/properties"
-	"github.com/stackfoundation/core/pkg/workflows/v1"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/errors"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/properties"
+	"github.com/stackfoundation/sandbox/core/pkg/workflows/v1"
 )
 
 func expandHeaders(headers []v1.HTTPHeader, variables *properties.Properties) ([]v1.HTTPHeader, error) {

@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/stackfoundation/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
 )
 
 // Returns a function that will return n errors, then return successfully forever.

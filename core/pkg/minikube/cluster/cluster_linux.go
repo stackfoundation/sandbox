@@ -21,9 +21,9 @@ import (
 	"path/filepath"
 
 	"github.com/docker/machine/libmachine/drivers"
-	cfg "github.com/stackfoundation/core/pkg/minikube/config"
-	"github.com/stackfoundation/core/pkg/minikube/constants"
-	"github.com/stackfoundation/core/pkg/minikube/machine/drivers/none"
+	cfg "github.com/stackfoundation/sandbox/core/pkg/minikube/config"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/constants"
+	"github.com/stackfoundation/sandbox/core/pkg/minikube/machine/drivers/none"
 )
 
 type kvmDriver struct {

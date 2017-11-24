@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/stackfoundation/install"
-	"github.com/stackfoundation/process"
+	"github.com/stackfoundation/sandbox/install"
+	"github.com/stackfoundation/sandbox/process"
 )
 
 const distroScript = `#!/bin/sh

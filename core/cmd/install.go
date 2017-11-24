@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/stackfoundation/core/pkg/path"
-	"github.com/stackfoundation/core/pkg/wrapper"
-	"github.com/stackfoundation/install"
+	"github.com/stackfoundation/sandbox/core/pkg/path"
+	"github.com/stackfoundation/sandbox/core/pkg/wrapper"
+	"github.com/stackfoundation/sandbox/install"
 )
 
 var installCmd = &cobra.Command{

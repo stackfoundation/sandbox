@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/stackfoundation/core/pkg/hypervisor"
+	"github.com/stackfoundation/sandbox/core/pkg/hypervisor"
 )
 
 var failVirtualBox bool

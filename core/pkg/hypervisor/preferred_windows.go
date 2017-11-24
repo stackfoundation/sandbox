@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/stackfoundation/process"
+	"github.com/stackfoundation/sandbox/process"
 )
 
 func parseLines(stdout string) []string {
