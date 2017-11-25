@@ -21,8 +21,8 @@ Minikube is split into two parts: 1) a process that runs within a linux VM calle
 Get a specific version of minikube sources:
 
 ```
-git clone https://github.com/kubernetes/minikube.git
-cd minikube
+git clone https://github.com/kubernetes/minikube.git $GOPATH/src/k8s.io/minikube
+cd $GOPATH/src/k8s.io/minikube
 git checkout 2deea5f75745698fd04f81da724716
 ```
 
@@ -35,7 +35,7 @@ go build k8s.io/minikube/cmd/localkube
 
 Now that localkube is built, we can build Sandbox. Start by getting the Sandbox sources:
 ```
-git clone https://github.com/stackfoundation/sandbox.git
+git clone https://github.com/stackfoundation/sandbox.git $GOPATH/src/github.com/stackfoundation/sandbox
 cd sandbox
 ```
 Get all project dependencies and "vendor" them using the `dep` tool (if you don't have the `dep`, follow the instructions [here](https://github.com/golang/dep) to install it) - this will only have to be done when dependencies change:
@@ -50,16 +50,19 @@ You will need to run the following to generate a file that contains the embedded
 
 ```
 go get -u github.com/jteeuwen/go-bindata/...
+cd core
 go-bindata -nomemcopy -o pkg/minikube/assets/assets.go -pkg assets ./out/localkube ./out/cli.zip deploy/addons/...
 ```
 
-For macOS builds, you should also include an additional driver as an embedded artifact (from the releases page [here](https://github.com/zchee/docker-machine-driver-xhyve/releases)):
+For macOS builds, you should also include an additional driver as an embedded artifact (from the releases page [here](https://github.com/zchee/docker-machine-driver-xhyve/releases)) and include it in the go-bindata command:
 
 ```
+cd core
 go-bindata -nomemcopy -o pkg/minikube/assets/assets.go -pkg assets ./out/localkube ./out/docker-machine-driver-xhyve ./out/cli.zip deploy/addons/...
 ```
 
 After the project dependencies have been "vendor'ed" and the embedded resources generated, run the following to build Sandbox:
+_(Remember to unset the environment variables `GOOS` and `GOARCH` if you set them for building localkube)_
 
 ```
 go build github.com/stackfoundation/sandbox/core
