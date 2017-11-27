@@ -19,32 +19,27 @@ Sandbox is built on [minikube](https://github.com/kubernetes/minikube), and is w
 To begin, if you don't have a Go development environment, please [set one up](http://golang.org/doc/code.html). Ensure your `GOPATH` and `PATH` have been configured in accordance with the Go environment instructions.
 
 Minikube is split into two parts: 
-1) A process that runs within a linux VM called "localkube". Sandbox uses localkube as is, without any changes. That's why in order to use Sandbox, you will first need to build localkube directly from minikube.
+1) A process that runs within a linux VM called "localkube". Sandbox uses localkube as is, without any changes. That's why in order to build Sandbox, you will first need to build localkube directly from minikube.
 2) Minikube itself, which is the CLI application that Sandbox is built on top of. This is the part that is contained within this repo.
 
-You will first need to build the localkube linux binary directly from minikube.
+You will first need to build the localkube linux binary directly from minikube. You can take a look at the minikube repo if you want to manually build localkube. Otherwise, there is a Sandbox workflow in this repository called `build-localkube` that can be used to build localkube. The workflow directly clones the minikube repo, checks out a specific commit and builds the localkube binary.
 
-First, clone a specific version of the minikube repo into your `GOPATH` (the repo should end up at `[GOPATH]/src/k8s.io/minikube`):
+Start by getting the Sandbox repo (clone it into your `GOPATH` - the repo should end up at `[GOPATH]/src/github.com/stackfoundation/sandbox`):
 
-```
-git clone https://github.com/kubernetes/minikube.git
-cd [GOPATH]/src/k8s.io/minikube
-git checkout 2deea5f75745698fd04f81da724716
-```
-
-Set the environment variable `GOOS` to `linux`, and `GOARCH` to `amd64` to build for a 64-bit Linux.
-Build localkube by issuing the following command from the root of `GOPATH`:
-
-```
-go build -ldflags "-X k8s.io/minikube/pkg/version.version=v0.21.0 -X k8s.io/minikube/pkg/version.isoVersion=v0.23.1 -X k8s.io/minikube/pkg/version.isoPath=minikube/iso -s -w" k8s.io/minikube/cmd/localkube
-```
-
-Now that localkube is built, we can build Sandbox. Start by getting the Sandbox sources (again, clone into your `GOPATH`):
 ```
 git clone https://github.com/stackfoundation/sandbox.git
 cd  [GOPATH]/src/github.com/stackfoundation/sandbox
 ```
-Get all project dependencies and "vendor" them using the `dep` tool (if you don't have the `dep`, follow the instructions [here](https://github.com/golang/dep) to install it) - run this within the locally cloned `sandbox` repo:
+
+The `build-localkube` workflow can be run directly inside this checked out version by running:
+
+```
+./sbox run build-localkube
+```
+
+That will build localkube, and output it into a folder called `build` within the `sandbox` repo. Take a look at the workflow definition inside `workflows/build-localkube.yml` to see how the workflow is building localkube.
+
+Now that localkube is built, we will build Sandbox itself. Get all project dependencies and "vendor" them using the `dep` tool (if you don't have the `dep`, follow the instructions [here](https://github.com/golang/dep) to install it) - run this within the locally cloned `sandbox` repo:
 
 ```
 dep ensure
