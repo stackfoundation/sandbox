@@ -58,7 +58,6 @@ func IsInSystemPath(node string) (bool, error) {
 		return false, err
 	}
 
-	directoryAlreadyOnPath := false
 	node = normalizePath(node)
 
 	paths := strings.Split(pathVariable, ";")
