@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
@@ -89,6 +90,14 @@ func createPod(context *podContext, containerName string) error {
 					Env:             environment,
 					ReadinessProbe:  readinessProbe,
 					LivenessProbe:   healthProbe,
+					Resources: v1.ResourceRequirements{
+						Limits: v1.ResourceList{
+							"memory": resource.Quantity{Format: "1Gi"},
+						},
+						Requests: v1.ResourceList{
+							"memory": resource.Quantity{Format: "128Mi"},
+						},
+					},
 				},
 			},
 			Volumes:       podVolumes,

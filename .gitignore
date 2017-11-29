@@ -1,2 +1,3 @@
 out
 vendor/
+core/pkg/minikube/assets/assets.go

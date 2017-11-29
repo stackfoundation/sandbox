@@ -7,14 +7,15 @@ import (
 	"path/filepath"
 
 	"github.com/stackfoundation/sandbox/core/pkg/minikube/assets"
+	"github.com/stackfoundation/sandbox/core/pkg/path"
 	"github.com/stackfoundation/sandbox/install"
 	"github.com/stackfoundation/sandbox/process"
 )
 
 func isxhyveInstalled() bool {
-	_, info, err := xhyveDriverLocation()
+	installed, _ := path.IsInSystemPath("docker-machine-driver-xhyve")
 
-	return err == nil && info.Mode()&os.ModeSetuid > 0
+	return installed
 }
 
 func xhyveDriverLocation() (string, os.FileInfo, error) {
@@ -62,6 +63,12 @@ func installXhyveDriver() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	err = path.AddToSystemPath(driverPath)
+
+	if err != nil {
+		return err
 	}
 
 	fmt.Println("xhyve driver installed.")

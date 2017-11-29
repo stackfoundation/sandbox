@@ -1,0 +1,19 @@
+steps:
+ - run:
+     image: golang:1.8.5-stretch
+     source:
+       omit: true
+     volumes:
+      - hostPath: ./bin
+        mountPath: /app/bin
+     script: |-
+       export GOPATH=/app
+       mkdir $GOPATH
+       mkdir $GOPATH/src
+       git clone https://github.com/kubernetes/minikube.git       $GOPATH/src/k8s.io/minikube
+       cd $GOPATH/src/k8s.io/minikube
+       git checkout 2deea5f75745698fd04f81da724716
+       cd $GOPATH
+       CGO_ENABLED=1 go build -v -ldflags "-X k8s.io/minikube/pkg/version.version=v0.21.0 -X k8s.io/minikube/pkg/version.isoVersion=v0.23.1 -X k8s.io/minikube/pkg/version.isoPath=minikube/iso -s -w" -o /app/localkube k8s.io/minikube/cmd/localkube
+       mv /app/localkube /app/bin/localkube
+       

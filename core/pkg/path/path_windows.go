@@ -43,6 +43,33 @@ func AddSboxToSystemPath(installDirectory string) error {
 	return AddToSystemPath(installDirectory)
 }
 
+func IsInSystemPath(node string) (bool, error) {
+	environmentVariables, err := registry.OpenKey(
+		registry.CURRENT_USER,
+		"Environment",
+		registry.ALL_ACCESS)
+	defer environmentVariables.Close()
+	if err != nil {
+		return false, err
+	}
+
+	pathVariable, _, err := environmentVariables.GetStringValue("Path")
+	if err != nil {
+		return false, err
+	}
+
+	node = normalizePath(node)
+
+	paths := strings.Split(pathVariable, ";")
+	for _, path := range paths {
+		if node == normalizePath(path) {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 // AddToSystemPath Add the specified node to the system PATH variable
 func AddToSystemPath(node string) error {
 	environmentVariables, err := registry.OpenKey(

@@ -4,6 +4,7 @@ package path
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/stackfoundation/sandbox/io"
@@ -30,4 +31,9 @@ func AddToSystemPath(node string) error {
 	}
 
 	return err
+}
+
+func IsInSystemPath(node string) (bool, error) {
+	_, err := exec.Command("which", filepath.Base(node)).Output()
+	return err == nil, err
 }

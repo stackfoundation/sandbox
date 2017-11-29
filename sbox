@@ -1,0 +1,14 @@
+#!/bin/bash
+VERSION="0.1.2"
+
+CURR_DIR=$(dirname $(readlink $BASH_SOURCE || echo $BASH_SOURCE))
+
+if [ `uname` = "Linux" ]; then
+  if [ `uname -m` = "x86_64" ]; then
+    ${CURR_DIR}/sbox-cli/wrapper-${VERSION}-linux-amd64 "$@"
+  else
+    ${CURR_DIR}/sbox-cli/wrapper-${VERSION}-linux-386 "$@"
+  fi
+else
+  ${CURR_DIR}/sbox-cli/wrapper-${VERSION}-darwin-386 "$@"
+fi

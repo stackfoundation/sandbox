@@ -80,5 +80,10 @@ func (sc *StepContext) IsStepReadyToRun() bool {
 
 // IsWorkflowComplete Is the workflow in context complete?
 func (sc *StepContext) IsWorkflowComplete() bool {
-	return sc.isAtWorkflowBoundary() && sc.CanProceedToNextStep() && sc.Step.Service == nil
+	if sc.isAtWorkflowBoundary() {
+		return sc.Change.Type == v1.StepDone ||
+			sc.Change.Type == v1.WorkflowWaitDone
+	}
+
+	return false
 }
