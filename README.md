@@ -45,7 +45,7 @@ Now that localkube is built, we will build Sandbox itself. Get all project depen
 dep ensure
 ```
 
-Now copy the localkube binary built from the previous step to the `core/out` folder within the `sandbox` repo. In addition, copy the `cli.zip` file from the [StackFoundation downloads](https://stack.foundation/#!/downloads) page into the `core/out` folder as well. These will be embedded into the Sandbox binary.
+Now copy the localkube binary built from the previous step to the `core/out` folder within the `sandbox` repo. This will be embedded into the Sandbox binary.
 
 In order to embed the files into Sandbox, you will use a tool called `go-bindata` (find it [here](https://github.com/jteeuwen/go-bindata)) - install it by running:
 
@@ -56,13 +56,13 @@ go get -u github.com/jteeuwen/go-bindata/...
 You will need to run the following inside of the `core` folder within the `sandbox` repo to generate a file that contains the embedded resources into the final Sandbox binary:
 
 ```
-go-bindata -nomemcopy -o pkg/minikube/assets/assets.go -pkg assets ./out/localkube ./out/cli.zip deploy/addons/...
+go-bindata -nomemcopy -o pkg/minikube/assets/assets.go -pkg assets ./out/localkube deploy/addons/...
 ```
 
 For macOS builds, you should also include an additional driver as an embedded artifact (from the releases page [here](https://github.com/zchee/docker-machine-driver-xhyve/releases)) and include it in the go-bindata command:
 
 ```
-go-bindata -nomemcopy -o pkg/minikube/assets/assets.go -pkg assets ./out/localkube ./out/docker-machine-driver-xhyve ./out/cli.zip deploy/addons/...
+go-bindata -nomemcopy -o pkg/minikube/assets/assets.go -pkg assets ./out/localkube ./out/docker-machine-driver-xhyve deploy/addons/...
 ```
 
 After the project dependencies have been "vendor'ed" and the embedded resources generated, run the following in your `GOPATH` to build Sandbox _(Remember to unset the environment variables `GOOS` and `GOARCH` if you set them for building localkube)_:
